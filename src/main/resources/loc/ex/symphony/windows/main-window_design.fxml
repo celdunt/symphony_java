@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
+  <columnConstraints>
+    <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
+    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
+  </columnConstraints>
+  <rowConstraints>
+      <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
+      <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <MenuBar GridPane.columnSpan="3">
+        <menus>
+          <Menu mnemonicParsing="false" text="Файл">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#openBibleFiles__onAction" text="Загрузка Б." />
+              <MenuItem mnemonicParsing="false" onAction="#openEllenFiles__onAction" text="Загрузка Е." />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="search-field" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
+         <GridPane.margin>
+            <Insets right="35.0" top="3.0" />
+         </GridPane.margin>
+      </TextField>
+      <Button fx:id="searchButton" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0" styleClass="search-button" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+         <GridPane.margin>
+            <Insets top="3.0" />
+         </GridPane.margin>
+      </Button>
+      <TextField fx:id="searchByNameField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по названию" styleClass="search-field" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+         <GridPane.margin>
+            <Insets left="3.0" right="3.0" top="3.0" />
+         </GridPane.margin>
+      </TextField>
+      <TextField fx:id="searchByLinkField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по ссылкам" styleClass="search-field" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+         <GridPane.margin>
+            <Insets left="3.0" right="3.0" top="3.0" />
+         </GridPane.margin>
+      </TextField>
+      <ListView fx:id="chapterListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" orientation="HORIZONTAL" styleClass="chapter-list" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+         <GridPane.margin>
+            <Insets top="3.0" />
+         </GridPane.margin>
+      </ListView>
+      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.rowIndex="2" GridPane.rowSpan="2">
+        <tabs>
+          <Tab text="Библия">
+               <content>
+                  <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-list" />
+               </content>
+            </Tab>
+          <Tab text="Э. Уайт">
+               <content>
+                  <ListView fx:id="ellenListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+               </content></Tab>
+        </tabs>
+         <padding>
+            <Insets right="3.0" />
+         </padding>
+      </TabPane>
+      <TabPane nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
+        <tabs>
+          <Tab text="Библия">
+               <content>
+                  <ListView fx:id="bibleLinkView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+               </content></Tab>
+          <Tab text="Э. Уайт">
+               <content>
+                  <ListView fx:id="ellenLinkView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+               </content></Tab>
+        </tabs>
+         <padding>
+            <Insets right="3.0" />
+         </padding>
+      </TabPane>
+      <TextArea fx:id="mainTextField" prefHeight="200.0" prefWidth="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3">
+         <GridPane.margin>
+            <Insets top="3.0" />
+         </GridPane.margin>
+      </TextArea>
+   </children>
+</GridPane>

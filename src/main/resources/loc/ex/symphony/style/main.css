@@ -1,0 +1,26 @@
+.search-field {
+	-fx-background-radius: 10;
+}
+
+.search-button {
+	-fx-background-radius: 35;
+	-fx-border-radius: 35;
+}
+
+.chapter-list {
+	-fx-border-width: 1;
+	-fx-border-color: lightgray;
+}
+
+.tab-pane .tab-header-background {
+	-fx-background-color: transparent;
+}
+
+.v-list {
+	-fx-border-width: 1;
+	-fx-border-color: lightgray;
+}
+
+.v-list .list-cell {
+	-fx-wrap-text: true;
+}
