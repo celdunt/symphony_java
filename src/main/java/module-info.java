@@ -9,6 +9,8 @@ module loc.ex.symphony {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires com.almasb.fxgl.all;
+    requires annotations;
+    requires java.logging;
 
     opens loc.ex.symphony to javafx.fxml;
     exports loc.ex.symphony;

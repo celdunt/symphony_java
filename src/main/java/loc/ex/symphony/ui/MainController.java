@@ -11,11 +11,16 @@ import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
+import loc.ex.symphony.indexdata.IndexSaver;
+import loc.ex.symphony.indexdata.IndexStruct;
+import loc.ex.symphony.indexdata.Indexator;
 import loc.ex.symphony.listview.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 public class MainController {
 
@@ -32,6 +37,8 @@ public class MainController {
     public TextArea mainTextField;
 
     private Book selectedBook;
+
+    private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public void initialize() throws IOException {
         initializeBookFiles__OnAction();
@@ -96,7 +103,7 @@ public class MainController {
 
             initializeBookFiles__OnAction();
         } catch (IOException exception) {
-            exception.printStackTrace();
+            logger.info(exception.toString());
         }
     }
 
@@ -107,7 +114,32 @@ public class MainController {
 
             initializeBookFiles__OnAction();
         } catch (IOException exception) {
-            exception.printStackTrace();
+            logger.info(exception.toString());
+        }
+    }
+
+    public void doIndex__OnAction() {
+        Indexator indexator = new Indexator(bibleListView.getItems());
+
+        indexator.index();
+
+        IndexSaver.save(indexator.getIndexData());
+    }
+
+    public void loadIndex__OnAction() {
+        ConcurrentHashMap<String, List<IndexStruct>> indexData = IndexSaver.load();
+
+        List<IndexStruct> dataOfWord = indexData.get("послание");
+
+        if (!dataOfWord.isEmpty()) {
+            IndexStruct first = dataOfWord.get(0);
+            bibleListView.getSelectionModel().select(first.getBookId());
+            chapterListView.getSelectionModel().select(first.getChapterId()-1);
+            int start = 0;
+            for (int i = 0; i < first.getFragmentId(); i++) {
+                start += bibleListView.getItems().get(first.getBookId()).getChapters().get(first.getChapterId()).getFragments().get(i).length();
+            }
+            mainTextField.selectRange(start + first.getPosition(), start + first.getPosition() + first.getWordLength());
         }
     }
 }

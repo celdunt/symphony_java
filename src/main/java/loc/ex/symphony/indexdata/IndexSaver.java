@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class IndexSaver {
 
-    public void save(ConcurrentHashMap<String, List<IndexStruct>> index) {
+    public static void save(ConcurrentHashMap<String, List<IndexStruct>> index) {
         try (FileOutputStream fileOut = new FileOutputStream("index.id")) {
             ObjectOutputStream objOut = new ObjectOutputStream(fileOut);
             objOut.writeObject(index);
@@ -15,7 +15,7 @@ public class IndexSaver {
         }
     }
 
-    public ConcurrentHashMap<String, List<IndexStruct>> load() {
+    public static ConcurrentHashMap<String, List<IndexStruct>> load() {
         ConcurrentHashMap<String, List<IndexStruct>> index = new ConcurrentHashMap<>();
         try (FileInputStream fileIn = new FileInputStream("index.id")) {
             ObjectInputStream objIn = new ObjectInputStream(fileIn);

@@ -35,6 +35,12 @@
               <MenuItem mnemonicParsing="false" onAction="#openEllenFiles__onAction" text="Загрузка Е." />
             </items>
           </Menu>
+            <Menu mnemonicParsing="false" text="Индекс">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#doIndex__OnAction" text="Индексировать" />
+                  <MenuItem mnemonicParsing="false" onAction="#loadIndex__OnAction" text="?Загрузка?" />
+              </items>
+            </Menu>
         </menus>
       </MenuBar>
       <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="search-field" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
