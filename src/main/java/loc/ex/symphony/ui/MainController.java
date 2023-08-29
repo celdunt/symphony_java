@@ -118,7 +118,7 @@ public class MainController {
         }
     }
 
-    public void doIndex__OnAction() {
+    public void doIndex__OnAction() throws IOException {
         Indexator indexator = new Indexator(bibleListView.getItems());
 
         indexator.index();

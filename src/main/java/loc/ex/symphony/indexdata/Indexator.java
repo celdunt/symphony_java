@@ -3,6 +3,11 @@ package loc.ex.symphony.indexdata;
 import javafx.collections.ObservableList;
 import loc.ex.symphony.listview.Book;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,7 +26,7 @@ public class Indexator {
         this.bible = books;
     }
     
-    public void index() {
+    public void index() throws IOException {
         int numberOfThreads = Runtime.getRuntime().availableProcessors();
 
         logger.info("number of available threads :-> " + numberOfThreads);
@@ -37,7 +42,7 @@ public class Indexator {
                 for (int i = 0; i < numberOfThreads; i++) {
                     if (i == numberOfThreads-1) upperBound = fragments.size();
                     else upperBound = i * periodValue + periodValue;
-                    ThreadIndexation thread = new ThreadIndexation(bookId, chapterId, i * periodValue, upperBound, fragments);
+                    ThreadBasicIndexation thread = new ThreadBasicIndexation(bookId, chapterId, i * periodValue, upperBound, fragments);
                     thread.start();
                 }
 
@@ -45,6 +50,29 @@ public class Indexator {
 
             logger.info("1st stage: \"basic indexation\", percent of success :-> " + String.format("%.2f", ((bookId+1) * 100.0)/bible.size()) + "%");
         }
+
+        Path filePath = Paths.get("index/words.txt");
+        String wordsString = "";
+        if (Files.exists(filePath)) wordsString = Files.readString(filePath, Charset.forName("windows-1251"));
+        else logger.info("file path is doesn't exist");
+        String[] groupsOfWords = wordsString.split("г1лава");
+
+        logger.info("number of groups :-> " + groupsOfWords.length);
+
+        List<String[]> handledGroupsOfWords = new ArrayList<>();
+        for (String groupOfWords : groupsOfWords)
+            handledGroupsOfWords.add(groupOfWords.split("[\\s\\p{Punct}]+"));
+
+        int periodGroupValue = handledGroupsOfWords.size() / numberOfThreads;
+        int upperGroupBound;
+        for (int i = 0; i < numberOfThreads; i++) {
+            if (i == numberOfThreads - 1) upperGroupBound = handledGroupsOfWords.size();
+            else upperGroupBound = i * periodGroupValue + periodGroupValue;
+            ThreadNextIndexation thread = new ThreadNextIndexation(handledGroupsOfWords, i * periodGroupValue, upperGroupBound);
+            thread.start();
+        }
+
+        logger.info("2nd stage is completed");
     }
 
     public ConcurrentHashMap<String, List<IndexStruct>> getIndexData() {
@@ -52,7 +80,52 @@ public class Indexator {
     }
 
 
-    private class ThreadIndexation extends Thread {
+    private class ThreadNextIndexation extends Thread {
+        private Thread _this;
+
+        private final List<String[]> words;
+
+        private int start;
+        private final int end;
+
+        public ThreadNextIndexation(List<String[]> words, int start, int end) {
+            this.words = words;
+            this.start = start;
+            this.end = end;
+        }
+
+        public void run() {
+            for (;start < end; start++)
+                for (int fixedWord = 0; fixedWord < words.get(start).length; fixedWord++) {
+                    List<IndexStruct> referencesOfFixedWord = indexData.get(words.get(start)[fixedWord].toLowerCase());
+                    if (referencesOfFixedWord == null) continue;
+                    for (int nextWord = fixedWord+1; nextWord < words.get(start).length; nextWord++) {
+                        List<IndexStruct> referencesOfNextWord = indexData.get(words.get(start)[nextWord].toLowerCase());
+                        if (referencesOfNextWord == null) continue;
+                        indexData.computeIfAbsent(words.get(start)[nextWord].toLowerCase(), k -> new ArrayList<>()).addAll(referencesOfFixedWord);
+                        indexData.computeIfAbsent(words.get(start)[fixedWord].toLowerCase(), k -> new ArrayList<>()).addAll(referencesOfNextWord);
+                    }
+                }
+        }
+
+        public void start() {
+            if (_this == null) {
+                _this = new Thread(this, generateThreadName());
+                _this.start();
+            }
+        }
+
+        private String generateThreadName() {
+            StringBuilder name = new StringBuilder();
+
+            for (int i = 0; i < new Random().nextInt(10, 25); i++)
+                name.append((char)new Random().nextInt(1, 32));
+
+            return name.toString();
+        }
+    }
+
+    private class ThreadBasicIndexation extends Thread {
 
         private Thread _this;
 
@@ -63,7 +136,7 @@ public class Indexator {
 
         private final List<String> fragments;
 
-        public ThreadIndexation(int bookId, int chapterId, int start, int end, List<String> fragments) {
+        public ThreadBasicIndexation(int bookId, int chapterId, int start, int end, List<String> fragments) {
             this.bookId = bookId;
             this.chapterId = chapterId;
             this.start = start;
