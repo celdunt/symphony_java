@@ -21,11 +21,11 @@ public class Indexator {
     private final ObservableList<Book> bible;
 
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-    
+
     public Indexator(ObservableList<Book> books) {
         this.bible = books;
     }
-    
+
     public void index() throws IOException {
         int numberOfThreads = Runtime.getRuntime().availableProcessors();
 
@@ -40,7 +40,7 @@ public class Indexator {
                 int periodValue = fragments.size() / numberOfThreads;
                 int upperBound;
                 for (int i = 0; i < numberOfThreads; i++) {
-                    if (i == numberOfThreads-1) upperBound = fragments.size();
+                    if (i == numberOfThreads - 1) upperBound = fragments.size();
                     else upperBound = i * periodValue + periodValue;
                     ThreadBasicIndexation thread = new ThreadBasicIndexation(bookId, chapterId, i * periodValue, upperBound, fragments);
                     thread.start();
@@ -48,7 +48,7 @@ public class Indexator {
 
             }
 
-            logger.info("1st stage: \"basic indexation\", percent of success :-> " + String.format("%.2f", ((bookId+1) * 100.0)/bible.size()) + "%");
+            logger.info("1st stage: \"basic indexation\", percent of success :-> " + String.format("%.2f", ((bookId + 1) * 100.0) / bible.size()) + "%");
         }
 
         Path filePath = Paths.get("index/words.txt");
@@ -62,6 +62,8 @@ public class Indexator {
         List<String[]> handledGroupsOfWords = new ArrayList<>();
         for (String groupOfWords : groupsOfWords)
             handledGroupsOfWords.add(groupOfWords.split("[\\s\\p{Punct}]+"));
+
+        if (numberOfThreads > 2) numberOfThreads /= 2;
 
         int periodGroupValue = handledGroupsOfWords.size() / numberOfThreads;
         int upperGroupBound;
@@ -95,17 +97,15 @@ public class Indexator {
         }
 
         public void run() {
-            for (;start < end; start++)
-                for (int fixedWord = 0; fixedWord < words.get(start).length; fixedWord++) {
-                    List<IndexStruct> referencesOfFixedWord = indexData.get(words.get(start)[fixedWord].toLowerCase());
-                    if (referencesOfFixedWord == null) continue;
-                    for (int nextWord = fixedWord+1; nextWord < words.get(start).length; nextWord++) {
-                        List<IndexStruct> referencesOfNextWord = indexData.get(words.get(start)[nextWord].toLowerCase());
-                        if (referencesOfNextWord == null) continue;
-                        indexData.computeIfAbsent(words.get(start)[nextWord].toLowerCase(), k -> new ArrayList<>()).addAll(referencesOfFixedWord);
-                        indexData.computeIfAbsent(words.get(start)[fixedWord].toLowerCase(), k -> new ArrayList<>()).addAll(referencesOfNextWord);
+            for (; start < end; start++)
+                for (int fixedWord = 0; fixedWord < words.get(start).length; fixedWord++)
+                    for (int nextWord = fixedWord + 1; nextWord < words.get(start).length; nextWord++) {
+                        List<IndexStruct> fixedStruct = indexData.get(words.get(start)[fixedWord]);
+                        List<IndexStruct> nextStruct = indexData.get(words.get(start)[nextWord]);
+                        if (fixedStruct == null || nextStruct == null) continue;
+                        fixedStruct.get(0).getSynonyms().add(words.get(start)[nextWord]);
+                        nextStruct.get(0).getSynonyms().add(words.get(start)[fixedWord]);
                     }
-                }
         }
 
         public void start() {
@@ -119,7 +119,7 @@ public class Indexator {
             StringBuilder name = new StringBuilder();
 
             for (int i = 0; i < new Random().nextInt(10, 25); i++)
-                name.append((char)new Random().nextInt(1, 32));
+                name.append((char) new Random().nextInt(1, 32));
 
             return name.toString();
         }
@@ -146,7 +146,7 @@ public class Indexator {
         }
 
         public void run() {
-            for (;start < end; start++) {
+            for (; start < end; start++) {
                 String[] words = fragments.get(start).split("[\\s\\p{Punct}]+");
                 int currentWordPosition = 0;
                 for (String word : words) {
@@ -174,7 +174,7 @@ public class Indexator {
             StringBuilder name = new StringBuilder();
 
             for (int i = 0; i < new Random().nextInt(8, 15); i++)
-                name.append((char)new Random().nextInt(1, 32));
+                name.append((char) new Random().nextInt(1, 32));
 
             return name.toString();
         }

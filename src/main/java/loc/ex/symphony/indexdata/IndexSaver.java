@@ -7,12 +7,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IndexSaver {
 
     public static void save(ConcurrentHashMap<String, List<IndexStruct>> index) {
-        try (FileOutputStream fileOut = new FileOutputStream("index.id")) {
-            ObjectOutputStream objOut = new ObjectOutputStream(fileOut);
-            objOut.writeObject(index);
-        } catch (IOException exception) {
-            exception.printStackTrace();
+        synchronized (index) {
+            try (FileOutputStream fileOut = new FileOutputStream("index.id")) {
+                ObjectOutputStream objOut = new ObjectOutputStream(fileOut);
+                objOut.writeObject(index);
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
         }
+
     }
 
     public static ConcurrentHashMap<String, List<IndexStruct>> load() {

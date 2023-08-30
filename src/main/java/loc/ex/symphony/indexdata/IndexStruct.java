@@ -3,6 +3,8 @@ package loc.ex.symphony.indexdata;
 import loc.ex.symphony.listview.PathsEnum;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IndexStruct implements Serializable {
 
@@ -12,6 +14,13 @@ public class IndexStruct implements Serializable {
     private int fragmentId;
     private int position;
     private int wordLength;
+
+    private final List<String> synonyms = new ArrayList<>();
+
+
+    public List<String> getSynonyms() {
+        return synonyms;
+    }
 
     public int getBookId() {
         return bookId;

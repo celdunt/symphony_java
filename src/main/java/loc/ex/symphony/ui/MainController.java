@@ -3,10 +3,7 @@ package loc.ex.symphony.ui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.FileAdapter;
@@ -15,6 +12,7 @@ import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.indexdata.Indexator;
 import loc.ex.symphony.listview.*;
+import loc.ex.symphony.search.Searcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +22,7 @@ import java.util.logging.Logger;
 
 public class MainController {
 
+    private Searcher searcher;
 
     public TextField searchByTextField;
     public Button searchButton;
@@ -32,9 +31,10 @@ public class MainController {
     public ListView<Integer> chapterListView;
     public ListView<Book> bibleListView;
     public ListView<Book> ellenListView;
-    public ListView<Book> bibleLinkView;
+    public ListView<Link> bibleLinkView;
     public ListView<Book> ellenLinkView;
     public TextArea mainTextField;
+    public Tab bibleTab;
 
     private Book selectedBook;
 
@@ -48,6 +48,9 @@ public class MainController {
 
         selectedChapterList__OnAction();
 
+        bibleLinkView.setCellFactory(param -> new LinkCell<>());
+
+        searcher = new Searcher();
     }
 
     private void initializeBookFiles__OnAction() throws IOException {
@@ -140,6 +143,20 @@ public class MainController {
                 start += bibleListView.getItems().get(first.getBookId()).getChapters().get(first.getChapterId()).getFragments().get(i).length();
             }
             mainTextField.selectRange(start + first.getPosition(), start + first.getPosition() + first.getWordLength());
+        }
+    }
+
+    public void selectTabBible__OnAction() {
+        if (bibleTab.isSelected() && searcher != null) {
+            searcher.setResource(bibleListView.getItems());
+
+            logger.info("resource is set");
+        }
+     }
+
+    public void doSearch__OnAction() {
+        if (!searchByTextField.getText().isEmpty()) {
+            bibleLinkView.setItems(searcher.search(searchByTextField.getText()));
         }
     }
 }
