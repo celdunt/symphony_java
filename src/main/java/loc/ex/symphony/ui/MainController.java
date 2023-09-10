@@ -48,6 +48,8 @@ public class MainController {
 
         selectedChapterList__OnAction();
 
+        selectedBibleLink__OnAction();
+
         bibleLinkView.setCellFactory(param -> new LinkCell<>());
 
         searcher = new Searcher();
@@ -56,6 +58,32 @@ public class MainController {
     private void initializeBookFiles__OnAction() throws IOException {
         bibleListView.setItems(new FileAdapter().getBible());
         ellenListView.setItems(new FileAdapter().getEllen());
+    }
+
+    private void selectedBibleLink__OnAction() {
+        bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+            if (_new != null) {
+                bibleListView.getSelectionModel().select(_new.getLinkData().getBookId());
+                chapterListView.getSelectionModel().select(_new.getLinkData().getChapterId()-1);
+                int start = 0;
+                for (int i = 0; i < _new.getLinkData().getFragmentId(); i++) {
+                    start += bibleListView.getItems().get(_new.getLinkData().getBookId()).getChapters().get(_new.getLinkData().getChapterId()).getFragments().get(i).length();
+                }
+
+                //Ищем позицию слова
+
+                int startPositionWord = start + _new.getLinkData().getPosition();
+                int endPositionWord = start + _new.getLinkData().getPosition() + _new.getLinkData().getWordLength();
+
+                while (!mainTextField.getText().substring(startPositionWord, endPositionWord).toLowerCase().equals(_new.getWords()[0])) {
+                    if (endPositionWord >= mainTextField.getText().length()) break;
+                    startPositionWord++;
+                    endPositionWord++;
+                }
+
+                mainTextField.selectRange(startPositionWord, endPositionWord);
+            }
+        });
     }
 
     private void selectedChapterList__OnAction() {
