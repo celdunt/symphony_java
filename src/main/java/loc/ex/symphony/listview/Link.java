@@ -8,18 +8,18 @@ import java.util.List;
 
 public class Link {
 
-    private final IndexStruct linkData;
+    private final List<IndexStruct> references;
     private final String linkContent;
 
     private final String[] words;
 
-    public Link(IndexStruct linkData, ObservableList<Book> book, String... words) {
-        this.linkData = linkData;
+    public Link(List<IndexStruct> references, ObservableList<Book> book, String... words) {
+        this.references = references;
         linkContent =
-                book.get(linkData.getBookId()).name.get().replace("-", "\u00A0") + "\u00A0" +
-                        (book.get(linkData.getBookId()).getChapters().get(linkData.getChapterId()).number.get()-1) + "\n" +
-                        book.get(linkData.getBookId()).getChapters().get(linkData.getChapterId())
-                        .getFragments().get(linkData.getFragmentId());
+                book.get(references.get(0).getBookID()).name.get().replace("-", "\u00A0") + "\u00A0" +
+                        (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "\n" +
+                        book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
+                        .getFragments().get(references.get(0).getFragmentID());
         this.words = words;
     }
 
@@ -28,8 +28,8 @@ public class Link {
     }
 
 
-    public IndexStruct getLinkData() {
-        return linkData;
+    public List<IndexStruct> getReferences() {
+        return references;
     }
 
     @Override

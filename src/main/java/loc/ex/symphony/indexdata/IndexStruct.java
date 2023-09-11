@@ -22,27 +22,27 @@ public class IndexStruct implements Serializable {
         return synonyms;
     }
 
-    public int getBookId() {
+    public int getBookID() {
         return bookId;
     }
 
-    public void setBookId(int bookId) {
+    public void setBookID(int bookId) {
         this.bookId = bookId;
     }
 
-    public int getChapterId() {
+    public int getChapterID() {
         return chapterId;
     }
 
-    public void setChapterId(int chapterId) {
+    public void setChapterID(int chapterId) {
         this.chapterId = chapterId;
     }
 
-    public int getFragmentId() {
+    public int getFragmentID() {
         return fragmentId;
     }
 
-    public void setFragmentId(int fragmentId) {
+    public void setFragmentID(int fragmentId) {
         this.fragmentId = fragmentId;
     }
 

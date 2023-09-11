@@ -151,9 +151,9 @@ public class Indexator {
                 int currentWordPosition = 0;
                 for (String word : words) {
                     IndexStruct index = new IndexStruct();
-                    index.setBookId(bookId);
-                    index.setChapterId(chapterId);
-                    index.setFragmentId(start);
+                    index.setBookID(bookId);
+                    index.setChapterID(chapterId);
+                    index.setFragmentID(start);
                     index.setPosition(currentWordPosition);
                     index.setWordLength(word.length());
                     currentWordPosition += word.length();

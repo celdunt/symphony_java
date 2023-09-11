@@ -61,29 +61,7 @@ public class MainController {
     }
 
     private void selectedBibleLink__OnAction() {
-        bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            if (_new != null) {
-                bibleListView.getSelectionModel().select(_new.getLinkData().getBookId());
-                chapterListView.getSelectionModel().select(_new.getLinkData().getChapterId()-1);
-                int start = 0;
-                for (int i = 0; i < _new.getLinkData().getFragmentId(); i++) {
-                    start += bibleListView.getItems().get(_new.getLinkData().getBookId()).getChapters().get(_new.getLinkData().getChapterId()).getFragments().get(i).length();
-                }
 
-                //Ищем позицию слова
-
-                int startPositionWord = start + _new.getLinkData().getPosition();
-                int endPositionWord = start + _new.getLinkData().getPosition() + _new.getLinkData().getWordLength();
-
-                while (!mainTextField.getText().substring(startPositionWord, endPositionWord).toLowerCase().equals(_new.getWords()[0])) {
-                    if (endPositionWord >= mainTextField.getText().length()) break;
-                    startPositionWord++;
-                    endPositionWord++;
-                }
-
-                mainTextField.selectRange(startPositionWord, endPositionWord);
-            }
-        });
     }
 
     private void selectedChapterList__OnAction() {
@@ -164,11 +142,11 @@ public class MainController {
 
         if (!dataOfWord.isEmpty()) {
             IndexStruct first = dataOfWord.get(0);
-            bibleListView.getSelectionModel().select(first.getBookId());
-            chapterListView.getSelectionModel().select(first.getChapterId()-1);
+            bibleListView.getSelectionModel().select(first.getBookID());
+            chapterListView.getSelectionModel().select(first.getChapterID()-1);
             int start = 0;
-            for (int i = 0; i < first.getFragmentId(); i++) {
-                start += bibleListView.getItems().get(first.getBookId()).getChapters().get(first.getChapterId()).getFragments().get(i).length();
+            for (int i = 0; i < first.getFragmentID(); i++) {
+                start += bibleListView.getItems().get(first.getBookID()).getChapters().get(first.getChapterID()).getFragments().get(i).length();
             }
             mainTextField.selectRange(start + first.getPosition(), start + first.getPosition() + first.getWordLength());
         }
@@ -183,8 +161,9 @@ public class MainController {
      }
 
     public void doSearch__OnAction() {
-        if (!searchByTextField.getText().isEmpty()) {
-            bibleLinkView.setItems(searcher.search(searchByTextField.getText()));
+        String prompt = searchByTextField.getText();
+        if (!prompt.isEmpty()) {
+            bibleLinkView.setItems(searcher.search(prompt));
         }
     }
 }

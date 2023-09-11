@@ -11,9 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 public class Searcher {
 
+    private Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private ObservableList<Book> resource;
     private final ConcurrentHashMap<String, List<IndexStruct>> indexData;
 
@@ -25,20 +27,19 @@ public class Searcher {
         this.resource = resource;
     }
 
+    /**
+     *
+     * @param prompt This user search request parameter
+     * @return List of Link
+     *
+     */
     public ObservableList<Link> search(String prompt) {
-        if (indexData != null) {
-            List<IndexStruct> linkData = indexData.get(prompt.toLowerCase());
-            if (linkData != null)
-                return FXCollections.observableArrayList(linkData.stream().map(x -> new Link(x, resource, prompt)).toList());
-        }
-        return FXCollections.observableArrayList();
-    }
+        List<Link> foundOccurrences = new ArrayList<>();
 
-    public ObservableList<Link> search_1(String prompt) {
         if (indexData != null) {
             String[] words = prompt.split("[\\s\\p{Punct}]+");
             List<List<IndexStruct>> wordsData = new ArrayList<>();
-            //ищем слова из запроса и их синонимы и кидаем в один лист
+
             for (String word : words) {
                 List<IndexStruct> another = indexData.get(word.toLowerCase());
                 for (String synonym : another.get(0).getSynonyms()) another.addAll(indexData.get(synonym));
@@ -54,49 +55,147 @@ public class Searcher {
                 references.add(wordData.get(0));
             }
 
-            for (int iref = 0; iref < references.size(); iref++) {
-                int countEquals = 0;
-
-                for (int jref = 0; jref < references.size(); jref++) {
-                    if (iref != jref) {
-
-                        if (references.get(iref).getBookId() < references.get(jref).getBookId()) {
-                            while(references.get(iref).getBookId() < references.get(jref).getBookId()) {
-                                if (iterators.get(iref).hasNext()) references.set(iref, iterators.get(iref).next());
-                                else {
-                                    // exitKey
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                        while (references.get(jref).getBookId() < references.get(iref).getBookId()) {
-                            if (iterators.get(jref).hasNext()) references.set(jref, iterators.get(jref).next());
-                            else {
-                                // exitKey
-                                break;
-                            }
-                        }
-                        if (references.get(iref).getBookId() == references.get(jref).getBookId()) countEquals++;
-
-                        /*
-
-                        Необходимо прописать всё то же самое(что написано для bookId) для chapterId и fragmentId.
-                        Запихнуть ПОДГОНКУ ПОД ГЛАВЫ в условие countEquals == references.size()-1
-                        Запихнуть ПОДГОНКУ ПОД ФРАГМЕНТЫ в условие, находящееся в ПОДГОНКЕ ПОД ГЛАВЫ
-
-                         */
-                    }
-                }
-
-                if (countEquals == references.size()-1) {
-                    // Запускаем ПОДГОНКУ ПОД ГЛАВЫ, а там запустим ПОДГОНКУ ПОД ФРАГМЕНТЫ, а там слздадим нужный линк
-                }
-
+            while (adjustBookID(references, iterators)) {
+                foundOccurrences.add(new Link(references, resource, words));
             }
+
         }
 
 
-        return FXCollections.observableArrayList();
+        return FXCollections.observableArrayList(foundOccurrences);
+    }
+
+
+    /**
+     *
+     * Returns "false" if them couldn't find equal parameters "bookID"
+     *
+     * @param references This parameter will be changed so that all elements of this parameter will have the same "bookID" parameter
+     * @param iterators This parameter stores a list of IndexStruct
+     *
+     */
+    private boolean adjustBookID(List<IndexStruct> references, List<ListIterator<IndexStruct>> iterators) {
+        for (int iref = 0; iref < references.size(); iref++) {
+            int countEquals = 0;
+
+            for (int jref = 0; jref < references.size(); jref++) {
+                if (iref != jref) {
+
+                    if (references.get(iref).getBookID() < references.get(jref).getBookID()) {
+                        while(references.get(iref).getBookID() < references.get(jref).getBookID()) {
+                            if (iterators.get(iref).hasNext())
+                                references.set(iref, iterators.get(iref).next());
+                            else
+                                return false;
+                        }
+                        break;
+                    }
+                    while (references.get(jref).getBookID() < references.get(iref).getBookID()) {
+                        if (iterators.get(jref).hasNext())
+                            references.set(jref, iterators.get(jref).next());
+                        else
+                            return false;
+                    }
+                    if (references.get(iref).getBookID() == references.get(jref).getBookID()) countEquals++;
+                }
+            }
+
+            if (countEquals == references.size()-1) {
+                return adjustChapterID(references, iterators);
+            }
+
+        }
+
+        return false;
+    }
+
+
+    /**
+     *
+     * Returns "false" if them couldn't find equal parameters "chapterID"
+     *
+     * @param references This parameter will be changed so that all elements of this parameter will have the same "chapterID" parameter
+     * @param iterators his parameter stores a list of IndexStruct
+     *
+     */
+    private boolean adjustChapterID(List<IndexStruct> references, List<ListIterator<IndexStruct>> iterators) {
+        for (int iref = 0; iref < references.size(); iref++) {
+            int countEquals = 0;
+
+            for (int jref = 0; jref < references.size(); jref++) {
+                if (iref != jref) {
+
+                    if (references.get(iref).getChapterID() < references.get(jref).getChapterID()) {
+                        while(references.get(iref).getChapterID() < references.get(jref).getChapterID()) {
+                            if (iterators.get(iref).hasNext())
+                                references.set(iref, iterators.get(iref).next());
+                            else
+                                return false;
+                        }
+                        break;
+                    }
+                    while (references.get(jref).getChapterID() < references.get(iref).getChapterID()) {
+                        if (iterators.get(jref).hasNext())
+                            references.set(jref, iterators.get(jref).next());
+                        else
+                            return false;
+                    }
+                    if (references.get(iref).getChapterID() == references.get(jref).getChapterID()) countEquals++;
+
+                }
+            }
+
+            if (countEquals == references.size()-1) {
+                return adjustFragmentID(references, iterators);
+            }
+
+        }
+
+        return false;
+    }
+
+    /**
+     *
+     * Returns "false" if them couldn't find equal parameters "fragmentID"
+     *
+     * @param references This parameter will be changed so that all elements of this parameter will have the same "fragmentID" parameter
+     * @param iterators his parameter stores a list of IndexStruct
+     *
+     */
+    private boolean adjustFragmentID(List<IndexStruct> references, List<ListIterator<IndexStruct>> iterators) {
+        for (int iref = 0; iref < references.size(); iref++) {
+            int countEquals = 0;
+
+            for (int jref = 0; jref < references.size(); jref++) {
+                if (iref != jref) {
+
+                    if (references.get(iref).getFragmentID() < references.get(jref).getFragmentID()) {
+                        while(references.get(iref).getFragmentID() < references.get(jref).getFragmentID()) {
+                            if (iterators.get(iref).hasNext())
+                                references.set(iref, iterators.get(iref).next());
+                            else
+                                return false;
+                        }
+                        break;
+                    }
+                    while (references.get(jref).getFragmentID() < references.get(iref).getFragmentID()) {
+                        if (iterators.get(jref).hasNext())
+                            references.set(jref, iterators.get(jref).next());
+                        else
+                            return false;
+                    }
+                    if (references.get(iref).getFragmentID() == references.get(jref).getFragmentID()) countEquals++;
+
+                }
+            }
+
+            if (countEquals == references.size()-1) {
+                references.set(iref, iterators.get(iref).next());
+                return true;
+            }
+
+        }
+
+        return false;
     }
 }
