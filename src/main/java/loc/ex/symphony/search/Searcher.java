@@ -8,6 +8,7 @@ import loc.ex.symphony.listview.Book;
 import loc.ex.symphony.listview.Link;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,13 @@ public class Searcher {
         this.resource = resource;
     }
 
+    /*
+
+        НЕОБХОДИМО ЖОСТКО ПРОТЕСТИРОВАТЬ МЕТОД СЁРЧ!!!!!!
+
+     */
+
+
     /**
      *
      * @param prompt This user search request parameter
@@ -42,7 +50,13 @@ public class Searcher {
 
             for (String word : words) {
                 List<IndexStruct> another = indexData.get(word.toLowerCase());
+
+                if (another == null) return FXCollections.observableArrayList(foundOccurrences);
+
                 for (String synonym : another.get(0).getSynonyms()) another.addAll(indexData.get(synonym));
+
+                Collections.sort(another);
+
                 wordsData.add(another);
             }
 
@@ -57,6 +71,8 @@ public class Searcher {
 
             while (adjustBookID(references, iterators)) {
                 foundOccurrences.add(new Link(references, resource, words));
+                if (iterators.get(0).hasNext()) references.set(0, iterators.get(0).next());
+                else break;
             }
 
         }
@@ -190,7 +206,6 @@ public class Searcher {
             }
 
             if (countEquals == references.size()-1) {
-                references.set(iref, iterators.get(iref).next());
                 return true;
             }
 

@@ -9,17 +9,23 @@ import java.util.List;
 public class Link {
 
     private final List<IndexStruct> references;
-    private final String linkContent;
+    private String linkContent;
 
     private final String[] words;
 
     public Link(List<IndexStruct> references, ObservableList<Book> book, String... words) {
         this.references = references;
-        linkContent =
-                book.get(references.get(0).getBookID()).name.get().replace("-", "\u00A0") + "\u00A0" +
-                        (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "\n" +
-                        book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
-                        .getFragments().get(references.get(0).getFragmentID());
+
+        try {
+            linkContent =
+                    book.get(references.get(0).getBookID()).name.get().replace("-", "\u00A0") + "\u00A0" +
+                            (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "\n" +
+                            book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
+                                    .getFragments().get(references.get(0).getFragmentID());
+        } catch (Exception exception) {
+            linkContent = "none";
+        }
+
         this.words = words;
     }
 

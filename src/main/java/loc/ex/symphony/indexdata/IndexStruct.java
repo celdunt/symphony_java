@@ -1,12 +1,13 @@
 package loc.ex.symphony.indexdata;
 
 import loc.ex.symphony.listview.PathsEnum;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IndexStruct implements Serializable {
+public class IndexStruct implements Serializable, Comparable<IndexStruct> {
 
     public PathsEnum root;
     private int bookId;
@@ -60,5 +61,10 @@ public class IndexStruct implements Serializable {
 
     public void setWordLength(int wordLength) {
         this.wordLength = wordLength;
+    }
+
+    @Override
+    public int compareTo(@NotNull IndexStruct other) {
+        return Integer.compare(this.bookId, other.bookId);
     }
 }
