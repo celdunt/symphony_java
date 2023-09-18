@@ -3,10 +3,10 @@ Morphological search; Bible and Ellen White books explorer.
 
 Last updates:
   * book explorer;
-  * search by one word;
+  * search by phrase(need more tests);
   * UI;
 
 Goals:
-  * search by phrase;
+  * Highlite found text;
   * UI++;
   * bookmarks;
