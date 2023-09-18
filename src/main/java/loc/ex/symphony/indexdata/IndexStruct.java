@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class IndexStruct implements Serializable, Comparable<IndexStruct> {
 
@@ -65,6 +66,14 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
 
     @Override
     public int compareTo(@NotNull IndexStruct other) {
-        return Integer.compare(this.getBookID(), other.getBookID());
+        int firstStage = Integer.compare(this.getBookID(), other.getBookID());
+        int secondStage = Integer.compare(this.getChapterID(), other.getChapterID());
+        int thirdStage = Integer.compare(this.getFragmentID(), other.getFragmentID());
+
+        if (firstStage == 0)
+            if (secondStage == 0)
+                return thirdStage;
+            else return secondStage;
+        else return firstStage;
     }
 }

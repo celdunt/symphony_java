@@ -2,8 +2,10 @@ package loc.ex.symphony.listview;
 
 import javafx.collections.ObservableList;
 import loc.ex.symphony.indexdata.IndexStruct;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 
 public class Link {

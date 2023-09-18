@@ -7,10 +7,7 @@ import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.listview.Book;
 import loc.ex.symphony.listview.Link;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -39,29 +36,29 @@ public class Searcher {
 
         if (indexData != null) {
             String[] words = prompt.split("[\\s\\p{Punct}]+");
-            List<List<IndexStruct>> primaryWordsList = new ArrayList<>();
-            List<List<IndexStruct>> synonymsWordsList = new ArrayList<>();
-
+            List<List<IndexStruct>> onlyPrimaryWordsList = new ArrayList<>();
+            List<List<IndexStruct>> fullWordsList = new ArrayList<>();
 
             for (String word : words) {
                 List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
-                List<IndexStruct> synonymsWords = new ArrayList<>();
-                for (String synonym : primaryWords.get(0).getSynonyms()) synonymsWords.addAll(indexData.get(synonym));
+                List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
+
+                for (String synonym : primaryWords.get(0).getSynonyms()) fullWords.addAll(indexData.get(synonym));
 
                 Collections.sort(primaryWords);
-                Collections.sort(synonymsWords);
+                Collections.sort(fullWords);
 
-                primaryWordsList.add(primaryWords);
-                synonymsWordsList.add(synonymsWords);
+                onlyPrimaryWordsList.add(primaryWords);
+                fullWordsList.add(fullWords);
             }
 
             List<IndexStruct> references = new ArrayList<>();
             List<ListIterator<IndexStruct>> iterators = new ArrayList<>();
 
-            fillReferencesAndIterators(references, iterators, primaryWordsList);
+            fillReferencesAndIterators(references, iterators, onlyPrimaryWordsList);
             selectionOfValidEntries(references, iterators, foundOccurrences, words);
 
-            fillReferencesAndIterators(references, iterators, synonymsWordsList);
+            fillReferencesAndIterators(references, iterators, fullWordsList);
             selectionOfValidEntries(references, iterators, foundOccurrences, words);
         }
 
@@ -73,10 +70,7 @@ public class Searcher {
                                          List<Link> foundOccurrences, String[] words) {
 
         int fixedID = 0;
-        boolean isContinue = true;
-
-        if (references.isEmpty())
-            isContinue = false;
+        boolean isContinue = !references.isEmpty();
 
         while (isContinue) {
             int countOfValid = 1;
@@ -149,7 +143,9 @@ public class Searcher {
             }
 
             if (countOfValid == references.size()) {
-                foundOccurrences.add(new Link(references, resource, words));
+                Link toAdd = new Link(references, resource, words);
+                if (foundOccurrences.stream().noneMatch(x -> x.toString().equals(toAdd.toString())))
+                    foundOccurrences.add(toAdd);
                 if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
                 else isContinue = false;
             }
