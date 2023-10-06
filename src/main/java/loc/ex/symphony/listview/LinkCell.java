@@ -21,7 +21,7 @@ public class LinkCell<T> extends ListCell<T> {
             setMaxWidth(cellWidth);
             setPrefWidth(cellWidth);
 
-            text.setTextAlignment(TextAlignment.RIGHT);
+            text.setTextAlignment(TextAlignment.JUSTIFY);
             text.setWrappingWidth(cellWidth);
 
             setGraphic(text);

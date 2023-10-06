@@ -62,6 +62,17 @@ public class MainController {
 
     private void selectedBibleLink__OnAction() {
 
+        bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+            if (_new != null) {
+                List<IndexStruct> selectedReferences = _new.getReferences();
+                bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
+                bibleListView.scrollTo(selectedReferences.get(0).getBookID());
+
+                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID());
+                chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
+            }
+        });
+
     }
 
     private void selectedChapterList__OnAction() {

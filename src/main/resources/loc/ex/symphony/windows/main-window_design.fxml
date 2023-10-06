@@ -14,7 +14,6 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 
-<?import javafx.scene.control.ScrollPane?>
 <GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
@@ -24,8 +23,8 @@
   <rowConstraints>
       <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
-    <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
-    <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="57.60000915527343" minHeight="10.0" prefHeight="45.60001220703125" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="343.99998779296874" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
       <MenuBar GridPane.columnSpan="3">
@@ -49,7 +48,7 @@
             <Insets right="35.0" top="3.0" />
          </GridPane.margin>
       </TextField>
-      <Button fx:id="searchButton" onAction="#doSearch__OnAction" mnemonicParsing="false" prefHeight="32.0" prefWidth="32.0" styleClass="search-button" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+      <Button fx:id="searchButton" mnemonicParsing="false" onAction="#doSearch__OnAction" prefHeight="32.0" prefWidth="32.0" styleClass="search-button" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
          <GridPane.margin>
             <Insets top="3.0" />
          </GridPane.margin>
@@ -71,7 +70,7 @@
       </ListView>
       <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.rowIndex="2" GridPane.rowSpan="2">
         <tabs>
-          <Tab text="Библия" fx:id="bibleTab" onSelectionChanged="#selectTabBible__OnAction">
+          <Tab fx:id="bibleTab" onSelectionChanged="#selectTabBible__OnAction" text="Библия">
                <content>
                   <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-list" />
                </content>
@@ -88,11 +87,11 @@
       <TabPane nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
         <tabs>
           <Tab text="Библия">
-              <ListView fx:id="bibleLinkView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list"/>
+              <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
           </Tab>
           <Tab text="Э. Уайт">
                <content>
-                  <ListView fx:id="ellenLinkView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+                  <ListView fx:id="ellenLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
                </content></Tab>
         </tabs>
          <padding>
