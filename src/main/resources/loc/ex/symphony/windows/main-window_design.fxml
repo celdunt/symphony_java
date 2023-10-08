@@ -17,14 +17,14 @@
 <GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
-    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+    <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
       <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
   </columnConstraints>
   <rowConstraints>
       <RowConstraints maxHeight="25.0" minHeight="10.0" prefHeight="25.0" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="35.0" minHeight="10.0" prefHeight="35.0" vgrow="SOMETIMES" />
     <RowConstraints maxHeight="57.60000915527343" minHeight="10.0" prefHeight="45.60001220703125" vgrow="SOMETIMES" />
-    <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="343.99998779296874" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" prefHeight="343.99998779296874" vgrow="ALWAYS" />
   </rowConstraints>
    <children>
       <MenuBar GridPane.columnSpan="3">
@@ -98,7 +98,7 @@
             <Insets right="3.0" />
          </padding>
       </TabPane>
-      <TextArea fx:id="mainTextField" prefHeight="200.0" prefWidth="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3">
+      <TextArea fx:id="mainTextField" editable="false" prefHeight="200.0" prefWidth="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets top="3.0" />
          </GridPane.margin>

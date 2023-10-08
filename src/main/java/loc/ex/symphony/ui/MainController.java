@@ -17,11 +17,11 @@ import loc.ex.symphony.search.Searcher;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class MainController {
 
+    public TextArea mainTextField;
     private Searcher searcher;
 
     public TextField searchByTextField;
@@ -33,7 +33,6 @@ public class MainController {
     public ListView<Book> ellenListView;
     public ListView<Link> bibleLinkView;
     public ListView<Book> ellenLinkView;
-    public TextArea mainTextField;
     public Tab bibleTab;
 
     private Book selectedBook;
@@ -68,11 +67,50 @@ public class MainController {
                 bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                 bibleListView.scrollTo(selectedReferences.get(0).getBookID());
 
-                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID());
+                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID()-1);
                 chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
+
+                highlightText(selectedReferences, _new.getWords());
             }
         });
 
+    }
+
+    private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
+        String mainText = mainTextField.getText();
+        StringBuilder newText = new StringBuilder();
+
+        int x = 0;
+        int positionCarret = 0;
+
+        for (int i = 0; i < selectedReferences.size(); i++) {
+
+            Chapter chapter = selectedBook.getChapters().get(selectedReferences.get(i).getChapterID());
+
+            int start = 0;
+
+            for (int j = 0; j < selectedReferences.get(i).getFragmentID(); j++) start += chapter.getFragments().get(j).length();
+
+            start += selectedReferences.get(i).getPosition();
+            if (positionCarret == 0) positionCarret = start;
+            int end = start + selectedReferences.get(i).getWordLength();
+
+            while (!mainText.substring(start, end).equalsIgnoreCase(words[i])) {
+                start++;
+                end++;
+            }
+
+            newText.append(mainText, x, start);
+            newText.append(mainText.substring(start, end).toUpperCase());
+
+            x = end;
+        }
+
+        newText.append(mainText.substring(x));
+
+        mainTextField.setText(newText.toString());
+
+        mainTextField.selectRange(positionCarret, positionCarret);
     }
 
     private void selectedChapterList__OnAction() {
@@ -147,20 +185,7 @@ public class MainController {
     }
 
     public void loadIndex__OnAction() {
-        ConcurrentHashMap<String, List<IndexStruct>> indexData = IndexSaver.load();
 
-        List<IndexStruct> dataOfWord = indexData.get("послание");
-
-        if (!dataOfWord.isEmpty()) {
-            IndexStruct first = dataOfWord.get(0);
-            bibleListView.getSelectionModel().select(first.getBookID());
-            chapterListView.getSelectionModel().select(first.getChapterID()-1);
-            int start = 0;
-            for (int i = 0; i < first.getFragmentID(); i++) {
-                start += bibleListView.getItems().get(first.getBookID()).getChapters().get(first.getChapterID()).getFragments().get(i).length();
-            }
-            mainTextField.selectRange(start + first.getPosition(), start + first.getPosition() + first.getWordLength());
-        }
     }
 
     public void selectTabBible__OnAction() {
