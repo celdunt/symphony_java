@@ -3,7 +3,10 @@ package loc.ex.symphony.ui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.FileAdapter;
@@ -13,15 +16,18 @@ import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.indexdata.Indexator;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.Searcher;
+import org.controlsfx.control.spreadsheet.Grid;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class MainController {
 
-    public TextArea mainTextField;
+    public RichTextArea mainTextArea;
+    public GridPane mainGridPane;
     private Searcher searcher;
 
     public TextField searchByTextField;
@@ -40,6 +46,9 @@ public class MainController {
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public void initialize() throws IOException {
+
+        initializeMainTextArea();
+
         initializeBookFiles__OnAction();
 
         selectedBibleList__OnAction();
@@ -52,6 +61,17 @@ public class MainController {
         bibleLinkView.setCellFactory(param -> new LinkCell<>());
 
         searcher = new Searcher();
+    }
+
+    private void initializeMainTextArea() {
+        mainTextArea = new RichTextArea();
+
+        mainGridPane.getChildren().add(mainTextArea);
+        GridPane.setColumnIndex(mainTextArea, 1);
+        GridPane.setRowIndex(mainTextArea, 3);
+        GridPane.setHgrow(mainTextArea, Priority.ALWAYS);
+        GridPane.setVgrow(mainTextArea, Priority.ALWAYS);
+        GridPane.setMargin(mainTextArea, new Insets(3, 0, 0, 0));
     }
 
     private void initializeBookFiles__OnAction() throws IOException {
@@ -77,11 +97,13 @@ public class MainController {
     }
 
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
-        String mainText = mainTextField.getText();
+        String mainText = mainTextArea.getText();
         StringBuilder newText = new StringBuilder();
 
         int x = 0;
         int positionCarret = 0;
+
+        selectedReferences.sort(Comparator.comparingInt(IndexStruct::getPosition));
 
         for (int i = 0; i < selectedReferences.size(); i++) {
 
@@ -108,15 +130,15 @@ public class MainController {
 
         newText.append(mainText.substring(x));
 
-        mainTextField.setText(newText.toString());
+        mainTextArea.setText(newText.toString());
 
-        mainTextField.selectRange(positionCarret, positionCarret);
+        mainTextArea.selectRange(positionCarret, positionCarret);
     }
 
     private void selectedChapterList__OnAction() {
         chapterListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
-                mainTextField.setText(selectedBook.getChapters().get(_new).getEntireText());
+                mainTextArea.setText(selectedBook.getChapters().get(_new).getEntireText());
             }
         });
     }

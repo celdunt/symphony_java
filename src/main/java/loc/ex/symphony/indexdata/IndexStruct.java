@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -75,5 +76,13 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
                 return thirdStage;
             else return secondStage;
         else return firstStage;
+    }
+
+    public static class PositionComparator<IndexStruct> implements Comparator<loc.ex.symphony.indexdata.IndexStruct> {
+
+        @Override
+        public int compare(loc.ex.symphony.indexdata.IndexStruct o1, loc.ex.symphony.indexdata.IndexStruct o2) {
+            return Integer.compare(o1.getPosition(), o2.getPosition());
+        }
     }
 }
