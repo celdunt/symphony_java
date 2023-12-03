@@ -11,6 +11,7 @@ module loc.ex.symphony {
     requires com.almasb.fxgl.all;
     requires annotations;
     requires java.logging;
+    requires org.fxmisc.richtext;
 
     opens loc.ex.symphony to javafx.fxml;
     exports loc.ex.symphony;

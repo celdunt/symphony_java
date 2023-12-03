@@ -24,3 +24,9 @@
 .v-list .list-cell {
 	-fx-wrap-text: true;
 }
+
+.ftext {
+    -fx-fill: green;
+    -fx-stroke: green;
+    -fx-stroke-width: 0.5px;
+}

@@ -16,7 +16,8 @@ import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.indexdata.Indexator;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.Searcher;
-import org.controlsfx.control.spreadsheet.Grid;
+
+import org.fxmisc.richtext.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
 
 public class MainController {
 
-    public RichTextArea mainTextArea;
+    public StyleClassedTextArea mainTextArea;
     public GridPane mainGridPane;
     private Searcher searcher;
 
@@ -64,7 +65,9 @@ public class MainController {
     }
 
     private void initializeMainTextArea() {
-        mainTextArea = new RichTextArea();
+        mainTextArea = new StyleClassedTextArea();
+
+        mainTextArea.setWrapText(true);
 
         mainGridPane.getChildren().add(mainTextArea);
         GridPane.setColumnIndex(mainTextArea, 1);
@@ -98,7 +101,6 @@ public class MainController {
 
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
         String mainText = mainTextArea.getText();
-        StringBuilder newText = new StringBuilder();
 
         int x = 0;
         int positionCarret = 0;
@@ -110,35 +112,35 @@ public class MainController {
             Chapter chapter = selectedBook.getChapters().get(selectedReferences.get(i).getChapterID());
 
             int start = 0;
+            String word = selectedReferences.get(i).getWord();
 
             for (int j = 0; j < selectedReferences.get(i).getFragmentID(); j++) start += chapter.getFragments().get(j).length();
 
             start += selectedReferences.get(i).getPosition();
-            if (positionCarret == 0) positionCarret = start;
             int end = start + selectedReferences.get(i).getWordLength();
 
-            while (!mainText.substring(start, end).equalsIgnoreCase(words[i])) {
+
+            //[SOLVED?] Проблема: иногда(может даже часто) не может найти в тексте искомое слово, из-за чего упирается в конец строки и выдаёт исключение
+            while (!mainText.substring(start, end).equalsIgnoreCase(word)) {
                 start++;
                 end++;
             }
 
-            newText.append(mainText, x, start);
-            newText.append(mainText.substring(start, end).toUpperCase());
+            if (positionCarret == 0) positionCarret = start;
+            mainTextArea.setStyleClass(start, end, "ftext");
 
             x = end;
         }
 
-        newText.append(mainText.substring(x));
-
-        mainTextArea.setText(newText.toString());
-
-        mainTextArea.selectRange(positionCarret, positionCarret);
+        mainTextArea.moveTo(positionCarret);
+        mainTextArea.requestFollowCaret();
     }
 
     private void selectedChapterList__OnAction() {
         chapterListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
-                mainTextArea.setText(selectedBook.getChapters().get(_new).getEntireText());
+                mainTextArea.clear();
+                mainTextArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
             }
         });
     }

@@ -156,6 +156,7 @@ public class Indexator {
                     index.setFragmentID(start);
                     index.setPosition(currentWordPosition);
                     index.setWordLength(word.length());
+                    index.setWord(word);
                     currentWordPosition += word.length();
 
                     indexData.computeIfAbsent(word.toLowerCase(), k -> new ArrayList<>()).add(index);

@@ -17,6 +17,7 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
     private int fragmentId;
     private int position;
     private int wordLength;
+    private String word;
 
     private final List<String> synonyms = new ArrayList<>();
 
@@ -76,6 +77,14 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
                 return thirdStage;
             else return secondStage;
         else return firstStage;
+    }
+
+    public String getWord() {
+        return word;
+    }
+
+    public void setWord(String word) {
+        this.word = word;
     }
 
     public static class PositionComparator<IndexStruct> implements Comparator<loc.ex.symphony.indexdata.IndexStruct> {
