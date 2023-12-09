@@ -1,6 +1,8 @@
 package loc.ex.symphony.ui;
 
 
+import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -79,7 +81,7 @@ public class MainController {
 
     private void initializeBookFiles__OnAction() throws IOException {
         bibleListView.setItems(new FileAdapter().getBible());
-        ellenListView.setItems(new FileAdapter().getEllen());
+        //ellenListView.setItems(new FileAdapter().getEllen());
     }
 
     private void selectedBibleLink__OnAction() {
@@ -141,6 +143,9 @@ public class MainController {
             if (_new != null) {
                 mainTextArea.clear();
                 mainTextArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
+
+                mainTextArea.moveTo(0);
+                mainTextArea.requestFollowCaret();
             }
         });
     }
@@ -148,9 +153,8 @@ public class MainController {
     private void selectedBibleList__OnAction() {
         bibleListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
-                setChapterListView(_new);
-
                 selectedBook = _new;
+                setChapterListView(_new);
             }
         });
     }
@@ -160,6 +164,8 @@ public class MainController {
         chapterList.addAll(_new.getChapters().stream().map(x -> x.number.get()).toList());
         chapterList.remove(chapterList.size()-1);
         chapterListView.setItems(chapterList);
+
+        chapterListView.getSelectionModel().select(0);
     }
 
     private void selectedEllenList__OnAction() {

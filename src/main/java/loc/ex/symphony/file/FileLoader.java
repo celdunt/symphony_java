@@ -1,6 +1,8 @@
 package loc.ex.symphony.file;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,8 +21,12 @@ public class FileLoader {
 
         Stream<Path> paths = Files.walk(biblePath);
         for (Path path : paths.filter(Files::isRegularFile).toList()) {
-            books.add(new RawBook(path.getFileName().toString().replace(".txt", ""),
-                    String.join("\n", Files.readAllLines(path))));
+            try {
+                books.add(new RawBook(path.getFileName().toString().replace(".txt", "").substring(3),
+                        String.join("\n", Files.readAllLines(path, Charset.forName("windows-1251")))));
+            } catch (IOException exception) {}
+
+
         }
 
         return books;
