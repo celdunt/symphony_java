@@ -9,12 +9,14 @@ import java.io.IOException;
 
 public class Symphony extends Application {
     public static Stage window;
+    public static Scene scene;
 
     @Override
     public void start(Stage window) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(Symphony.class.getResource("windows/main-window_design.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 450);
         Symphony.window = window;
+        Symphony.scene = scene;
 
         window.setTitle("Symphony");
         window.setScene(scene);

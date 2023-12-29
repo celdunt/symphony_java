@@ -1,20 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<GridPane fx:id="mainGridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
+<GridPane fx:id="mainGridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
     <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
@@ -41,6 +31,11 @@
                   <MenuItem mnemonicParsing="false" onAction="#loadIndex__OnAction" text="?Загрузка?" />
               </items>
             </Menu>
+            <Menu fx:id="bookmarksMenu" mnemonicParsing="false" text="Закладки">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#BookmarksMenu_Click" text="Открыть окно" />
+                  <MenuItem mnemonicParsing="false" onAction="#CreateBookmark__OnAction" text="Создать закладку" />
+               </items></Menu>
         </menus>
       </MenuBar>
       <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="search-field" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">

@@ -1,12 +1,14 @@
 package loc.ex.symphony.ui;
 
 
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
@@ -23,14 +25,14 @@ import org.fxmisc.richtext.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class MainController {
 
     public StyleClassedTextArea mainTextArea;
     public GridPane mainGridPane;
+    public Menu bookmarksMenu;
     private Searcher searcher;
 
     public TextField searchByTextField;
@@ -45,6 +47,7 @@ public class MainController {
     public Tab bibleTab;
 
     private Book selectedBook;
+    private Chapter selectedChapter;
 
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
@@ -61,9 +64,35 @@ public class MainController {
 
         selectedBibleLink__OnAction();
 
+        Platform.runLater(this::initializeSceneHandler);
+
         bibleLinkView.setCellFactory(param -> new LinkCell<>());
 
         searcher = new Searcher();
+    }
+
+    private void initializeSceneHandler() {
+        Set<KeyCode> pressedKeys = new HashSet<>();
+
+        Symphony.scene.setOnKeyPressed(e -> {
+            if (mainTextArea.isFocused()) {
+                if (e.getCode().getName().equals("Ctrl")) {
+                    pressedKeys.add(e.getCode());
+                }
+                if (e.getCode().getName().equals("C")) {
+                    pressedKeys.add(e.getCode());
+                }
+                if (pressedKeys.size() > 1) {
+                    Clipboard clipboard = Clipboard.getSystemClipboard();
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString(mainTextArea.getSelectedText());
+                    clipboard.setContent(content);
+
+                    pressedKeys.clear();
+                }
+            }
+        });
+
     }
 
     private void initializeMainTextArea() {
@@ -141,6 +170,7 @@ public class MainController {
     private void selectedChapterList__OnAction() {
         chapterListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
+                selectedChapter = selectedBook.getChapters().get(_new);
                 mainTextArea.clear();
                 mainTextArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
 
@@ -212,6 +242,38 @@ public class MainController {
         indexator.index();
 
         IndexSaver.save(indexator.getIndexData());
+    }
+
+    public void BookmarksMenu_Click() throws IOException {
+        BookmarksWindow.initAndShow();
+    }
+
+    public void CreateBookmark__OnAction() {
+        if (!mainTextArea.getSelectedText().isEmpty()) {
+            List<IndexStruct> refs = new ArrayList<>();
+
+            IndexStruct indexStruct = new IndexStruct();
+            int currentFragmentId = 0;
+            int position = mainTextArea.getSelection().getStart();
+
+            for (; currentFragmentId < selectedChapter.getFragments().size(); currentFragmentId++) {
+                if (position - selectedChapter.getFragments().get(currentFragmentId).length() < 0) {
+                    currentFragmentId--;
+                    break;
+                } else position -= selectedChapter.getFragments().get(currentFragmentId).length();
+            }
+
+            indexStruct.setBookID(bibleListView.getSelectionModel().getSelectedIndex());
+            indexStruct.setChapterID(chapterListView.getSelectionModel().getSelectedIndex());
+            indexStruct.setFragmentID(currentFragmentId);
+            indexStruct.setPosition(position);
+            indexStruct.setWord(mainTextArea.getSelectedText());
+            indexStruct.setWordLength(mainTextArea.getSelectedText().length());
+
+            refs.add(indexStruct);
+
+            Link link = new Link(refs, (ObservableList<Book>) bibleLinkView, mainTextArea.getSelectedText());
+        }
     }
 
     public void loadIndex__OnAction() {
