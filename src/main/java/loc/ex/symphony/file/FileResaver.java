@@ -6,6 +6,7 @@ import loc.ex.symphony.listview.PathsEnum;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,7 +46,12 @@ public class FileResaver {
 
 
         for (File file : files) {
-            String fileText = String.join("\n", Files.readAllLines(file.toPath(), Charset.forName("windows-1251")));
+            String fileText;
+            try {
+                fileText = String.join("\n", Files.readAllLines(file.toPath(), Charset.forName("windows-1251")));
+            } catch (IOException exception) {
+                fileText = String.join("\n", Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+            }
             Path filePath = path.resolve(file.getName());
             Files.write(filePath, fileText.getBytes());
         }

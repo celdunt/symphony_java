@@ -4,22 +4,20 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-fx:controller="loc.ex.symphony.ui.BookmarksController">
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.BookmarksController">
    <children>
-      <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
+      <ListView fx:id="bookmarksListView" prefHeight="200.0" prefWidth="500.0" VBox.vgrow="ALWAYS">
+         <HBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </HBox.margin></ListView>
+      <VBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
          <children>
-            <Button fx:id="openBookmarkButton" mnemonicParsing="false" text="Открыть" />
-            <Button fx:id="deleteBookmarkButton" mnemonicParsing="false" text="Удалить">
-               <HBox.margin>
-                  <Insets left="15.0" />
-               </HBox.margin>
-            </Button>
+            <Button fx:id="openBookmarkButton" mnemonicParsing="false" onAction="#OpenBookmark__Action" prefWidth="65.0" text="Открыть" />
+            <Button fx:id="deleteBookmarkButton" mnemonicParsing="false" onAction="#DeleteBookmark__Action" prefWidth="65.0" text="Удалить">
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin></Button>
          </children>
-      </HBox>
-      <ListView fx:id="bookmarksListView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+      </VBox>
    </children>
-   <padding>
-      <Insets bottom="5.0" left="5.0" right="5.0" />
-   </padding>
-</VBox>
+</HBox>

@@ -2,6 +2,7 @@ package loc.ex.symphony.ui;
 
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -13,15 +14,18 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.file.BookmarksSerializer;
 import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
 import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.indexdata.Indexator;
 import loc.ex.symphony.listview.*;
+import loc.ex.symphony.search.Cutser;
 import loc.ex.symphony.search.Searcher;
 
 import org.fxmisc.richtext.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +53,21 @@ public class MainController {
     private Book selectedBook;
     private Chapter selectedChapter;
 
+    public static BookmarksWindow bookmarksWindow;
+
+    static {
+        try {
+            bookmarksWindow = new BookmarksWindow();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static SimpleStringProperty listener = new SimpleStringProperty();
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
+    public MainController() throws IOException {
+    }
 
     public void initialize() throws IOException {
 
@@ -66,9 +84,23 @@ public class MainController {
 
         Platform.runLater(this::initializeSceneHandler);
 
-        bibleLinkView.setCellFactory(param -> new LinkCell<>());
+        bibleListView.setCellFactory(param -> new RichCell<>());
+        bibleLinkView.setCellFactory(param -> new RichCell<>());
+        ellenListView.setCellFactory(param -> new RichCell<>());
+        ellenLinkView.setCellFactory(param -> new RichCell<>());
 
-        searcher = new Searcher();
+        searcher = new Searcher(PathsEnum.Bible);
+
+        listener.addListener(listener -> {
+            logger.info("IS CHANGED!");
+            bibleListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().get(0).getBookID());
+            bibleListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().get(0).getBookID());
+
+            chapterListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID()-1);
+            chapterListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID());
+
+            highlightText(BookmarksController.selectedBookmark.link().getReferences(), new String[] {BookmarksController.selectedBookmark.link().getReferences().get(0).getWord()});
+        });
     }
 
     private void initializeSceneHandler() {
@@ -110,7 +142,7 @@ public class MainController {
 
     private void initializeBookFiles__OnAction() throws IOException {
         bibleListView.setItems(new FileAdapter().getBible());
-        //ellenListView.setItems(new FileAdapter().getEllen());
+        ellenListView.setItems(new FileAdapter().getEllen());
     }
 
     private void selectedBibleLink__OnAction() {
@@ -133,7 +165,6 @@ public class MainController {
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
         String mainText = mainTextArea.getText();
 
-        int x = 0;
         int positionCarret = 0;
 
         selectedReferences.sort(Comparator.comparingInt(IndexStruct::getPosition));
@@ -160,7 +191,6 @@ public class MainController {
             if (positionCarret == 0) positionCarret = start;
             mainTextArea.setStyleClass(start, end, "ftext");
 
-            x = end;
         }
 
         mainTextArea.moveTo(positionCarret);
@@ -172,6 +202,7 @@ public class MainController {
             if (_new != null) {
                 selectedChapter = selectedBook.getChapters().get(_new);
                 mainTextArea.clear();
+                mainTextArea.setStyleClass(0, 0, "jtext");
                 mainTextArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
 
                 mainTextArea.moveTo(0);
@@ -241,39 +272,80 @@ public class MainController {
 
         indexator.index();
 
-        IndexSaver.save(indexator.getIndexData());
+        IndexSaver.save(indexator.getIndexData(), PathsEnum.Bible);
+
+        indexator = new Indexator(ellenListView.getItems());
+
+        indexator.index();
+
+        IndexSaver.save(indexator.getIndexData(), PathsEnum.EllenWhite);
     }
 
     public void BookmarksMenu_Click() throws IOException {
-        BookmarksWindow.initAndShow();
+        bookmarksWindow.GetStage().show();
     }
 
     public void CreateBookmark__OnAction() {
         if (!mainTextArea.getSelectedText().isEmpty()) {
             List<IndexStruct> refs = new ArrayList<>();
 
-            IndexStruct indexStruct = new IndexStruct();
-            int currentFragmentId = 0;
-            int position = mainTextArea.getSelection().getStart();
-
-            for (; currentFragmentId < selectedChapter.getFragments().size(); currentFragmentId++) {
-                if (position - selectedChapter.getFragments().get(currentFragmentId).length() < 0) {
-                    currentFragmentId--;
-                    break;
-                } else position -= selectedChapter.getFragments().get(currentFragmentId).length();
-            }
-
-            indexStruct.setBookID(bibleListView.getSelectionModel().getSelectedIndex());
-            indexStruct.setChapterID(chapterListView.getSelectionModel().getSelectedIndex());
-            indexStruct.setFragmentID(currentFragmentId);
-            indexStruct.setPosition(position);
-            indexStruct.setWord(mainTextArea.getSelectedText());
-            indexStruct.setWordLength(mainTextArea.getSelectedText().length());
+            IndexStruct indexStruct = GetBookmarkIndexStruct();
 
             refs.add(indexStruct);
 
-            Link link = new Link(refs, (ObservableList<Book>) bibleLinkView, mainTextArea.getSelectedText());
+            Link link = new Link(refs, bibleListView.getItems(), mainTextArea.getSelectedText());
+
+            Cutser cutser = new Cutser();
+
+            String nameBookmark = cutser.GetBibleCut(bibleListView.getSelectionModel().getSelectedIndex()) +
+                    " " + (chapterListView.getSelectionModel().getSelectedIndex()+1) + ":" +
+                    (indexStruct.getFragmentID()+1) + "  " + mainTextArea.getSelectedText();
+
+            Bookmark bookmark = new Bookmark(nameBookmark, link, new Date(System.currentTimeMillis()));
+
+            BookmarksController.bookmarks.add(bookmark);
+
+            BookmarksSerializer.Serialize(BookmarksController.bookmarks);
+
+            /*Реализовать:
+                - нэйминг ссылок[done],
+                - сериализация закладок[done],
+                - десериализация закладок[done],
+                - при открытии приложения создание окна закладок[done],
+                - открытие закладок
+
+            Последовательность создания закладок:
+                << Десериализация уже существующих закладок в лист *x([десериализация закладок])
+                Создание ссылки на закладку([нэйминг ссылок]) > помещается в спец. класс "закладка" > "закладка" помещается в лист *x > лист *x сериализуется([сериализация закладок])
+                >> [открытие закладок]
+             */
+
         }
+    }
+
+    @NotNull
+    private IndexStruct GetBookmarkIndexStruct() {
+        IndexStruct indexStruct = new IndexStruct();
+        int currentFragmentId = 0;
+        int position = mainTextArea.getSelection().getStart();
+
+        for (; currentFragmentId < selectedChapter.getFragments().size(); currentFragmentId++) {
+            if (position - selectedChapter.getFragments().get(currentFragmentId).length() < 0) {
+                break;
+            } else position -= selectedChapter.getFragments().get(currentFragmentId).length();
+        }
+
+        indexStruct.setBookID(bibleListView.getSelectionModel().getSelectedIndex());
+        indexStruct.setChapterID(chapterListView.getSelectionModel().getSelectedIndex()+1);
+        indexStruct.setFragmentID(currentFragmentId);
+        indexStruct.setPosition(position);
+        indexStruct.setWord(mainTextArea.getSelectedText());
+        indexStruct.setWordLength(mainTextArea.getSelectedText().length());
+
+        logger.info(indexStruct.getBookID() + "\\" + indexStruct.getChapterID() + "\\" + indexStruct.getFragmentID() + "\\" +
+                indexStruct.getPosition() + "\\" + indexStruct.getWord());
+
+        return indexStruct;
     }
 
     public void loadIndex__OnAction() {

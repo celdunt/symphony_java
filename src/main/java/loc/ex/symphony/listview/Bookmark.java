@@ -1,19 +1,12 @@
 package loc.ex.symphony.listview;
 
-public class Bookmark {
-    private final String name;
-    private final Link link;
+import java.io.Serializable;
+import java.util.Date;
 
-    public Bookmark(String name, Link link) {
-        this.name = name;
-        this.link = link;
-    }
+public record Bookmark(String name, Link link, Date date) implements Serializable {
 
-    public String getName() {
-        return name;
-    }
-
-    public Link getLink() {
-        return link;
+    @Override
+    public String toString() {
+        return date().getDay() + "." + (date().getMonth()+1) + "." + (date().getYear()-100) + "    " + name();
     }
 }

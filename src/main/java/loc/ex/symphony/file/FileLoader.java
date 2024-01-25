@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class FileLoader {
@@ -38,10 +39,15 @@ public class FileLoader {
 
         Stream<Path> paths = Files.walk(ellenPath);
         for (Path path : paths.filter(Files::isRegularFile).toList()) {
-            books.add(new RawBook(path.getFileName().toString().replace(".txt", ""),
-                    String.join("\n", Files.readAllLines(path))));
+            try {
+                books.add(new RawBook(path.getFileName().toString().replace(".txt", "").substring(3),
+                        String.join("\n", Files.readAllLines(path, StandardCharsets.UTF_8))));
+            } catch (IOException exception) {
+
+            }
         }
 
+        java.util.logging.Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info(books.size() + "   Count of books");
         return books;
     }
 

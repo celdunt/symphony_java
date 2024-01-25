@@ -30,3 +30,7 @@
     -fx-stroke: green;
     -fx-stroke-width: 0.5px;
 }
+
+.jtext {
+    -fx-fill: black;
+}

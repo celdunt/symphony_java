@@ -6,6 +6,7 @@ import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.listview.Book;
 import loc.ex.symphony.listview.Link;
+import loc.ex.symphony.listview.PathsEnum;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,8 +18,8 @@ public class Searcher {
     private ObservableList<Book> resource;
     private final ConcurrentHashMap<String, List<IndexStruct>> indexData;
 
-    public Searcher() {
-        indexData = IndexSaver.load();
+    public Searcher(PathsEnum mode) {
+        indexData = IndexSaver.load(mode);
     }
 
     public void setResource(ObservableList<Book> resource) {

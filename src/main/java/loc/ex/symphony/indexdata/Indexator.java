@@ -18,12 +18,12 @@ public class Indexator {
 
     private final ConcurrentHashMap<String, List<IndexStruct>> indexData = new ConcurrentHashMap<>();
 
-    private final ObservableList<Book> bible;
+    private final ObservableList<Book> books;
 
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public Indexator(ObservableList<Book> books) {
-        this.bible = books;
+        this.books = books;
     }
 
     public void index() throws IOException {
@@ -31,12 +31,12 @@ public class Indexator {
 
         logger.info("number of available threads :-> " + numberOfThreads);
 
-        logger.info("number of book :-> " + bible.size());
+        logger.info("number of book :-> " + books.size());
 
-        for (int bookId = 0; bookId < bible.size(); bookId++) {
-            for (int chapterId = 0; chapterId < bible.get(bookId).getChapters().size(); chapterId++) {
+        for (int bookId = 0; bookId < books.size(); bookId++) {
+            for (int chapterId = 0; chapterId < books.get(bookId).getChapters().size(); chapterId++) {
 
-                List<String> fragments = bible.get(bookId).getChapters().get(chapterId).getFragments();
+                List<String> fragments = books.get(bookId).getChapters().get(chapterId).getFragments();
                 int periodValue = fragments.size() / numberOfThreads;
                 int upperBound;
                 for (int i = 0; i < numberOfThreads; i++) {
@@ -48,7 +48,7 @@ public class Indexator {
 
             }
 
-            logger.info("1st stage: \"basic indexation\", percent of success :-> " + String.format("%.2f", ((bookId + 1) * 100.0) / bible.size()) + "%");
+            logger.info("1st stage: \"basic indexation\", percent of success :-> " + String.format("%.2f", ((bookId + 1) * 100.0) / books.size()) + "%");
         }
 
         Path filePath = Paths.get("index/words.txt");

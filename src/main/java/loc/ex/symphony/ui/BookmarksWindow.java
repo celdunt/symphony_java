@@ -9,17 +9,22 @@ import java.io.IOException;
 
 public class BookmarksWindow {
 
-    public static void initAndShow() throws IOException {
-        Stage window = new Stage();
+    private final Stage window = new Stage();
 
+    public BookmarksWindow() throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(Symphony.class.getResource("windows/bookmarks-window_design.fxml"));
 
-        Scene scene = new Scene(fxmlLoader.load(), 300, 450);
+        Scene scene = new Scene(fxmlLoader.load(), 600, 400);
 
         window.setTitle("Bookmark's");
         window.setScene(scene);
+    }
 
+    public void Show() {
         window.show();
     }
 
+    public Stage GetStage() {
+        return window;
+    }
 }
