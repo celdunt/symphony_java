@@ -13,41 +13,45 @@ import java.util.stream.Stream;
 
 public class FileLoader {
 
-    private final Path biblePath = Paths.get("bible");
-    private final Path ellenPath = Paths.get("ellen");
+    Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    public List<RawBook> getBible() throws IOException {
-        if (!Files.isReadable(biblePath)) return null;
+    public List<RawBook> getBible() {
+        Path biblePath = Paths.get("bible");
         List<RawBook> books = new ArrayList<>();
 
-        Stream<Path> paths = Files.walk(biblePath);
-        for (Path path : paths.filter(Files::isRegularFile).toList()) {
-            try {
-                books.add(new RawBook(path.getFileName().toString().replace(".txt", "").substring(3),
+        if (!Files.isReadable(biblePath)) return books;
+
+        try(Stream<Path> paths = Files.walk(biblePath)) {
+            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                books.add(new RawBook(path.getFileName().toString()
+                        .replace(".txt", "")
+                        .substring(3),
                         String.join("\n", Files.readAllLines(path, Charset.forName("windows-1251")))));
-            } catch (IOException exception) {}
-
-
+            }
+        } catch (IOException exception) {
+            logger.info(exception.getMessage());
         }
 
         return books;
     }
 
-    public List<RawBook> getEllen() throws IOException {
-        if (!Files.isReadable(ellenPath)) return null;
+    public List<RawBook> getEllen() {
+        Path ellenPath = Paths.get("ellen");
         List<RawBook> books = new ArrayList<>();
 
-        Stream<Path> paths = Files.walk(ellenPath);
-        for (Path path : paths.filter(Files::isRegularFile).toList()) {
-            try {
-                books.add(new RawBook(path.getFileName().toString().replace(".txt", "").substring(3),
-                        String.join("\n", Files.readAllLines(path, StandardCharsets.UTF_8))));
-            } catch (IOException exception) {
+        if (!Files.isReadable(ellenPath)) return books;
 
+        try(Stream<Path> paths = Files.walk(ellenPath)) {
+            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                books.add(new RawBook(path.getFileName().toString()
+                        .replace(".txt", "")
+                        .substring(3),
+                        String.join("\n", Files.readAllLines(path, StandardCharsets.UTF_8))));
             }
+        } catch (IOException exception) {
+            logger.info(exception.getMessage());
         }
 
-        java.util.logging.Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info(books.size() + "   Count of books");
         return books;
     }
 

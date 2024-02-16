@@ -70,7 +70,7 @@
                   <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-list" />
                </content>
             </Tab>
-          <Tab text="Э. Уайт">
+          <Tab fx:id="ellenTab" onSelectionChanged="#selectTabEllen__OnAction" text="Э. Уайт">
                <content>
                   <ListView fx:id="ellenListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
                </content></Tab>

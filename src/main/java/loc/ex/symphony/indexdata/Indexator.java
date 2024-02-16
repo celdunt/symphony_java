@@ -30,7 +30,6 @@ public class Indexator {
         int numberOfThreads = Runtime.getRuntime().availableProcessors();
 
         logger.info("number of available threads :-> " + numberOfThreads);
-
         logger.info("number of book :-> " + books.size());
 
         for (int bookId = 0; bookId < books.size(); bookId++) {

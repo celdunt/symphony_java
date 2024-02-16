@@ -1,17 +1,13 @@
 package loc.ex.symphony.indexdata;
 
-import loc.ex.symphony.listview.PathsEnum;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 public class IndexStruct implements Serializable, Comparable<IndexStruct> {
-
-    public PathsEnum root;
     private int bookId;
     private int chapterId;
     private int fragmentId;
@@ -87,8 +83,7 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
         this.word = word;
     }
 
-    public static class PositionComparator<IndexStruct> implements Comparator<loc.ex.symphony.indexdata.IndexStruct> {
-
+    public static class PositionComparator implements Comparator<loc.ex.symphony.indexdata.IndexStruct> {
         @Override
         public int compare(loc.ex.symphony.indexdata.IndexStruct o1, loc.ex.symphony.indexdata.IndexStruct o2) {
             return Integer.compare(o1.getPosition(), o2.getPosition());

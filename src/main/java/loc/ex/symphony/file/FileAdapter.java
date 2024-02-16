@@ -8,45 +8,29 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class FileAdapter {
 
-    private final List<RawBook> bible;
-    private final List<RawBook> ellen;
-
-
-    public FileAdapter() throws IOException {
-        FileLoader fileLoader = new FileLoader();
-        bible = fileLoader.getBible();
-        ellen = fileLoader.getEllen();
+    public ObservableList<Book> getBible() throws IOException {
+        return doHandleBibleList();
     }
 
-    public ObservableList<Book> getBible() {
-        return getHandledObservableList("(?i)ГЛАВА\\s*\\d+", "(\\d+)\\s+(.*?)\\n", PathsEnum.Bible);
-        //return getObservableList(PathsEnum.Bible);
+    public ObservableList<Book> getEllen() throws IOException {
+        return doHandleEllenList();
     }
 
-    public ObservableList<Book> getEllen() {
-        //return getHandledObservableList("(?i)Г1лава\\s*\\d+", "\\[(\\d+)\\](.*?)\\n", PathsEnum.EllenWhite);
-        return getObservableList(PathsEnum.EllenWhite);
-    }
+    private ObservableList<Book> doHandleBibleList() throws IOException {
+        List<RawBook> rawBible = new FileLoader().getBible();
 
-    private ObservableList<Book> getHandledObservableList(String splitByChapterRegex, String splitByFragmentsRegex, PathsEnum root) {
-        List<RawBook> rawBooks = new ArrayList<>();
-
-        if (root == PathsEnum.Bible) rawBooks = bible;
-        else if (root == PathsEnum.EllenWhite) rawBooks = ellen;
-
-        Pattern splitByChapterPattern = Pattern.compile(splitByChapterRegex);
+        Pattern splitByChapterPattern = Pattern.compile("(?i)ГЛАВА\\s*\\d+");
         ObservableList<Book> bookObservableList = FXCollections.observableArrayList();
 
-        for (RawBook book : rawBooks) {
+        for (RawBook book : rawBible) {
             String[] rawChapters = splitByChapterPattern.split(book.text.get());
-            Book handledBook = new Book(book.name.get(), root);
+            Book handledBook = new Book(book.name.get(), PathsEnum.Bible);
 
             for (int numOfChapter = 1; numOfChapter <= rawChapters.length; numOfChapter++) {
-                Pattern splitByFragmentPattern = Pattern.compile(splitByFragmentsRegex);
+                Pattern splitByFragmentPattern = Pattern.compile("(\\d+)\\s+(.*?)\\n");
                 Matcher matcher = splitByFragmentPattern.matcher(rawChapters[numOfChapter-1]);
 
                 List<String> fragments = new ArrayList<>();
@@ -73,28 +57,16 @@ public class FileAdapter {
         return bookObservableList;
     }
 
-    private ObservableList<Book> getObservableList(PathsEnum root) {
+    private ObservableList<Book> doHandleEllenList() throws IOException {
         ObservableList<Book> observableBooks = FXCollections.observableArrayList();
-        List<RawBook> rawBooks;
-        String splitByChapterPattern;
-        String splitByFragmentPattern;
+        List<RawBook> rawEllen = new FileLoader().getEllen();
 
-        if (root == PathsEnum.Bible) {
-            rawBooks = bible;
-            splitByChapterPattern = "(?i)ГЛАВА\\s*\\d+";
-            splitByFragmentPattern = "\\d+\\.\\s+";
-        } else {
-            rawBooks = ellen;
-            splitByChapterPattern = "Г1лава\\s*\\d+\\.\\n*|Г1лава\\s*\\d+\\n*|Г1лава\\s*\\n*|г1лава\\s*\\n*";
-            splitByFragmentPattern = "\\[\\d+]\\s+";
-        }
-
-        for (RawBook rawBook : rawBooks) {
-            String[] rawChapters = rawBook.text.get().split(splitByChapterPattern);
-            Book handledBook = new Book(rawBook.name.get(), root);
+        for (RawBook rawBook : rawEllen) {
+            String[] rawChapters = rawBook.text.get().split("Г1лава\\s*\\d+\\.\\n*|Г1лава\\s*\\d+\\n*|Г1лава\\s*\\n*|г1лава\\s*\\n*");
+            Book handledBook = new Book(rawBook.name.get(), PathsEnum.EllenWhite);
 
             for(int ichapter = 0; ichapter < rawChapters.length; ichapter++) {
-                String[] rawFragments = rawChapters[ichapter].split(splitByFragmentPattern);
+                String[] rawFragments = rawChapters[ichapter].split("\\[\\d+]\\s+");
                 List<String> fragments = new ArrayList<>(List.of(rawFragments))
                         .stream().map(fr -> fr.replaceAll("^\\s*\\n+", ""))
                         .toList();

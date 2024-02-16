@@ -17,9 +17,7 @@ import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.BookmarksSerializer;
 import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
-import loc.ex.symphony.indexdata.IndexSaver;
-import loc.ex.symphony.indexdata.IndexStruct;
-import loc.ex.symphony.indexdata.Indexator;
+import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.Cutser;
 import loc.ex.symphony.search.Searcher;
@@ -37,6 +35,7 @@ public class MainController {
     public StyleClassedTextArea mainTextArea;
     public GridPane mainGridPane;
     public Menu bookmarksMenu;
+    public Tab ellenTab;
     private Searcher searcher;
 
     public TextField searchByTextField;
@@ -47,7 +46,7 @@ public class MainController {
     public ListView<Book> bibleListView;
     public ListView<Book> ellenListView;
     public ListView<Link> bibleLinkView;
-    public ListView<Book> ellenLinkView;
+    public ListView<Link> ellenLinkView;
     public Tab bibleTab;
 
     private Book selectedBook;
@@ -66,7 +65,7 @@ public class MainController {
     public static SimpleStringProperty listener = new SimpleStringProperty();
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    public MainController() throws IOException {
+    public MainController() {
     }
 
     public void initialize() throws IOException {
@@ -90,6 +89,9 @@ public class MainController {
         ellenLinkView.setCellFactory(param -> new RichCell<>());
 
         searcher = new Searcher(PathsEnum.Bible);
+        searcher.setResource(bibleListView.getItems());
+
+        logger.info("resource is set");
 
         listener.addListener(listener -> {
             logger.info("IS CHANGED!");
@@ -232,9 +234,8 @@ public class MainController {
     private void selectedEllenList__OnAction() {
         ellenListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
-                setChapterListView(_new);
-
                 selectedBook = _new;
+                setChapterListView(_new);
             }
         });
     }
@@ -268,20 +269,19 @@ public class MainController {
     }
 
     public void doIndex__OnAction() throws IOException {
-        Indexator indexator = new Indexator(bibleListView.getItems());
+        IndexatorSingleThreaded indexator = new IndexatorSingleThreaded(bibleListView.getItems());
 
         indexator.index();
+        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
-        IndexSaver.save(indexator.getIndexData(), PathsEnum.Bible);
 
-        indexator = new Indexator(ellenListView.getItems());
+        indexator = new IndexatorSingleThreaded(ellenListView.getItems());
 
         indexator.index();
-
-        IndexSaver.save(indexator.getIndexData(), PathsEnum.EllenWhite);
+        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
     }
 
-    public void BookmarksMenu_Click() throws IOException {
+    public void BookmarksMenu_Click() {
         bookmarksWindow.GetStage().show();
     }
 
@@ -354,16 +354,29 @@ public class MainController {
 
     public void selectTabBible__OnAction() {
         if (bibleTab.isSelected() && searcher != null) {
+            searcher = new Searcher(PathsEnum.Bible);
             searcher.setResource(bibleListView.getItems());
 
             logger.info("resource is set");
         }
      }
 
+    public void selectTabEllen__OnAction() {
+        if (ellenTab.isSelected() && searcher != null) {
+            searcher = new Searcher(PathsEnum.EllenWhite);
+            searcher.setResource(ellenListView.getItems());
+
+            logger.info("resource is set");
+        }
+    }
+
     public void doSearch__OnAction() {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
-            bibleLinkView.setItems(searcher.search(prompt));
+            if (bibleTab.isSelected())
+                bibleLinkView.setItems(searcher.search(prompt));
+            if (ellenTab.isSelected())
+                ellenLinkView.setItems(searcher.search(prompt));
         }
     }
 }
