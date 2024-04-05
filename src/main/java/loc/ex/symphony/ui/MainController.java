@@ -272,13 +272,23 @@ public class MainController {
         IndexatorSingleThreaded indexator = new IndexatorSingleThreaded(bibleListView.getItems());
 
         indexator.index();
-        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
+
+        for (var key : indexator.getDictionary().keySet()) {
+            IndexSaverSingleThreaded.save(indexator.getDictionary().get(key), PathsEnum.Bible, String.valueOf(key));
+        }
+
+        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
 
         indexator = new IndexatorSingleThreaded(ellenListView.getItems());
 
         indexator.index();
-        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
+
+        for (var key : indexator.getDictionary().keySet()) {
+            IndexSaverSingleThreaded.save(indexator.getDictionary().get(key), PathsEnum.EllenWhite, String.valueOf(key));
+        }
+
+        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
     }
 
     public void BookmarksMenu_Click() {

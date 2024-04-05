@@ -2,7 +2,6 @@ package loc.ex.symphony.search;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexSaverSingleThreaded;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.listview.Book;
@@ -10,7 +9,6 @@ import loc.ex.symphony.listview.Link;
 import loc.ex.symphony.listview.PathsEnum;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class Searcher {

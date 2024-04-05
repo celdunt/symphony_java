@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 public class IndexatorSingleThreaded {
 
+    private final HashMap<Character, HashMap<String, List<IndexStruct>>> dictionary = new HashMap<>();
     private final HashMap<String, List<IndexStruct>> indexData = new HashMap<>();
     private final ObservableList<Book> books;
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
@@ -25,6 +26,9 @@ public class IndexatorSingleThreaded {
 
     public HashMap<String, List<IndexStruct>> getIndexData() {
         return indexData;
+    }
+    public HashMap<Character, HashMap<String, List<IndexStruct>>> getDictionary() {
+        return dictionary;
     }
 
     public void index() throws IOException {
@@ -46,7 +50,14 @@ public class IndexatorSingleThreaded {
                         index.setWord(word);
                         currentWordPosition += word.length();
 
-                        indexData.computeIfAbsent(word.toLowerCase(), k -> new ArrayList<>()).add(index);
+                        char key;
+                        if (word.isEmpty()) continue;
+                        key = word.toLowerCase().charAt(0);
+
+                        dictionary.computeIfAbsent(key, a -> new HashMap<>())
+                                .computeIfAbsent(word.toLowerCase(), k -> new ArrayList<>()).add(index);
+
+                        //indexData.computeIfAbsent(word.toLowerCase(), k -> new ArrayList<>()).add(index);
                     }
                 }
             }
@@ -61,13 +72,27 @@ public class IndexatorSingleThreaded {
         for (String[] morphSynonymGroupsOfWord : morphSynonymGroupsOfWords) {
             for (int fixedWord = 0; fixedWord < morphSynonymGroupsOfWord.length; fixedWord++)
                 for (int nextWord = fixedWord + 1; nextWord < morphSynonymGroupsOfWord.length; nextWord++) {
-                    List<IndexStruct> fixedStruct = indexData.get(morphSynonymGroupsOfWord[fixedWord]);
-                    List<IndexStruct> nextStruct = indexData.get(morphSynonymGroupsOfWord[nextWord]);
+                    //List<IndexStruct> fixedStruct = indexData.get(morphSynonymGroupsOfWord[fixedWord]);
+                    char keyOfFixed;
+                    char keyOfNext;
 
-                    if (fixedStruct == null || nextStruct == null) continue;
+                    if (morphSynonymGroupsOfWord[fixedWord].isEmpty()) continue;
+                    if (morphSynonymGroupsOfWord[nextWord].isEmpty()) continue;
 
-                    fixedStruct.get(0).getSynonyms().add(morphSynonymGroupsOfWord[nextWord]);
-                    nextStruct.get(0).getSynonyms().add(morphSynonymGroupsOfWord[fixedWord]);
+
+                    keyOfFixed = morphSynonymGroupsOfWord[fixedWord].toLowerCase().charAt(0);
+                    keyOfNext = morphSynonymGroupsOfWord[nextWord].toLowerCase().charAt(0);
+
+                    if (dictionary.containsKey(keyOfFixed) && dictionary.containsKey(keyOfNext)) {
+                        List<IndexStruct> fixedStruct = dictionary.get(keyOfFixed).get(morphSynonymGroupsOfWord[fixedWord]);
+                        //List<IndexStruct> nextStruct = indexData.get(morphSynonymGroupsOfWord[nextWord]);
+                        List<IndexStruct> nextStruct = dictionary.get(keyOfNext).get(morphSynonymGroupsOfWord[nextWord]);
+
+                        if (fixedStruct == null || nextStruct == null) continue;
+
+                        fixedStruct.get(0).getSynonyms().add(morphSynonymGroupsOfWord[nextWord]);
+                        nextStruct.get(0).getSynonyms().add(morphSynonymGroupsOfWord[fixedWord]);
+                    }
                 }
 
             logger.info("2st Stage: \"next idx\", percent of success: " + String.format("%.2f", ((varOfSuccess++) * 100.0)/ morphSynonymGroupsOfWords.size()) + "%");
