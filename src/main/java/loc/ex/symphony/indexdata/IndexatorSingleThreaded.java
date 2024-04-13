@@ -38,7 +38,7 @@ public class IndexatorSingleThreaded {
             for (int chapterId = 0; chapterId < books.get(bookId).getChapters().size(); chapterId++) {
                 List<String> fragments = books.get(bookId).getChapters().get(chapterId).getFragments();
                 for (int fragmentId = 0; fragmentId < fragments.size(); fragmentId++) {
-                    String[] words = fragments.get(fragmentId).split("[\\s\\p{Punct}]+");
+                    String[] words = fragments.get(fragmentId).split("[^a-zA-Zа-яА-Я1-9]+");//\s\p{Punct}]+
                     int currentWordPosition = 0;
                     for (String word : words) {
                         IndexStruct index = new IndexStruct();
@@ -113,7 +113,7 @@ public class IndexatorSingleThreaded {
         List<String[]> handledGroupsOfWords = new ArrayList<>();
 
         for (String groupOfWords : groupsOfWords) {
-            handledGroupsOfWords.add(groupOfWords.split("[\\s\\p{Punct}]+"));
+            handledGroupsOfWords.add(groupOfWords.split("[^a-zA-Zа-яА-Я1-9]+"));
         }
 
         return handledGroupsOfWords;
