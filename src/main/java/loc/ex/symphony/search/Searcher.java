@@ -2,12 +2,14 @@ package loc.ex.symphony.search;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexSaverSingleThreaded;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.listview.Book;
 import loc.ex.symphony.listview.Link;
 import loc.ex.symphony.listview.PathsEnum;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -15,10 +17,10 @@ public class Searcher {
 
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private ObservableList<Book> resource;
-    private final HashMap<String, List<IndexStruct>> indexData;
+    private HashMap<String, List<IndexStruct>> indexData;
 
     public Searcher(PathsEnum mode) {
-        indexData = IndexSaverSingleThreaded.load(mode);
+
     }
 
     public void setResource(ObservableList<Book> resource) {
@@ -26,41 +28,42 @@ public class Searcher {
     }
 
     /**
-     *
      * @param prompt This user search request parameter
      * @return List of Link
-     *
      */
-    public ObservableList<Link> search(String prompt) {
+    public ObservableList<Link> search(String prompt, PathsEnum pathsEnum) {
         List<Link> foundOccurrences = new ArrayList<>();
 
-        if (indexData != null) {
-            String[] words = prompt.split("[\\s\\p{Punct}]+");
-            List<List<IndexStruct>> onlyPrimaryWordsList = new ArrayList<>();
-            List<List<IndexStruct>> fullWordsList = new ArrayList<>();
 
-            for (String word : words) {
-                List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
-                List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
+        String[] words = prompt.split("[\\s\\p{Punct}]+");
+        List<List<IndexStruct>> onlyPrimaryWordsList = new ArrayList<>();
+        List<List<IndexStruct>> fullWordsList = new ArrayList<>();
 
-                for (String synonym : primaryWords.get(0).getSynonyms()) fullWords.addAll(indexData.get(synonym));
+        for (String word : words) {
+            indexData = IndexSaverSingleThreaded.load(word.toLowerCase().substring(0, 1), pathsEnum);
 
-                Collections.sort(primaryWords);
-                Collections.sort(fullWords);
+            if (indexData == null) continue;
 
-                onlyPrimaryWordsList.add(primaryWords);
-                fullWordsList.add(fullWords);
-            }
+            List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
+            List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
 
-            List<IndexStruct> references = new ArrayList<>();
-            List<ListIterator<IndexStruct>> iterators = new ArrayList<>();
+            for (String synonym : primaryWords.get(0).getSynonyms()) fullWords.addAll(indexData.get(synonym));
 
-            fillReferencesAndIterators(references, iterators, onlyPrimaryWordsList);
-            selectionOfValidEntries(references, iterators, foundOccurrences, words);
+            Collections.sort(primaryWords);
+            Collections.sort(fullWords);
 
-            fillReferencesAndIterators(references, iterators, fullWordsList);
-            selectionOfValidEntries(references, iterators, foundOccurrences, words);
+            onlyPrimaryWordsList.add(primaryWords);
+            fullWordsList.add(fullWords);
         }
+
+        List<IndexStruct> references = new ArrayList<>();
+        List<ListIterator<IndexStruct>> iterators = new ArrayList<>();
+
+        fillReferencesAndIterators(references, iterators, onlyPrimaryWordsList);
+        selectionOfValidEntries(references, iterators, foundOccurrences, words);
+
+        fillReferencesAndIterators(references, iterators, fullWordsList);
+        selectionOfValidEntries(references, iterators, foundOccurrences, words);
 
 
         return FXCollections.observableArrayList(foundOccurrences);
@@ -74,7 +77,7 @@ public class Searcher {
 
         while (isContinue) {
             int countOfValid = 1;
-            for (int i = fixedID+1; i < references.size(); i++) {
+            for (int i = fixedID + 1; i < references.size(); i++) {
 
                 if (references.get(fixedID).getBookID() == references.get(i).getBookID()) {
 
@@ -83,7 +86,7 @@ public class Searcher {
                         if (references.get(fixedID).getFragmentID() == references.get(i).getFragmentID())
                             countOfValid++;
                         else {
-                            while(references.get(fixedID).getFragmentID() > references.get(i).getFragmentID() &&
+                            while (references.get(fixedID).getFragmentID() > references.get(i).getFragmentID() &&
                                     references.get(fixedID).getBookID() == references.get(i).getBookID() &&
                                     references.get(fixedID).getChapterID() == references.get(i).getChapterID()) {
                                 if (iterators.get(i).hasNext()) references.set(i, iterators.get(i).next());
@@ -92,10 +95,11 @@ public class Searcher {
                                     break;
                                 }
                             }
-                            while(references.get(fixedID).getFragmentID() < references.get(i).getFragmentID() &&
+                            while (references.get(fixedID).getFragmentID() < references.get(i).getFragmentID() &&
                                     references.get(fixedID).getBookID() == references.get(i).getBookID() &&
                                     references.get(fixedID).getChapterID() == references.get(i).getChapterID()) {
-                                if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
+                                if (iterators.get(fixedID).hasNext())
+                                    references.set(fixedID, iterators.get(fixedID).next());
                                 else {
                                     isContinue = false;
                                     break;
@@ -104,7 +108,7 @@ public class Searcher {
                         }
 
                     } else {
-                        while(references.get(fixedID).getChapterID() > references.get(i).getChapterID() &&
+                        while (references.get(fixedID).getChapterID() > references.get(i).getChapterID() &&
                                 references.get(fixedID).getBookID() == references.get(i).getBookID()) {
                             if (iterators.get(i).hasNext()) references.set(i, iterators.get(i).next());
                             else {
@@ -112,9 +116,10 @@ public class Searcher {
                                 break;
                             }
                         }
-                        while(references.get(fixedID).getChapterID() < references.get(i).getChapterID() &&
+                        while (references.get(fixedID).getChapterID() < references.get(i).getChapterID() &&
                                 references.get(fixedID).getBookID() == references.get(i).getBookID()) {
-                            if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
+                            if (iterators.get(fixedID).hasNext())
+                                references.set(fixedID, iterators.get(fixedID).next());
                             else {
                                 isContinue = false;
                                 break;
@@ -123,14 +128,14 @@ public class Searcher {
                     }
 
                 } else {
-                    while(references.get(fixedID).getBookID() > references.get(i).getBookID()) {
+                    while (references.get(fixedID).getBookID() > references.get(i).getBookID()) {
                         if (iterators.get(i).hasNext()) references.set(i, iterators.get(i).next());
                         else {
                             isContinue = false;
                             break;
                         }
                     }
-                    while(references.get(fixedID).getBookID() < references.get(i).getBookID()) {
+                    while (references.get(fixedID).getBookID() < references.get(i).getBookID()) {
                         if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
                         else {
                             isContinue = false;

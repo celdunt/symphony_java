@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
@@ -36,6 +37,8 @@ public class MainController {
     public GridPane mainGridPane;
     public Menu bookmarksMenu;
     public Tab ellenTab;
+    public Tab bibleLinkTab;
+    public Tab ellenLinkTab;
     private Searcher searcher;
 
     public TextField searchByTextField;
@@ -79,7 +82,7 @@ public class MainController {
 
         selectedChapterList__OnAction();
 
-        selectedBibleLink__OnAction();
+        selectedBookLink__OnAction();
 
         Platform.runLater(this::initializeSceneHandler);
 
@@ -102,6 +105,14 @@ public class MainController {
             chapterListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID());
 
             highlightText(BookmarksController.selectedBookmark.link().getReferences(), new String[] {BookmarksController.selectedBookmark.link().getReferences().get(0).getWord()});
+        });
+    }
+
+    private void initializeSearchByLink() {
+        searchByLinkField.textProperty().addListener(action -> {
+            if (bibleLinkTab.isSelected()) {
+
+            }
         });
     }
 
@@ -147,13 +158,26 @@ public class MainController {
         ellenListView.setItems(new FileAdapter().getEllen());
     }
 
-    private void selectedBibleLink__OnAction() {
+    private void selectedBookLink__OnAction() {
 
         bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
                 List<IndexStruct> selectedReferences = _new.getReferences();
                 bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                 bibleListView.scrollTo(selectedReferences.get(0).getBookID());
+
+                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID()-1);
+                chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
+
+                highlightText(selectedReferences, _new.getWords());
+            }
+        });
+
+        ellenLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+            if (_new != null) {
+                List<IndexStruct> selectedReferences = _new.getReferences();
+                ellenListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
+                ellenListView.scrollTo(selectedReferences.get(0).getBookID());
 
                 chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID()-1);
                 chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
@@ -383,10 +407,44 @@ public class MainController {
     public void doSearch__OnAction() {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
-            if (bibleTab.isSelected())
-                bibleLinkView.setItems(searcher.search(prompt));
-            if (ellenTab.isSelected())
-                ellenLinkView.setItems(searcher.search(prompt));
+            if (bibleTab.isSelected()) {
+                FilteredList<Link> filteredList = new FilteredList<>(searcher.search(prompt, PathsEnum.Bible), p -> true);
+                searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    filteredList.setPredicate(data -> {
+                        if (newValue == null || newValue.isEmpty()) {
+                            return true;
+                        }
+                        String[] findTexts = newValue.toLowerCase().split(" ");
+
+                        return checkContains(data.getLinkContent().toLowerCase(), findTexts);
+                    });
+                });
+                bibleLinkView.setItems(filteredList);
+            }
+            if (ellenTab.isSelected()) {
+                FilteredList<Link> filteredList = new FilteredList<>(searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
+                searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    filteredList.setPredicate(data -> {
+                        if (newValue == null || newValue.isEmpty()) {
+                            return true;
+                        }
+                        String[] findTexts = newValue.toLowerCase().split(" ");
+
+                        return checkContains(data.getLinkContent().toLowerCase(), findTexts);
+                    });
+                });
+                ellenLinkView.setItems(filteredList);
+            }
+
+
         }
+    }
+
+    private boolean checkContains(String str, String[] arr) {
+        for (String text : arr) {
+            if (!str.contains(text)) return false;
+        }
+
+        return true;
     }
 }

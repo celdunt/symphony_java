@@ -11,6 +11,11 @@ import java.util.List;
 public class Link implements Serializable {
 
     private final List<IndexStruct> references = new ArrayList<>();
+
+    public String getLinkContent() {
+        return linkContent;
+    }
+
     private final String linkContent;
 
     private final String[] words;

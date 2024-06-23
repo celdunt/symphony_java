@@ -27,8 +27,8 @@ public class IndexSaverSingleThreaded {
         }
     }
 
-    public static HashMap<String, List<IndexStruct>> load(PathsEnum mode) {
-        String name = mode == PathsEnum.Bible? "bible.id" : "ellen.id";
+    public static HashMap<String, List<IndexStruct>> load(String name_, PathsEnum mode) {
+        String name = mode == PathsEnum.Bible? "biblid/" + name_ + "-bible.id" : "ellid/"+ name_ + "-ellen.id";
         HashMap<String, List<IndexStruct>> index = new HashMap<>();
 
         try (FileInputStream fileIn = new FileInputStream(name)) {

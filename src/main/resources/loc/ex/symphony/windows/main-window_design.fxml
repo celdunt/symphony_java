@@ -81,10 +81,10 @@
       </TabPane>
       <TabPane nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
         <tabs>
-          <Tab text="Библия">
+          <Tab fx:id="bibleLinkTab" text="Библия">
               <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
           </Tab>
-          <Tab text="Э. Уайт">
+          <Tab fx:id="ellenLinkTab" text="Э. Уайт">
                <content>
                   <ListView fx:id="ellenLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
                </content></Tab>
