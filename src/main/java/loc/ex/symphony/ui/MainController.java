@@ -23,7 +23,7 @@ import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.Cutser;
 import loc.ex.symphony.search.Searcher;
 
-import org.fxmisc.richtext.*;
+import org.fxmisc.richtext.StyleClassedTextArea;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

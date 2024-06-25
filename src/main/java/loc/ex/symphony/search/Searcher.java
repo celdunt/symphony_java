@@ -47,7 +47,14 @@ public class Searcher {
             List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
             List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
 
-            for (String synonym : primaryWords.get(0).getSynonyms()) fullWords.addAll(indexData.get(synonym));
+            for (String synonym : primaryWords.get(0).getSynonyms()) {
+                if (indexData.get(synonym) == null || indexData.get(synonym).isEmpty()) {
+                    indexData.putAll(
+                            IndexSaverSingleThreaded.load(synonym.toLowerCase().substring(0, 1), pathsEnum)
+                    );
+                }
+                fullWords.addAll(indexData.get(synonym));
+            }
 
             Collections.sort(primaryWords);
             Collections.sort(fullWords);
