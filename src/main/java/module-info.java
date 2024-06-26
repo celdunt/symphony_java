@@ -11,6 +11,8 @@ module loc.ex.symphony {
     requires com.almasb.fxgl.all;
     requires annotations;
     requires java.logging;
+    requires java.sql;
+    requires org.xerial.sqlitejdbc;
 
     opens loc.ex.symphony to javafx.fxml;
     exports loc.ex.symphony;
