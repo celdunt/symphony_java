@@ -12,7 +12,7 @@ module loc.ex.symphony {
     requires annotations;
     requires java.logging;
     requires org.fxmisc.richtext;
-    requires one.nio;
+    requires java.sql;
 
     opens loc.ex.symphony to javafx.fxml;
     exports loc.ex.symphony;
