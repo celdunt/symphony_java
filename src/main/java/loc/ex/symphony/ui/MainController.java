@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -39,7 +40,8 @@ public class MainController {
     public Tab ellenTab;
     public Tab bibleLinkTab;
     public Tab ellenLinkTab;
-    private Searcher searcher;
+    private Searcher b_searcher;
+    private Searcher e_searcher;
 
     public TextField searchByTextField;
     public Button searchButton;
@@ -54,6 +56,9 @@ public class MainController {
 
     private Book selectedBook;
     private Chapter selectedChapter;
+
+    private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
+    private HashMap<Integer, String> e_uniqueWord = new HashMap<>();
 
     public static BookmarksWindow bookmarksWindow;
 
@@ -73,6 +78,9 @@ public class MainController {
 
     public void initialize() throws IOException {
 
+        b_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.Bible);
+        e_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.EllenWhite);
+
         initializeMainTextArea();
 
         initializeBookFiles__OnAction();
@@ -91,8 +99,6 @@ public class MainController {
         ellenListView.setCellFactory(param -> new RichCell<>());
         ellenLinkView.setCellFactory(param -> new RichCell<>());
 
-        searcher = new Searcher(PathsEnum.Bible);
-        searcher.setResource(bibleListView.getItems());
 
         logger.info("resource is set");
 
@@ -104,8 +110,20 @@ public class MainController {
             chapterListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID()-1);
             chapterListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID());
 
-            highlightText(BookmarksController.selectedBookmark.link().getReferences(), new String[] {BookmarksController.selectedBookmark.link().getReferences().get(0).getWord()});
+            highlightText(BookmarksController.selectedBookmark.link().getReferences(), new String[] {
+
+                    //!!!!!b_uniqueWord.get(BookmarksController.selectedBookmark.link().getReferences().getFirst().getWordKey())
+
+            });
         });
+
+
+        b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
+        b_searcher.setResource(bibleListView.getItems());
+        e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
+        e_searcher.setResource(ellenListView.getItems());
+
+        mainTextArea.editableProperty().set(false);
     }
 
     private void initializeSearchByLink() {
@@ -189,6 +207,8 @@ public class MainController {
     }
 
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
+        HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected()? b_uniqueWord: ellenLinkTab.isSelected()? e_uniqueWord: b_uniqueWord;
+
         String mainText = mainTextArea.getText();
 
         int positionCarret = 0;
@@ -200,12 +220,12 @@ public class MainController {
             Chapter chapter = selectedBook.getChapters().get(selectedReferences.get(i).getChapterID());
 
             int start = 0;
-            String word = selectedReferences.get(i).getWord();
+            String word = uniqueWords.get(selectedReferences.get(i).getWordKey());
 
             for (int j = 0; j < selectedReferences.get(i).getFragmentID(); j++) start += chapter.getFragments().get(j).length();
 
             start += selectedReferences.get(i).getPosition();
-            int end = start + selectedReferences.get(i).getWordLength();
+            int end = start + uniqueWords.get(selectedReferences.get(i).getWordKey()).length();
 
 
             //[SOLVED?] Проблема: иногда(может даже часто) не может найти в тексте искомое слово, из-за чего упирается в конец строки и выдаёт исключение
@@ -292,14 +312,17 @@ public class MainController {
         }
     }
 
-    public void doIndex__OnAction() throws IOException {
+    public void doIndex__OnAction() throws IOException, SQLException, ClassNotFoundException {
         IndexatorSingleThreaded indexator = new IndexatorSingleThreaded(bibleListView.getItems());
 
         indexator.index();
 
-        for (var key : indexator.getDictionary().keySet()) {
+        IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.Bible);
+        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
+
+        /*for (var key : indexator.getDictionary().keySet()) {
             IndexSaverSingleThreaded.save(indexator.getDictionary().get(key), PathsEnum.Bible, String.valueOf(key));
-        }
+        }*/
 
         //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
@@ -308,9 +331,12 @@ public class MainController {
 
         indexator.index();
 
-        for (var key : indexator.getDictionary().keySet()) {
+        IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.EllenWhite);
+        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
+
+       /* for (var key : indexator.getDictionary().keySet()) {
             IndexSaverSingleThreaded.save(indexator.getDictionary().get(key), PathsEnum.EllenWhite, String.valueOf(key));
-        }
+        }*/
 
         //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
     }
@@ -331,9 +357,7 @@ public class MainController {
 
             Cutser cutser = new Cutser();
 
-            String nameBookmark = cutser.GetBibleCut(bibleListView.getSelectionModel().getSelectedIndex()) +
-                    " " + (chapterListView.getSelectionModel().getSelectedIndex()+1) + ":" +
-                    (indexStruct.getFragmentID()+1) + "  " + mainTextArea.getSelectedText();
+            String nameBookmark = STR."\{cutser.GetBibleCut(bibleListView.getSelectionModel().getSelectedIndex())} \{chapterListView.getSelectionModel().getSelectedIndex() + 1}:\{indexStruct.getFragmentID() + 1}  \{mainTextArea.getSelectedText()}";
 
             Bookmark bookmark = new Bookmark(nameBookmark, link, new Date(System.currentTimeMillis()));
 
@@ -373,11 +397,11 @@ public class MainController {
         indexStruct.setChapterID(chapterListView.getSelectionModel().getSelectedIndex()+1);
         indexStruct.setFragmentID(currentFragmentId);
         indexStruct.setPosition(position);
-        indexStruct.setWord(mainTextArea.getSelectedText());
-        indexStruct.setWordLength(mainTextArea.getSelectedText().length());
+        //indexStruct.setWord(mainTextArea.getSelectedText());
+        //indexStruct.setWordLength(mainTextArea.getSelectedText().length());
 
         logger.info(indexStruct.getBookID() + "\\" + indexStruct.getChapterID() + "\\" + indexStruct.getFragmentID() + "\\" +
-                indexStruct.getPosition() + "\\" + indexStruct.getWord());
+                indexStruct.getPosition() + "\\" + b_uniqueWord.get(indexStruct.getWordKey()));
 
         return indexStruct;
     }
@@ -387,28 +411,18 @@ public class MainController {
     }
 
     public void selectTabBible__OnAction() {
-        if (bibleTab.isSelected() && searcher != null) {
-            searcher = new Searcher(PathsEnum.Bible);
-            searcher.setResource(bibleListView.getItems());
 
-            logger.info("resource is set");
-        }
      }
 
     public void selectTabEllen__OnAction() {
-        if (ellenTab.isSelected() && searcher != null) {
-            searcher = new Searcher(PathsEnum.EllenWhite);
-            searcher.setResource(ellenListView.getItems());
 
-            logger.info("resource is set");
-        }
     }
 
     public void doSearch__OnAction() {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
             if (bibleTab.isSelected()) {
-                FilteredList<Link> filteredList = new FilteredList<>(searcher.search(prompt, PathsEnum.Bible), p -> true);
+                FilteredList<Link> filteredList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
                 searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
                     filteredList.setPredicate(data -> {
                         if (newValue == null || newValue.isEmpty()) {
@@ -422,7 +436,7 @@ public class MainController {
                 bibleLinkView.setItems(filteredList);
             }
             if (ellenTab.isSelected()) {
-                FilteredList<Link> filteredList = new FilteredList<>(searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
+                FilteredList<Link> filteredList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
                 searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
                     filteredList.setPredicate(data -> {
                         if (newValue == null || newValue.isEmpty()) {

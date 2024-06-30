@@ -66,8 +66,30 @@ public class FileAdapter {
             Book handledBook = new Book(rawBook.name.get(), PathsEnum.EllenWhite);
 
             for(int ichapter = 0; ichapter < rawChapters.length; ichapter++) {
-                String[] rawFragments = rawChapters[ichapter].split("\\[\\d+]\\s+");
-                List<String> fragments = new ArrayList<>(List.of(rawFragments))
+                String[] rawFragments = rawChapters[ichapter].split("\\."); //\[\d+]\s+
+                List<String> splitedFragmets = new ArrayList<>();
+                int minLength = 25;
+                StringBuilder buffer = new StringBuilder();
+
+                for (String part : rawFragments) {
+                    part = part.trim(); // Убираем пробелы по краям
+
+                    if (buffer.isEmpty()) {
+                        buffer.append(part);
+                    } else {
+                        if (buffer.length() + part.length() + 1 < minLength) {
+                            buffer.append(".").append(part);
+                        } else {
+                            splitedFragmets.add(buffer.append(".").toString());
+                            buffer.setLength(0);
+                            buffer.append(part);
+                        }
+                    }
+                }
+                if (!buffer.isEmpty())
+                    splitedFragmets.add(buffer.append(".").toString());
+
+                List<String> fragments = new ArrayList<>(splitedFragmets)
                         .stream().map(fr -> fr.replaceAll("^\\s*\\n+", ""))
                         .toList();
                 Chapter chapter = new Chapter(ichapter+1);

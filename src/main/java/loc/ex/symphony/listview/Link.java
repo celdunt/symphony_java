@@ -23,10 +23,10 @@ public class Link implements Serializable {
     public Link(List<IndexStruct> references, ObservableList<Book> book, String... words) {
         this.references.addAll(references);
 
-        String bookName = book.get(references.get(0).getBookID()).name.get();
-        String chapterNumber = (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "";
-        String fragmentText = book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
-                .getFragments().get(references.get(0).getFragmentID());
+        String bookName = book.get(references.getFirst().getBookID()).name.get();
+        String chapterNumber = (book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID()).number.get()-1) + "";
+        String fragmentText = book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID())
+                .getFragments().get(references.getFirst().getFragmentID());
         linkContent = bookName + " : " + chapterNumber + "\n" + fragmentText;
 
         this.words = words;

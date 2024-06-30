@@ -13,6 +13,9 @@ module loc.ex.symphony {
     requires java.logging;
     requires org.fxmisc.richtext;
     requires java.sql;
+    requires org.xerial.sqlitejdbc;
+    requires com.fasterxml.jackson.databind;
+
 
     opens loc.ex.symphony to javafx.fxml;
     exports loc.ex.symphony;

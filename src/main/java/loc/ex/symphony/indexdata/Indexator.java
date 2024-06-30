@@ -102,8 +102,8 @@ public class Indexator {
                         List<IndexStruct> fixedStruct = indexData.get(words.get(start)[fixedWord]);
                         List<IndexStruct> nextStruct = indexData.get(words.get(start)[nextWord]);
                         if (fixedStruct == null || nextStruct == null) continue;
-                        fixedStruct.get(0).getSynonyms().add(words.get(start)[nextWord]);
-                        nextStruct.get(0).getSynonyms().add(words.get(start)[fixedWord]);
+                        //fixedStruct.get(0).getSynonyms().add(words.get(start)[nextWord]);
+                        //.get(0).getSynonyms().add(words.get(start)[fixedWord]);
                     }
         }
 
@@ -154,8 +154,8 @@ public class Indexator {
                     index.setChapterID(chapterId);
                     index.setFragmentID(start);
                     index.setPosition(currentWordPosition);
-                    index.setWordLength(word.length());
-                    index.setWord(word);
+                    //index.setWordLength(word.length());
+                    //index.setWord(word);
                     currentWordPosition += word.length();
 
                     indexData.computeIfAbsent(word.toLowerCase(), k -> new ArrayList<>()).add(index);

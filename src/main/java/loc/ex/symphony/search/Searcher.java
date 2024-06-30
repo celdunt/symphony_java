@@ -9,6 +9,7 @@ import loc.ex.symphony.listview.Book;
 import loc.ex.symphony.listview.Link;
 import loc.ex.symphony.listview.PathsEnum;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
@@ -17,10 +18,12 @@ public class Searcher {
 
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private ObservableList<Book> resource;
-    private HashMap<String, List<IndexStruct>> indexData;
+    private final HashMap<String, List<IndexStruct>> indexData;
+    private final HashMap<Integer, String> uniqueWords;
 
-    public Searcher(PathsEnum mode) {
-
+    public Searcher(PathsEnum mode, HashMap<Integer, String> uniqueWords) throws IOException {
+        indexData = IndexSaverSingleThreaded.load(mode);
+        this.uniqueWords = uniqueWords;
     }
 
     public void setResource(ObservableList<Book> resource) {
@@ -40,21 +43,25 @@ public class Searcher {
         List<List<IndexStruct>> fullWordsList = new ArrayList<>();
 
         for (String word : words) {
-            indexData = IndexSaverSingleThreaded.load(word.toLowerCase().substring(0, 1), pathsEnum);
+            //indexData = IndexSaverSingleThreaded.load(word.toLowerCase().substring(0, 1), pathsEnum);
 
             if (indexData == null) continue;
 
             List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
             List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
 
-            for (String synonym : primaryWords.get(0).getSynonyms()) {
+            for (int synonymKey : primaryWords.getFirst().getSynonymsKeys()) {
+                fullWords.addAll(indexData.get(uniqueWords.get(synonymKey)));
+            }
+
+            /*for (String synonym : primaryWords.get(0).getSynonyms()) {
                 if (indexData.get(synonym) == null || indexData.get(synonym).isEmpty()) {
-                    indexData.putAll(
+                    *//*indexData.putAll(
                             IndexSaverSingleThreaded.load(synonym.toLowerCase().substring(0, 1), pathsEnum)
-                    );
+                    );*//*
                 }
                 fullWords.addAll(indexData.get(synonym));
-            }
+            }*/
 
             Collections.sort(primaryWords);
             Collections.sort(fullWords);
@@ -174,7 +181,7 @@ public class Searcher {
 
         for (List<IndexStruct> wordsList : wordsMatrix) {
             if (wordsList.isEmpty()) return;
-            references.add(wordsList.get(0));
+            references.add(wordsList.getFirst());
             iterators.add(wordsList.listIterator());
         }
 

@@ -1,5 +1,8 @@
 package loc.ex.symphony.indexdata;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -7,19 +10,40 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class IndexStruct implements Serializable, Comparable<IndexStruct> {
-    private int bookId;
-    private int chapterId;
-    private int fragmentId;
-    private int position;
-    private int wordLength;
-    private String word;
 
-    private final List<String> synonyms = new ArrayList<>();
+    public int bookId;
+    public int chapterId;
+    public int fragmentId;
+    public int position;
+    public int wordKey;
 
+    public final List<Integer> synonymsKeys = new ArrayList<>();
 
-    public List<String> getSynonyms() {
-        return synonyms;
+    @JsonCreator
+    public IndexStruct(
+            @JsonProperty("bookId") int bookId,
+            @JsonProperty("chapterId") int chapterId,
+            @JsonProperty("fragmentId") int fragmentId,
+            @JsonProperty("position") int position,
+            @JsonProperty("wordKey") int wordKey,
+            @JsonProperty("synonymsKeys") List<Integer> synonymsKeys) {
+        this.bookId = bookId;
+        this.chapterId = chapterId;
+        this.fragmentId = fragmentId;
+        this.position = position;
+        this.wordKey = wordKey;
+        if (synonymsKeys != null) {
+            this.synonymsKeys.addAll(synonymsKeys);
+        }
+    }
+
+    public IndexStruct() {}
+
+    public List<Integer> getSynonymsKeys() {
+        return synonymsKeys;
     }
 
     public int getBookID() {
@@ -54,12 +78,13 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
         this.position = position;
     }
 
-    public int getWordLength() {
-        return wordLength;
+
+    public int getWordKey() {
+        return wordKey;
     }
 
-    public void setWordLength(int wordLength) {
-        this.wordLength = wordLength;
+    public void setWordKey(int wordKey) {
+        this.wordKey = wordKey;
     }
 
     @Override
@@ -73,14 +98,6 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
                 return thirdStage;
             else return secondStage;
         else return firstStage;
-    }
-
-    public String getWord() {
-        return word;
-    }
-
-    public void setWord(String word) {
-        this.word = word;
     }
 
     public static class PositionComparator implements Comparator<loc.ex.symphony.indexdata.IndexStruct> {
