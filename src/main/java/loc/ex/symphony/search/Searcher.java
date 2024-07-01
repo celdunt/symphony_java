@@ -2,12 +2,15 @@ package loc.ex.symphony.search;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.scene.control.Alert;
 import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexSaverSingleThreaded;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.listview.Book;
 import loc.ex.symphony.listview.Link;
 import loc.ex.symphony.listview.PathsEnum;
+import loc.ex.symphony.ui.MainController;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,11 +21,27 @@ public class Searcher {
 
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private ObservableList<Book> resource;
-    private final HashMap<String, List<IndexStruct>> indexData;
+    private HashMap<String, List<IndexStruct>> indexData;
     private final HashMap<Integer, String> uniqueWords;
 
+    private static byte COUNT_OF_LOADED_BOOK_INDICES = 0;
+
     public Searcher(PathsEnum mode, HashMap<Integer, String> uniqueWords) throws IOException {
-        indexData = IndexSaverSingleThreaded.load(mode);
+        Task<HashMap<String, List<IndexStruct>>> task = IndexSaverSingleThreaded.loadTask(mode);
+        task.setOnSucceeded(a -> {
+            indexData = task.getValue();
+            COUNT_OF_LOADED_BOOK_INDICES++;
+            if (COUNT_OF_LOADED_BOOK_INDICES == 2)
+                MainController.usabilityButtonListener.set("enable_button");
+        });
+
+        task.setOnFailed(a -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Данные индексации не были загружены");
+            alert.show();
+        });
+
+        new Thread(task).start();
+
         this.uniqueWords = uniqueWords;
     }
 

@@ -6,6 +6,16 @@ import javafx.scene.text.TextAlignment;
 
 public class RichCell<T> extends ListCell<T> {
 
+    private final int width;
+
+    public RichCell(int width) {
+        this.width = width;
+    }
+
+    public RichCell() {
+        this.width = 145;
+    }
+
     @Override
     protected void updateItem(T item, boolean empty) {
         super.updateItem(item, empty);
@@ -15,7 +25,7 @@ public class RichCell<T> extends ListCell<T> {
             setGraphic(null);
         } else {
             Text text = new Text(item.toString());
-            int cellWidth = 145;
+            int cellWidth = width;
 
             setMinWidth(cellWidth);
             setMaxWidth(cellWidth);

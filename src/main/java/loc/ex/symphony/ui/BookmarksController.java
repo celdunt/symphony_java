@@ -18,7 +18,7 @@ public class BookmarksController {
     public void initialize() {
         bookmarks = BookmarksSerializer.Deserialize();
 
-        bookmarksListView.setCellFactory(param -> new RichCell<>());
+        bookmarksListView.setCellFactory(param -> new RichCell<>(350));
 
         bookmarksListView.setItems(bookmarks);
     }

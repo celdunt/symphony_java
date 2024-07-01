@@ -6,6 +6,7 @@ import loc.ex.symphony.listview.PathsEnum;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import javafx.concurrent.Task;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -35,6 +36,15 @@ public class IndexSaverSingleThreaded {
         String name_ = mode == PathsEnum.Bible? "bible.json" : "ellen.json";
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(Files.newBufferedWriter(Path.of(name_)), index);
+    }
+
+    public static Task<HashMap<String, List<IndexStruct>>> loadTask(PathsEnum mode) {
+        return new Task<HashMap<String, List<IndexStruct>>>() {
+            @Override
+            protected HashMap<String, List<IndexStruct>> call() throws Exception {
+                return load(mode);
+            }
+        };
     }
 
     public static HashMap<String, List<IndexStruct>> load(PathsEnum mode) throws IOException {

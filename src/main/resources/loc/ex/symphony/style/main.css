@@ -34,3 +34,12 @@
 .jtext {
     -fx-fill: black;
 }
+
+.hover_selection_panel {
+    -fx-background-color: blue;
+    -fx-background-radius: 7 7 0 0;
+}
+
+.copy_button {
+    -fx-background-radius: 28;
+}

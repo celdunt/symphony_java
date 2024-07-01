@@ -6,12 +6,15 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.geometry.Insets;
+import javafx.event.EventHandler;
+import javafx.geometry.*;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
@@ -30,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 public class MainController {
@@ -60,6 +64,9 @@ public class MainController {
     private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
     private HashMap<Integer, String> e_uniqueWord = new HashMap<>();
 
+    public static AtomicReference<Double> currentWindowWidth = new AtomicReference<>(0d);
+    public static AtomicReference<Double> currentWindowHeight = new AtomicReference<>(0d);
+
     public static BookmarksWindow bookmarksWindow;
 
     static {
@@ -71,6 +78,7 @@ public class MainController {
     }
 
     public static SimpleStringProperty listener = new SimpleStringProperty();
+    public static SimpleStringProperty usabilityButtonListener = new SimpleStringProperty();
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public MainController() {
@@ -82,6 +90,8 @@ public class MainController {
         e_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.EllenWhite);
 
         initializeMainTextArea();
+
+        initializeHoverSelectionPanel();
 
         initializeBookFiles__OnAction();
 
@@ -104,17 +114,25 @@ public class MainController {
 
         listener.addListener(listener -> {
             logger.info("IS CHANGED!");
-            bibleListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().get(0).getBookID());
-            bibleListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().get(0).getBookID());
+            ListView<Book> selectedResource = bibleTab.isSelected()? bibleListView: ellenTab.isSelected()? ellenListView: bibleListView;
+            HashMap<Integer, String> uniqueWords = bibleTab.isSelected()? b_uniqueWord: ellenTab.isSelected()? e_uniqueWord: b_uniqueWord;
+            selectedResource.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().getFirst().getBookID());
+            selectedResource.scrollTo(BookmarksController.selectedBookmark.link().getReferences().getFirst().getBookID());
 
-            chapterListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID()-1);
-            chapterListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().get(0).getChapterID());
+            chapterListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().getFirst().getChapterID()-1);
+            chapterListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().getFirst().getChapterID());
 
             highlightText(BookmarksController.selectedBookmark.link().getReferences(), new String[] {
 
-                    //!!!!!b_uniqueWord.get(BookmarksController.selectedBookmark.link().getReferences().getFirst().getWordKey())
+                    uniqueWords.get(BookmarksController.selectedBookmark.link().getReferences().getFirst().getWordKey())
 
             });
+        });
+
+        searchButton.setDisable(true);
+
+        usabilityButtonListener.addListener(listener -> {
+            searchButton.setDisable(false);
         });
 
 
@@ -169,6 +187,86 @@ public class MainController {
         GridPane.setHgrow(mainTextArea, Priority.ALWAYS);
         GridPane.setVgrow(mainTextArea, Priority.ALWAYS);
         GridPane.setMargin(mainTextArea, new Insets(3, 0, 0, 0));
+    }
+
+    private void initializeHoverSelectionPanel() {
+        HBox hoverSelectionPanel = new HBox();
+        hoverSelectionPanel.setVisible(false);
+        hoverSelectionPanel.setMaxHeight(30);
+        hoverSelectionPanel.setMaxWidth(200);
+        hoverSelectionPanel.getStyleClass().add("hover_selection_panel");
+
+        mainGridPane.getChildren().add(hoverSelectionPanel);
+        initializeHoverSelectionPanelCopyButton(hoverSelectionPanel);
+
+        GridPane.setColumnIndex(hoverSelectionPanel, 0);
+        GridPane.setColumnSpan(hoverSelectionPanel, 3);
+        GridPane.setRowIndex(hoverSelectionPanel, 0);
+        GridPane.setRowSpan(hoverSelectionPanel, 4);
+        GridPane.setValignment(hoverSelectionPanel, VPos.TOP);
+        GridPane.setHalignment(hoverSelectionPanel, HPos.LEFT);
+        initializeHoverSelectionPanelBehavior(hoverSelectionPanel);
+    }
+
+    private void initializeHoverSelectionPanelCopyButton(HBox hoverSelectionPanel) {
+
+        Button copyButton = new Button();
+        copyButton.setText("");
+        copyButton.setPrefWidth(26);
+        copyButton.setPrefHeight(26);
+        HBox.setMargin(copyButton, new Insets(0, 0, 1, 3));
+        copyButton.getStyleClass().add("copy_button");
+        hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+        hoverSelectionPanel.getChildren().add(copyButton);
+        initializeHoverSelectionPanelCopyButtonBehavior(copyButton);
+
+    }
+
+    private void initializeHoverSelectionPanelCopyButtonBehavior(Button copyButton) {
+
+        copyButton.onActionProperty().set(action -> {
+            if (!mainTextArea.getSelectedText().isEmpty()) {
+
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(mainTextArea.getSelectedText());
+                clipboard.setContent(content);
+
+            }
+        });
+
+    }
+
+    private void initializeHoverSelectionPanelBehavior(HBox hoverSelectionPanel) {
+        AtomicReference<Double> deltaX = new AtomicReference<>(0d);
+        AtomicReference<Double> deltaY = new AtomicReference<>(0d);
+
+        mainTextArea.setOnMousePressed(mouseEvent -> {
+            deltaX.set(mouseEvent.getScreenX() - mouseEvent.getSceneX());
+            deltaY.set(mouseEvent.getScreenY() - mouseEvent.getSceneY());
+        });
+
+
+        mainTextArea.selectionProperty().addListener((ov, i1, i2) -> {
+            if (i1.getStart() != i1.getEnd() && !mainTextArea.getSelectedText().isEmpty()) {
+                hoverSelectionPanel.setVisible(true);
+                Bounds bounds = mainTextArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()+2).orElse(null);
+
+                if (bounds != null) {
+                    hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
+                    hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getMaxHeight());
+
+                    if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getMaxWidth()
+                    > currentWindowWidth.get()-200) {
+                        hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get()-200-hoverSelectionPanel.getMaxWidth());
+                    }
+
+                }
+            }
+            if (mainTextArea.getSelectedText().isEmpty()) {
+                hoverSelectionPanel.setVisible(false);
+            }
+        });
     }
 
     private void initializeBookFiles__OnAction() throws IOException {
@@ -348,16 +446,17 @@ public class MainController {
     public void CreateBookmark__OnAction() {
         if (!mainTextArea.getSelectedText().isEmpty()) {
             List<IndexStruct> refs = new ArrayList<>();
+            ListView<Book> selectedResource = bibleTab.isSelected()? bibleListView: ellenTab.isSelected()? ellenListView: bibleListView;
 
-            IndexStruct indexStruct = GetBookmarkIndexStruct();
+            IndexStruct indexStruct = GetBookmarkIndexStruct(selectedResource);
 
             refs.add(indexStruct);
 
-            Link link = new Link(refs, bibleListView.getItems(), mainTextArea.getSelectedText());
+            Link link = new Link(refs, selectedResource.getItems(), mainTextArea.getSelectedText());
 
             Cutser cutser = new Cutser();
 
-            String nameBookmark = STR."\{cutser.GetBibleCut(bibleListView.getSelectionModel().getSelectedIndex())} \{chapterListView.getSelectionModel().getSelectedIndex() + 1}:\{indexStruct.getFragmentID() + 1}  \{mainTextArea.getSelectedText()}";
+            String nameBookmark = STR."\{cutser.GetBibleCut(selectedResource.getSelectionModel().getSelectedIndex())} \{chapterListView.getSelectionModel().getSelectedIndex() + 1}:\{indexStruct.getFragmentID() + 1}  \{mainTextArea.getSelectedText()}";
 
             Bookmark bookmark = new Bookmark(nameBookmark, link, new Date(System.currentTimeMillis()));
 
@@ -382,7 +481,7 @@ public class MainController {
     }
 
     @NotNull
-    private IndexStruct GetBookmarkIndexStruct() {
+    private IndexStruct GetBookmarkIndexStruct(ListView<Book> selectedResource) {
         IndexStruct indexStruct = new IndexStruct();
         int currentFragmentId = 0;
         int position = mainTextArea.getSelection().getStart();
@@ -393,15 +492,14 @@ public class MainController {
             } else position -= selectedChapter.getFragments().get(currentFragmentId).length();
         }
 
-        indexStruct.setBookID(bibleListView.getSelectionModel().getSelectedIndex());
+        indexStruct.setBookID(selectedResource.getSelectionModel().getSelectedIndex());
         indexStruct.setChapterID(chapterListView.getSelectionModel().getSelectedIndex()+1);
         indexStruct.setFragmentID(currentFragmentId);
         indexStruct.setPosition(position);
         //indexStruct.setWord(mainTextArea.getSelectedText());
         //indexStruct.setWordLength(mainTextArea.getSelectedText().length());
 
-        logger.info(indexStruct.getBookID() + "\\" + indexStruct.getChapterID() + "\\" + indexStruct.getFragmentID() + "\\" +
-                indexStruct.getPosition() + "\\" + b_uniqueWord.get(indexStruct.getWordKey()));
+        logger.info(STR."\{indexStruct.getBookID()}\\\{indexStruct.getChapterID()}\\\{indexStruct.getFragmentID()}\\\{indexStruct.getPosition()}\\\{b_uniqueWord.get(indexStruct.getWordKey())}");
 
         return indexStruct;
     }

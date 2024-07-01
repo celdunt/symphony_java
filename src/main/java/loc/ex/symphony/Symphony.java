@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import loc.ex.symphony.ui.MainController;
 
 import java.io.IOException;
 
@@ -17,6 +18,14 @@ public class Symphony extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 800, 450);
         Symphony.window = window;
         Symphony.scene = scene;
+
+        MainController.currentWindowWidth.set(window.getWidth());
+        MainController.currentWindowHeight.set(window.getHeight());
+
+        window.widthProperty().addListener(lis -> {
+            MainController.currentWindowWidth.set(window.getWidth());
+            MainController.currentWindowHeight.set(window.getHeight());
+        });
 
         window.setTitle("Symphony");
         window.setScene(scene);
