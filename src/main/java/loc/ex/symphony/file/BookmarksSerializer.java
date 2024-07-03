@@ -1,39 +1,43 @@
 package loc.ex.symphony.file;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import loc.ex.symphony.listview.Bookmark;
+
+import loc.ex.symphony.listview.BookmarkStruct;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+
 public class BookmarksSerializer {
 
-    public static void Serialize(ObservableList<Bookmark> bookmarks) {
-        List<Bookmark> bookmarkList = bookmarks.stream().toList();
-        try (FileOutputStream fileOut = new FileOutputStream("bookmarks.ol")) {
-            ObjectOutputStream objOut = new ObjectOutputStream(fileOut);
-            objOut.writeObject(bookmarkList);
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
+    public static void save(ObservableList<BookmarkStruct> bookmarks) throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(Files.newBufferedWriter(Path.of("bookmarks.json")), bookmarks.stream().toList());
+
     }
 
-    public static ObservableList<Bookmark> Deserialize() {
-        ObservableList<Bookmark> bookmarks = FXCollections.observableArrayList();
+    public static List<BookmarkStruct> load() throws IOException {
 
-        if (!Files.exists(Path.of("bookmarks.ol"))) return bookmarks;
+        Path path = Path.of("bookmarks.json");
 
-        try (FileInputStream fileIn = new FileInputStream("bookmarks.ol")) {
-            ObjectInputStream objIn = new ObjectInputStream(fileIn);
-            bookmarks = FXCollections.observableArrayList((List<Bookmark>) objIn.readObject());
-        } catch (IOException | ClassNotFoundException exception) {
-            exception.printStackTrace();
+        if (!Files.exists(path)) {
+            return FXCollections.observableArrayList();
         }
 
-        return bookmarks;
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        return mapper.readValue(Files.newBufferedReader(path), new TypeReference<List<BookmarkStruct>>() {});
+
     }
 
 }

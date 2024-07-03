@@ -33,8 +33,8 @@
             </Menu>
             <Menu fx:id="bookmarksMenu" mnemonicParsing="false" text="Закладки">
                <items>
-                  <MenuItem mnemonicParsing="false" onAction="#BookmarksMenu_Click" text="Открыть окно" />
-                  <MenuItem mnemonicParsing="false" onAction="#CreateBookmark__OnAction" text="Создать закладку" />
+                  <MenuItem mnemonicParsing="false" onAction="#openBookmarkWindowOnAction" text="Открыть окно" />
+                  <MenuItem mnemonicParsing="false"  text="Создать закладку" />
                </items></Menu>
         </menus>
       </MenuBar>
@@ -63,7 +63,7 @@
             <Insets top="3.0" />
          </GridPane.margin>
       </ListView>
-      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.rowIndex="2" GridPane.rowSpan="2">
+      <TabPane fx:id="bookTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.rowIndex="2" GridPane.rowSpan="2">
         <tabs>
           <Tab fx:id="bibleTab" onSelectionChanged="#selectTabBible__OnAction" text="Библия">
                <content>

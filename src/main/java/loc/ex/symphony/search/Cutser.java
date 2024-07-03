@@ -15,7 +15,7 @@ public class Cutser {
             "1 Кор.", "2 Кор.", "Гал.", "Еф.", "Флп.", "Кол.", "1 Фес.", "2 Фес.",
             "1 Тим.", "2 Тим.", "Тит.", "Флм.", "Евр.", "Откр."}));
 
-    public String GetBibleCut(int bookIndex) {
+    public String getBibleCut(int bookIndex) {
         if (bookIndex >= 0 && bookIndex < 66) {
             for (int i = 0; i < bookIndex; i++) {
                 if (bibleCuts.hasNext()) {
@@ -26,7 +26,7 @@ public class Cutser {
         } else return "error";
     }
 
-    public int GetBibleIndex(String bibleCut) {
+    public int getBibleIndex(String bibleCut) {
         int findIndex = -1;
         int errorIndex = 65;
         while (bibleCuts.hasNext()) {

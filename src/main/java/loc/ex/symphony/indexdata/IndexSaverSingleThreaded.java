@@ -20,6 +20,12 @@ public class IndexSaverSingleThreaded {
         mapper.writeValue(Files.newBufferedWriter(Path.of(name)), uniqueWords);
     }
 
+    public static void saveUniqueWordsHelp(HashMap<String, Integer> uniqueWords, PathsEnum mode) throws IOException {
+        String name = mode == PathsEnum.Bible ? "b_uniqueWordsH.json" : "e_uniqueWordsH.json";
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(Files.newBufferedWriter(Path.of(name)), uniqueWords);
+    }
+
     public static HashMap<Integer, String> loadUniqueWords(PathsEnum mode) throws IOException {
         String name = mode == PathsEnum.Bible ? "b_uniqueWords.json" : "e_uniqueWords.json";
         Path path = Path.of(name);
@@ -31,6 +37,19 @@ public class IndexSaverSingleThreaded {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(Files.newBufferedReader(path), new TypeReference<HashMap<Integer, String>>() {});
     }
+
+    public static HashMap<String, Integer> loadUniqueWordsHelp(PathsEnum mode) throws IOException {
+        String name = mode == PathsEnum.Bible ? "b_uniqueWordsH.json" : "e_uniqueWordsH.json";
+        Path path = Path.of(name);
+
+        if (!Files.exists(path)) {
+            return new HashMap<>();
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(Files.newBufferedReader(path), new TypeReference<HashMap<String, Integer>>() {});
+    }
+
 
     public static void save(HashMap<String, List<IndexStruct>> index, PathsEnum mode) throws IOException {
         String name_ = mode == PathsEnum.Bible? "bible.json" : "ellen.json";

@@ -20,6 +20,7 @@ public class IndexatorSingleThreaded {
     private final HashMap<Character, HashMap<String, List<IndexStruct>>> dictionary = new HashMap<>();
     private final HashMap<String, List<IndexStruct>> indexData = new HashMap<>();
     private final HashMap<Integer, String> uniqueWords = new HashMap<>();
+
     private final HashMap<String, Integer> uniqueWordsHelp = new HashMap<>();
     private final ObservableList<Book> books;
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
@@ -39,6 +40,9 @@ public class IndexatorSingleThreaded {
     }
     public HashMap<Integer, String> getUniqueWords() {
         return uniqueWords;
+    }
+    public HashMap<String, Integer> getUniqueWordsHelp() {
+        return uniqueWordsHelp;
     }
 
     public void index() throws IOException {

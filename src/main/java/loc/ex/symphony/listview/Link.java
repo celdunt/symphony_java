@@ -1,5 +1,8 @@
 package loc.ex.symphony.listview;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import javafx.collections.ObservableList;
 import loc.ex.symphony.indexdata.IndexStruct;
 
@@ -7,7 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Link implements Serializable {
 
     private final List<IndexStruct> references = new ArrayList<>();
@@ -20,7 +23,11 @@ public class Link implements Serializable {
 
     private final String[] words;
 
-    public Link(List<IndexStruct> references, ObservableList<Book> book, String... words) {
+    @JsonCreator
+    public Link(
+            @JsonProperty("references")List<IndexStruct> references,
+            @JsonProperty("book")ObservableList<Book> book,
+            @JsonProperty("words")String... words) {
         this.references.addAll(references);
 
         String bookName = book.get(references.getFirst().getBookID()).name.get();

@@ -2,32 +2,29 @@ package loc.ex.symphony.ui;
 
 
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.event.EventHandler;
 import javafx.geometry.*;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
-import loc.ex.symphony.file.BookmarksSerializer;
 import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
 import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
-import loc.ex.symphony.search.Cutser;
 import loc.ex.symphony.search.Searcher;
 
 import org.fxmisc.richtext.StyleClassedTextArea;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +41,7 @@ public class MainController {
     public Tab ellenTab;
     public Tab bibleLinkTab;
     public Tab ellenLinkTab;
+    public TabPane bookTabPane;
     private Searcher b_searcher;
     private Searcher e_searcher;
 
@@ -63,31 +61,32 @@ public class MainController {
 
     private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
     private HashMap<Integer, String> e_uniqueWord = new HashMap<>();
+    private HashMap<String, Integer> b_uniqueWordH = new HashMap<>();
+    private HashMap<String, Integer> e_uniqueWordH = new HashMap<>();
 
     public static AtomicReference<Double> currentWindowWidth = new AtomicReference<>(0d);
     public static AtomicReference<Double> currentWindowHeight = new AtomicReference<>(0d);
 
-    public static BookmarksWindow bookmarksWindow;
-
-    static {
-        try {
-            bookmarksWindow = new BookmarksWindow();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public BookmarksWindow bookmarksWindow;
 
     public static SimpleStringProperty listener = new SimpleStringProperty();
     public static SimpleStringProperty usabilityButtonListener = new SimpleStringProperty();
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
+    public static ObjectProperty<BookmarkStruct> openingBookmark = new SimpleObjectProperty<>();
 
     public MainController() {
     }
 
     public void initialize() throws IOException {
 
+        bookmarksWindow = new BookmarksWindow();
+
         b_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.Bible);
         e_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.EllenWhite);
+
+        b_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.Bible);
+        e_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.EllenWhite);
 
         initializeMainTextArea();
 
@@ -102,6 +101,8 @@ public class MainController {
 
         selectedBookLink__OnAction();
 
+        initOpenBookmarkAction();
+
         Platform.runLater(this::initializeSceneHandler);
 
         bibleListView.setCellFactory(param -> new RichCell<>());
@@ -111,23 +112,6 @@ public class MainController {
 
 
         logger.info("resource is set");
-
-        listener.addListener(listener -> {
-            logger.info("IS CHANGED!");
-            ListView<Book> selectedResource = bibleTab.isSelected()? bibleListView: ellenTab.isSelected()? ellenListView: bibleListView;
-            HashMap<Integer, String> uniqueWords = bibleTab.isSelected()? b_uniqueWord: ellenTab.isSelected()? e_uniqueWord: b_uniqueWord;
-            selectedResource.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().getFirst().getBookID());
-            selectedResource.scrollTo(BookmarksController.selectedBookmark.link().getReferences().getFirst().getBookID());
-
-            chapterListView.getSelectionModel().select(BookmarksController.selectedBookmark.link().getReferences().getFirst().getChapterID()-1);
-            chapterListView.scrollTo(BookmarksController.selectedBookmark.link().getReferences().getFirst().getChapterID());
-
-            highlightText(BookmarksController.selectedBookmark.link().getReferences(), new String[] {
-
-                    uniqueWords.get(BookmarksController.selectedBookmark.link().getReferences().getFirst().getWordKey())
-
-            });
-        });
 
         searchButton.setDisable(true);
 
@@ -142,6 +126,82 @@ public class MainController {
         e_searcher.setResource(ellenListView.getItems());
 
         mainTextArea.editableProperty().set(false);
+    }
+
+    public void initOpenBookmarkAction() {
+
+        openingBookmark.addListener(change -> {
+
+            if (openingBookmark.get() != null) {
+                ListView<Book> openingBook;
+                if (openingBookmark.get().getRoot() == PathsEnum.Bible) {
+                    openingBook = bibleListView;
+                    bookTabPane.getSelectionModel().select(bibleTab);
+                } else {
+                    openingBook = ellenListView;
+                    bookTabPane.getSelectionModel().select(ellenTab);
+                }
+
+                openingBook.getSelectionModel().select(-1);
+                openingBook.getSelectionModel().select(openingBookmark.get().getBookId());
+                openingBook.scrollTo(openingBookmark.get().getBookId());
+
+                chapterListView.getSelectionModel().select(openingBookmark.get().getChapterId()-1);
+                chapterListView.scrollTo(openingBookmark.get().getChapterId());
+
+                highlightBookmark(openingBookmark.get());
+
+                openingBookmark.set(null);
+            }
+
+        });
+
+    }
+
+    public void highlightBookmark(BookmarkStruct bookmark) {
+
+        String mainText = mainTextArea.getText();
+
+        int start = bookmark.getPosition();
+        int end = start + bookmark.getText().length();
+
+        while (!mainText.substring(start, end).equalsIgnoreCase(bookmark.getText())) {
+            start++;
+            end++;
+        }
+
+        mainTextArea.setStyleClass(start, end, "ftext");
+
+        mainTextArea.moveTo(start);
+        mainTextArea.requestFollowCaret();
+
+    }
+
+    public void initCreateBookmarkAction() {
+        BookmarksController.additionBookmark.set(createBookmark());
+    }
+
+    public BookmarkStruct createBookmark() {
+
+        String selectedText = mainTextArea.getSelectedText();
+        ListView<Book> selectedList = bibleTab.isSelected()? bibleListView: ellenListView;
+        PathsEnum root = bibleTab.isSelected()? PathsEnum.Bible: PathsEnum.EllenWhite;
+        String link = "";
+        if (!selectedText.isEmpty()) {
+            link += String.format("%s %d", selectedBook.name.get(), chapterListView.getSelectionModel().getSelectedItem());
+
+            return new BookmarkStruct.Builder()
+                    .with_content(selectedText)
+                    .with_link(link)
+                    .withRoot(root)
+                    .withBookId(selectedList.getSelectionModel().getSelectedIndex())
+                    .withChapterId(chapterListView.getSelectionModel().getSelectedItem())
+                    .withPosition(mainTextArea.getSelection().getStart())
+                    .withText(selectedText)
+                    .build();
+        }
+        return new BookmarkStruct.Builder().build();
+
     }
 
     private void initializeSearchByLink() {
@@ -190,6 +250,7 @@ public class MainController {
     }
 
     private void initializeHoverSelectionPanel() {
+
         HBox hoverSelectionPanel = new HBox();
         hoverSelectionPanel.setVisible(false);
         hoverSelectionPanel.setMaxHeight(30);
@@ -205,7 +266,10 @@ public class MainController {
         GridPane.setRowSpan(hoverSelectionPanel, 4);
         GridPane.setValignment(hoverSelectionPanel, VPos.TOP);
         GridPane.setHalignment(hoverSelectionPanel, HPos.LEFT);
+
         initializeHoverSelectionPanelBehavior(hoverSelectionPanel);
+        initializeHoverSelectionPanelBookmarkButton(hoverSelectionPanel);
+
     }
 
     private void initializeHoverSelectionPanelCopyButton(HBox hoverSelectionPanel) {
@@ -219,6 +283,22 @@ public class MainController {
         hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
         hoverSelectionPanel.getChildren().add(copyButton);
         initializeHoverSelectionPanelCopyButtonBehavior(copyButton);
+
+    }
+
+    private void initializeHoverSelectionPanelBookmarkButton(HBox hoverSelectionPanel) {
+
+        Button createBookmarkButton = new Button();
+        createBookmarkButton.setText("");
+        createBookmarkButton.setPrefWidth(26);
+        createBookmarkButton.setPrefHeight(26);
+        HBox.setMargin(createBookmarkButton, new Insets(0, 0, 1, 3));
+        createBookmarkButton.getStyleClass().add("copy_button");
+        hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+        hoverSelectionPanel.getChildren().add(createBookmarkButton);
+        createBookmarkButton.onActionProperty().set(actionEvent -> {
+            initCreateBookmarkAction();
+        });
 
     }
 
@@ -282,7 +362,7 @@ public class MainController {
                 bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                 bibleListView.scrollTo(selectedReferences.get(0).getBookID());
 
-                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID()-1);
+                chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID()-1);
                 chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                 highlightText(selectedReferences, _new.getWords());
@@ -416,6 +496,7 @@ public class MainController {
         indexator.index();
 
         IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.Bible);
+        IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Bible);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
         /*for (var key : indexator.getDictionary().keySet()) {
@@ -430,6 +511,7 @@ public class MainController {
         indexator.index();
 
         IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.EllenWhite);
+        IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.EllenWhite);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
 
        /* for (var key : indexator.getDictionary().keySet()) {
@@ -439,70 +521,10 @@ public class MainController {
         //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
     }
 
-    public void BookmarksMenu_Click() {
-        bookmarksWindow.GetStage().show();
+    public void openBookmarkWindowOnAction() throws IOException {
+        bookmarksWindow.stage().show();
     }
 
-    public void CreateBookmark__OnAction() {
-        if (!mainTextArea.getSelectedText().isEmpty()) {
-            List<IndexStruct> refs = new ArrayList<>();
-            ListView<Book> selectedResource = bibleTab.isSelected()? bibleListView: ellenTab.isSelected()? ellenListView: bibleListView;
-
-            IndexStruct indexStruct = GetBookmarkIndexStruct(selectedResource);
-
-            refs.add(indexStruct);
-
-            Link link = new Link(refs, selectedResource.getItems(), mainTextArea.getSelectedText());
-
-            Cutser cutser = new Cutser();
-
-            String nameBookmark = STR."\{cutser.GetBibleCut(selectedResource.getSelectionModel().getSelectedIndex())} \{chapterListView.getSelectionModel().getSelectedIndex() + 1}:\{indexStruct.getFragmentID() + 1}  \{mainTextArea.getSelectedText()}";
-
-            Bookmark bookmark = new Bookmark(nameBookmark, link, new Date(System.currentTimeMillis()));
-
-            BookmarksController.bookmarks.add(bookmark);
-
-            BookmarksSerializer.Serialize(BookmarksController.bookmarks);
-
-            /*Реализовать:
-                - нэйминг ссылок[done],
-                - сериализация закладок[done],
-                - десериализация закладок[done],
-                - при открытии приложения создание окна закладок[done],
-                - открытие закладок
-
-            Последовательность создания закладок:
-                << Десериализация уже существующих закладок в лист *x([десериализация закладок])
-                Создание ссылки на закладку([нэйминг ссылок]) > помещается в спец. класс "закладка" > "закладка" помещается в лист *x > лист *x сериализуется([сериализация закладок])
-                >> [открытие закладок]
-             */
-
-        }
-    }
-
-    @NotNull
-    private IndexStruct GetBookmarkIndexStruct(ListView<Book> selectedResource) {
-        IndexStruct indexStruct = new IndexStruct();
-        int currentFragmentId = 0;
-        int position = mainTextArea.getSelection().getStart();
-
-        for (; currentFragmentId < selectedChapter.getFragments().size(); currentFragmentId++) {
-            if (position - selectedChapter.getFragments().get(currentFragmentId).length() < 0) {
-                break;
-            } else position -= selectedChapter.getFragments().get(currentFragmentId).length();
-        }
-
-        indexStruct.setBookID(selectedResource.getSelectionModel().getSelectedIndex());
-        indexStruct.setChapterID(chapterListView.getSelectionModel().getSelectedIndex()+1);
-        indexStruct.setFragmentID(currentFragmentId);
-        indexStruct.setPosition(position);
-        //indexStruct.setWord(mainTextArea.getSelectedText());
-        //indexStruct.setWordLength(mainTextArea.getSelectedText().length());
-
-        logger.info(STR."\{indexStruct.getBookID()}\\\{indexStruct.getChapterID()}\\\{indexStruct.getFragmentID()}\\\{indexStruct.getPosition()}\\\{b_uniqueWord.get(indexStruct.getWordKey())}");
-
-        return indexStruct;
-    }
 
     public void loadIndex__OnAction() {
 
