@@ -8,8 +8,11 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.geometry.*;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -22,12 +25,13 @@ import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
 import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
-import loc.ex.symphony.search.Searcher;
+import loc.ex.symphony.search.*;
 
 import org.fxmisc.richtext.StyleClassedTextArea;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,6 +58,10 @@ public class MainController {
     public ListView<Book> ellenListView;
     public ListView<Link> bibleLinkView;
     public ListView<Link> ellenLinkView;
+    FilteredList<Link> filteredBibleList;
+    FilteredList<Link> filteredEllenList;
+    ObservableList<Link> obsBibleLink = FXCollections.observableArrayList();
+    ObservableList<Link> obsEllenLink = FXCollections.observableArrayList();
     public Tab bibleTab;
 
     private Book selectedBook;
@@ -78,7 +86,7 @@ public class MainController {
     public MainController() {
     }
 
-    public void initialize() throws IOException {
+    public void initialize() throws IOException, URISyntaxException {
 
         bookmarksWindow = new BookmarksWindow();
 
@@ -89,6 +97,9 @@ public class MainController {
         e_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.EllenWhite);
 
         initializeMainTextArea();
+
+        initializeLeafButtons("left");
+        initializeLeafButtons("right");
 
         initializeHoverSelectionPanel();
 
@@ -102,6 +113,10 @@ public class MainController {
         selectedBookLink__OnAction();
 
         initOpenBookmarkAction();
+
+        initSearchByLink();
+
+        initSearchByLinkCut();
 
         Platform.runLater(this::initializeSceneHandler);
 
@@ -146,7 +161,7 @@ public class MainController {
                 openingBook.getSelectionModel().select(openingBookmark.get().getBookId());
                 openingBook.scrollTo(openingBookmark.get().getBookId());
 
-                chapterListView.getSelectionModel().select(openingBookmark.get().getChapterId()-1);
+                chapterListView.getSelectionModel().select(openingBookmark.get().getChapterId() - 1);
                 chapterListView.scrollTo(openingBookmark.get().getChapterId());
 
                 highlightBookmark(openingBookmark.get());
@@ -184,11 +199,11 @@ public class MainController {
     public BookmarkStruct createBookmark() {
 
         String selectedText = mainTextArea.getSelectedText();
-        ListView<Book> selectedList = bibleTab.isSelected()? bibleListView: ellenListView;
-        PathsEnum root = bibleTab.isSelected()? PathsEnum.Bible: PathsEnum.EllenWhite;
+        ListView<Book> selectedList = bibleTab.isSelected() ? bibleListView : ellenListView;
+        PathsEnum root = bibleTab.isSelected() ? PathsEnum.Bible : PathsEnum.EllenWhite;
         String link = "";
         if (!selectedText.isEmpty()) {
-            link += String.format("%s %d", selectedBook.name.get(), chapterListView.getSelectionModel().getSelectedItem());
+            link += String.format("%s %d", new Cutser().getCutByRoot(selectedList.getSelectionModel().getSelectedIndex(), root), chapterListView.getSelectionModel().getSelectedItem());
 
             return new BookmarkStruct.Builder()
                     .with_content(selectedText)
@@ -247,6 +262,59 @@ public class MainController {
         GridPane.setHgrow(mainTextArea, Priority.ALWAYS);
         GridPane.setVgrow(mainTextArea, Priority.ALWAYS);
         GridPane.setMargin(mainTextArea, new Insets(3, 0, 0, 0));
+    }
+
+    private void initializeLeafButtons(String side) throws URISyntaxException {
+
+        String path;
+        HPos pos;
+        if (side.equals("right")) {
+            path = "buttons/forward.png";
+            pos = HPos.RIGHT;
+        } else if (side.equals("left")) {
+            path = "buttons/backward.png";
+            pos = HPos.LEFT;
+        } else {
+            return;
+        }
+
+        String url = Symphony.class.getResource(path).toURI().getPath();
+        if (url.startsWith("/")) url = url.replaceFirst("/", "");
+        Image image = new Image(url);
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(50);
+        imageView.setFitHeight(50);
+
+        Button leafButton = new Button();
+        leafButton.setStyle("-fx-background-color: transparent;");
+        leafButton.setOpacity(0.5);
+        leafButton.setOnMouseEntered(mouse -> {
+            leafButton.setOpacity(1);
+        });
+        leafButton.setOnMouseExited(mouse -> {
+            leafButton.setOpacity(0.5);
+        });
+        leafButton.setPrefWidth(50);
+        leafButton.setPrefHeight(50);
+        leafButton.setMaxWidth(50);
+        leafButton.setMaxHeight(50);
+        leafButton.setGraphic(imageView);
+
+        mainGridPane.getChildren().add(leafButton);
+        GridPane.setColumnIndex(leafButton, 1);
+        GridPane.setRowIndex(leafButton, 3);
+        GridPane.setValignment(leafButton, VPos.BOTTOM);
+        GridPane.setHalignment(leafButton, pos);
+
+        initializeLeafButtonsBehavior(leafButton, side);
+
+    }
+
+    public void initializeLeafButtonsBehavior(Button leafButton, String side) {
+        leafButton.setOnAction(action -> {
+            if (side.equals("right")) chapterListView.getSelectionModel().selectNext();
+            else chapterListView.getSelectionModel().selectPrevious();
+        });
     }
 
     private void initializeHoverSelectionPanel() {
@@ -330,15 +398,15 @@ public class MainController {
         mainTextArea.selectionProperty().addListener((ov, i1, i2) -> {
             if (i1.getStart() != i1.getEnd() && !mainTextArea.getSelectedText().isEmpty()) {
                 hoverSelectionPanel.setVisible(true);
-                Bounds bounds = mainTextArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()+2).orElse(null);
+                Bounds bounds = mainTextArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart() + 2).orElse(null);
 
                 if (bounds != null) {
                     hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
                     hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getMaxHeight());
 
                     if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getMaxWidth()
-                    > currentWindowWidth.get()-200) {
-                        hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get()-200-hoverSelectionPanel.getMaxWidth());
+                            > currentWindowWidth.get() - 200) {
+                        hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getMaxWidth());
                     }
 
                 }
@@ -359,10 +427,13 @@ public class MainController {
         bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
                 List<IndexStruct> selectedReferences = _new.getReferences();
+
+                bibleLinkView.scrollTo(bibleLinkView.getSelectionModel().getSelectedIndex());
+
                 bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                 bibleListView.scrollTo(selectedReferences.get(0).getBookID());
 
-                chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID()-1);
+                chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID() - 1);
                 chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                 highlightText(selectedReferences, _new.getWords());
@@ -372,10 +443,12 @@ public class MainController {
         ellenLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
                 List<IndexStruct> selectedReferences = _new.getReferences();
+                ellenLinkView.scrollTo(bibleLinkView.getSelectionModel().getSelectedIndex());
+
                 ellenListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                 ellenListView.scrollTo(selectedReferences.get(0).getBookID());
 
-                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID()-1);
+                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
                 chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                 highlightText(selectedReferences, _new.getWords());
@@ -385,7 +458,7 @@ public class MainController {
     }
 
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
-        HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected()? b_uniqueWord: ellenLinkTab.isSelected()? e_uniqueWord: b_uniqueWord;
+        HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected() ? b_uniqueWord : ellenLinkTab.isSelected() ? e_uniqueWord : b_uniqueWord;
 
         String mainText = mainTextArea.getText();
 
@@ -400,7 +473,8 @@ public class MainController {
             int start = 0;
             String word = uniqueWords.get(selectedReferences.get(i).getWordKey());
 
-            for (int j = 0; j < selectedReferences.get(i).getFragmentID(); j++) start += chapter.getFragments().get(j).length();
+            for (int j = 0; j < selectedReferences.get(i).getFragmentID(); j++)
+                start += chapter.getFragments().get(j).length();
 
             start += selectedReferences.get(i).getPosition();
             int end = start + uniqueWords.get(selectedReferences.get(i).getWordKey()).length();
@@ -438,16 +512,57 @@ public class MainController {
     private void selectedBibleList__OnAction() {
         bibleListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
+                bibleLinkView.getSelectionModel().select(-1);
                 selectedBook = _new;
                 setChapterListView(_new);
+                if (bibleListView.getSelectionModel().getSelectedIndex() > -1 && !bibleLinkView.getItems().isEmpty())
+                    sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
             }
         });
+    }
+
+    private void sortLinkView(int id) {
+
+        ListView<Link> listView;
+        PathsEnum enu;
+        FilteredList<Link> filteredList;
+
+        if (bibleTab.isSelected()) {
+            enu = PathsEnum.Bible;
+            listView = bibleLinkView;
+            filteredList = filteredBibleList;
+        } else {
+            enu = PathsEnum.EllenWhite;
+            listView = ellenLinkView;
+            filteredList = filteredEllenList;
+        }
+
+        SortedList<Link> sortedList = new SortedList<>(filteredList);
+
+        String searchText = new Cutser().getCutByRoot(id, enu);
+
+        sortedList.setComparator((item1, item2) -> {
+            boolean item1Contains = item1.getLinkContent().contains(searchText);
+            boolean item2Contains = item2.getLinkContent().contains(searchText);
+
+            if (item1Contains && !item2Contains) {
+                return -1;
+            } else if (!item1Contains && item2Contains) {
+                return 1;
+            } else {
+                return item1.getLinkContent().compareTo(item2.getLinkContent());
+            }
+        });
+
+        listView.setItems(sortedList);
+        listView.scrollTo(listView.getSelectionModel().getSelectedIndex());
+
     }
 
     private void setChapterListView(Book _new) {
         ObservableList<Integer> chapterList = FXCollections.observableArrayList();
         chapterList.addAll(_new.getChapters().stream().map(x -> x.number.get()).toList());
-        chapterList.remove(chapterList.size()-1);
+        chapterList.removeLast();
         chapterListView.setItems(chapterList);
 
         chapterListView.getSelectionModel().select(0);
@@ -456,8 +571,11 @@ public class MainController {
     private void selectedEllenList__OnAction() {
         ellenListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
+                ellenListView.getSelectionModel().select(-1);
                 selectedBook = _new;
                 setChapterListView(_new);
+                if (ellenListView.getSelectionModel().getSelectedIndex() > -1 && !ellenLinkView.getItems().isEmpty())
+                    sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
             }
         });
     }
@@ -526,15 +644,131 @@ public class MainController {
     }
 
 
-    public void loadIndex__OnAction() {
+    public void loadIndex__OnAction() throws URISyntaxException, IOException {
+
 
     }
 
     public void selectTabBible__OnAction() {
 
-     }
+    }
 
     public void selectTabEllen__OnAction() {
+
+    }
+
+
+    public void initSearchByLink() {
+
+        filteredBibleList = new FilteredList<>(obsBibleLink, p -> true);
+        searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredBibleList.setPredicate(data -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String[] findTexts = newValue.toLowerCase().split(" ");
+
+                return checkContains(data.getLinkContent().toLowerCase(), findTexts);
+            });
+        });
+        bibleLinkView.setItems(filteredBibleList);
+
+        filteredEllenList = new FilteredList<>(obsEllenLink, p -> true);
+        searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredEllenList.setPredicate(data -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String[] findTexts = newValue.toLowerCase().split(" ");
+
+                return checkContains(data.getLinkContent().toLowerCase(), findTexts);
+            });
+        });
+        ellenLinkView.setItems(filteredEllenList);
+
+    }
+
+    public void initSearchByLinkCut() {
+
+        searchByLinkField.onKeyPressedProperty().set(action -> {
+            if (action.getCode() == KeyCode.ENTER && !searchByLinkField.getText().isEmpty()) {
+                searchByCut(searchByLinkField.getText());
+            }
+        });
+
+    }
+
+    public void searchByCut(String prompt) {
+
+        Cutprompt cutprompt = Cutprompt.validationBuild(prompt);
+        if (cutprompt instanceof ErrorCutprompt)
+            System.err.println("link isn't valid: error prompt");
+        else if (cutprompt instanceof BibleCutprompt) {
+            searchByCutBiblePart((BibleCutprompt) cutprompt);
+        } else if (cutprompt instanceof EllenCutprompt) {
+            searchByCutEllenPart((EllenCutprompt) cutprompt);
+        }
+
+    }
+
+    public void searchByCutEllenPart(EllenCutprompt cutprompt) {
+
+        int page = cutprompt.getPage();
+        int chapterId = 0;
+        int fragmentId = 0;
+        int pos = -1;
+
+        Book book = ellenListView.getItems().get(cutprompt.getBookId());
+        boolean key = false;
+        for (Chapter chapter : book.getChapters()) {
+            fragmentId = 0;
+            for (String fragment : chapter.getFragments()) {
+                if (fragment.contains(String.format("[%d]", page))) {
+                    pos = fragment.indexOf(String.format("[%d]", page));
+                    key = true;
+                    break;
+                }
+                fragmentId++;
+            }
+            if (key) break;
+            chapterId++;
+        }
+
+
+        if (pos > -1) {
+            if (ellenListView.getItems().get(cutprompt.getBookId()).getChapters().size() > chapterId && chapterId >= 0
+                    && ellenListView.getItems().get(cutprompt.getBookId()).getChapters().get(chapterId).getFragments().size() > fragmentId
+                    && fragmentId >= 0) {
+                Link link = new Link(List.of(new IndexStruct(
+                        cutprompt.getBookId(),
+                        chapterId,
+                        fragmentId, 0,
+                        e_uniqueWordH.get(String.valueOf(page)),
+                        null
+                )), ellenListView.getItems(), cutprompt.getMode(), String.valueOf(page));
+                obsEllenLink.add(link);
+            } else System.err.println("link isn't valid: invalid values");
+        } else System.err.println("link isn't valid: invalid values");
+
+    }
+
+    public void searchByCutBiblePart(BibleCutprompt cutprompt) {
+
+        int chapterId = cutprompt.getChapter();
+        int fragmentId = cutprompt.getFragment();
+
+        if (bibleListView.getItems().get(cutprompt.getBookId()).getChapters().size() > chapterId && chapterId >= 0
+                && bibleListView.getItems().get(cutprompt.getBookId()).getChapters().get(chapterId).getFragments().size() > fragmentId
+                && fragmentId >= 0) {
+            Link link = new Link(List.of(new IndexStruct(
+                    cutprompt.getBookId(),
+                    chapterId,
+                    fragmentId, 0,
+                    b_uniqueWordH.get(String.valueOf(fragmentId + 1)),
+                    null
+            )), bibleListView.getItems(), cutprompt.getMode(), String.valueOf(fragmentId + 1));
+            obsBibleLink.add(link);
+        } else System.err.println("link isn't valid: invalid values");
 
     }
 
@@ -542,9 +776,9 @@ public class MainController {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
             if (bibleTab.isSelected()) {
-                FilteredList<Link> filteredList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
-                searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
-                    filteredList.setPredicate(data -> {
+                filteredBibleList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
+                /*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    filteredBibleList.setPredicate(data -> {
                         if (newValue == null || newValue.isEmpty()) {
                             return true;
                         }
@@ -552,13 +786,13 @@ public class MainController {
 
                         return checkContains(data.getLinkContent().toLowerCase(), findTexts);
                     });
-                });
-                bibleLinkView.setItems(filteredList);
+                });*/
+                bibleLinkView.setItems(filteredBibleList);
             }
             if (ellenTab.isSelected()) {
-                FilteredList<Link> filteredList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
-                searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
-                    filteredList.setPredicate(data -> {
+                filteredEllenList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
+                /*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    filteredEllenList.setPredicate(data -> {
                         if (newValue == null || newValue.isEmpty()) {
                             return true;
                         }
@@ -566,8 +800,8 @@ public class MainController {
 
                         return checkContains(data.getLinkContent().toLowerCase(), findTexts);
                     });
-                });
-                ellenLinkView.setItems(filteredList);
+                });*/
+                ellenLinkView.setItems(filteredEllenList);
             }
 
 

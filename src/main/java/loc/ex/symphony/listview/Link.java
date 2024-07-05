@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import javafx.collections.ObservableList;
 import loc.ex.symphony.indexdata.IndexStruct;
+import loc.ex.symphony.search.Cutser;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -27,10 +28,11 @@ public class Link implements Serializable {
     public Link(
             @JsonProperty("references")List<IndexStruct> references,
             @JsonProperty("book")ObservableList<Book> book,
+            PathsEnum pathsEnum,
             @JsonProperty("words")String... words) {
         this.references.addAll(references);
 
-        String bookName = book.get(references.getFirst().getBookID()).name.get();
+        String bookName = new Cutser().getCutByRoot(references.getFirst().getBookID(), pathsEnum); //book.get(references.getFirst().getBookID()).name.get();
         String chapterNumber = (book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID()).number.get()-1) + "";
         String fragmentText = book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID())
                 .getFragments().get(references.getFirst().getFragmentID());

@@ -93,17 +93,17 @@ public class Searcher {
         List<ListIterator<IndexStruct>> iterators = new ArrayList<>();
 
         fillReferencesAndIterators(references, iterators, onlyPrimaryWordsList);
-        selectionOfValidEntries(references, iterators, foundOccurrences, words);
+        selectionOfValidEntries(references, iterators, foundOccurrences, words, pathsEnum);
 
         fillReferencesAndIterators(references, iterators, fullWordsList);
-        selectionOfValidEntries(references, iterators, foundOccurrences, words);
+        selectionOfValidEntries(references, iterators, foundOccurrences, words, pathsEnum);
 
 
         return FXCollections.observableArrayList(foundOccurrences);
     }
 
     private void selectionOfValidEntries(List<IndexStruct> references, List<ListIterator<IndexStruct>> iterators,
-                                         List<Link> foundOccurrences, String[] words) {
+                                         List<Link> foundOccurrences, String[] words, PathsEnum pathsEnum) {
 
         int fixedID = 0;
         boolean isContinue = !references.isEmpty();
@@ -181,7 +181,7 @@ public class Searcher {
             }
 
             if (countOfValid == references.size()) {
-                Link toAdd = new Link(references, resource, words);
+                Link toAdd = new Link(references, resource, pathsEnum, words);
                 if (foundOccurrences.stream().noneMatch(x -> x.toString().equals(toAdd.toString())))
                     foundOccurrences.add(toAdd);
                 if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
