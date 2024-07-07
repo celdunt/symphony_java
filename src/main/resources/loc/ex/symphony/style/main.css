@@ -1,5 +1,28 @@
 .search-field {
 	-fx-background-radius: 10;
+	-fx-padding: 0 0 0 20;
+}
+
+.erase-button {
+    -fx-background-radius: 10 2 2 10;
+    -fx-background-color: transparent;
+    -fx-border-radius: 10 2 2 10;
+    -fx-border-width: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-opacity: 0.7;
+    -fx-padding: 0 0 0 2;
+}
+
+.erase-button:hover {
+    -fx-opacity: 1;
+}
+
+.erase-button:focused {
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
 }
 
 .search-button {

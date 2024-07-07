@@ -19,6 +19,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.FileAdapter;
@@ -46,6 +47,9 @@ public class MainController {
     public Tab bibleLinkTab;
     public Tab ellenLinkTab;
     public TabPane bookTabPane;
+    public Button eraseSearchByText;
+    public Button eraseSearchByName;
+    public Button eraseSearchByLink;
     private Searcher b_searcher;
     private Searcher e_searcher;
 
@@ -65,7 +69,6 @@ public class MainController {
     public Tab bibleTab;
 
     private Book selectedBook;
-    private Chapter selectedChapter;
 
     private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
     private HashMap<Integer, String> e_uniqueWord = new HashMap<>();
@@ -110,7 +113,9 @@ public class MainController {
 
         selectedChapterList__OnAction();
 
-        selectedBookLink__OnAction();
+        LinkHandler.getInstance(this).initLinkListSelection();
+        EraseButtonHandler.getInstance(this).initEraseButtons();
+        MainTextAreaHandler.getInstance(this).initMainTextAreaHandler();
 
         initOpenBookmarkAction();
 
@@ -141,6 +146,8 @@ public class MainController {
         e_searcher.setResource(ellenListView.getItems());
 
         mainTextArea.editableProperty().set(false);
+
+        selectTabBible__OnAction();
     }
 
     public void initOpenBookmarkAction() {
@@ -422,41 +429,6 @@ public class MainController {
         ellenListView.setItems(new FileAdapter().getEllen());
     }
 
-    private void selectedBookLink__OnAction() {
-
-        bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            if (_new != null) {
-                List<IndexStruct> selectedReferences = _new.getReferences();
-
-                bibleLinkView.scrollTo(bibleLinkView.getSelectionModel().getSelectedIndex());
-
-                bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
-                bibleListView.scrollTo(selectedReferences.get(0).getBookID());
-
-                chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID() - 1);
-                chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
-
-                highlightText(selectedReferences, _new.getWords());
-            }
-        });
-
-        ellenLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            if (_new != null) {
-                List<IndexStruct> selectedReferences = _new.getReferences();
-                ellenLinkView.scrollTo(bibleLinkView.getSelectionModel().getSelectedIndex());
-
-                ellenListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
-                ellenListView.scrollTo(selectedReferences.get(0).getBookID());
-
-                chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
-                chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
-
-                highlightText(selectedReferences, _new.getWords());
-            }
-        });
-
-    }
-
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
         HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected() ? b_uniqueWord : ellenLinkTab.isSelected() ? e_uniqueWord : b_uniqueWord;
 
@@ -498,7 +470,6 @@ public class MainController {
     private void selectedChapterList__OnAction() {
         chapterListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
             if (_new != null) {
-                selectedChapter = selectedBook.getChapters().get(_new);
                 mainTextArea.clear();
                 mainTextArea.setStyleClass(0, 0, "jtext");
                 mainTextArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
@@ -511,14 +482,20 @@ public class MainController {
 
     private void selectedBibleList__OnAction() {
         bibleListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            if (_new != null) {
-                bibleLinkView.getSelectionModel().select(-1);
-                selectedBook = _new;
-                setChapterListView(_new);
-                if (bibleListView.getSelectionModel().getSelectedIndex() > -1 && !bibleLinkView.getItems().isEmpty())
-                    sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
-            }
+            selectBibleList();
         });
+    }
+
+    private void selectBibleList() {
+
+        Book _selectedBook = bibleListView.getSelectionModel().getSelectedItem();
+        if (_selectedBook != null) {
+            selectedBook = _selectedBook;
+            setChapterListView(_selectedBook);
+            if (bibleListView.getSelectionModel().getSelectedIndex() > -1 && !bibleLinkView.getItems().isEmpty())
+                sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
+        }
+
     }
 
     private void sortLinkView(int id) {
@@ -570,15 +547,22 @@ public class MainController {
 
     private void selectedEllenList__OnAction() {
         ellenListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            if (_new != null) {
-                ellenListView.getSelectionModel().select(-1);
-                selectedBook = _new;
-                setChapterListView(_new);
-                if (ellenListView.getSelectionModel().getSelectedIndex() > -1 && !ellenLinkView.getItems().isEmpty())
-                    sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
-            }
+            selectEllenList();
         });
     }
+
+    private void selectEllenList() {
+
+        Book _selectedBook = ellenListView.getSelectionModel().getSelectedItem();
+        if (_selectedBook != null) {
+            selectedBook = _selectedBook;
+            setChapterListView(_selectedBook);
+            if (ellenListView.getSelectionModel().getSelectedIndex() > -1 && !ellenLinkView.getItems().isEmpty())
+                sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
+        }
+
+    }
+
 
     private List<File> selectFiles() {
         FileChooser fileChooser = new FileChooser();
@@ -650,11 +634,13 @@ public class MainController {
     }
 
     public void selectTabBible__OnAction() {
-
+        bibleListView.getSelectionModel().select(0);
+        selectBibleList();
     }
 
     public void selectTabEllen__OnAction() {
-
+        ellenListView.getSelectionModel().select(0);
+        selectEllenList();
     }
 
 
@@ -814,5 +800,191 @@ public class MainController {
         }
 
         return true;
+    }
+
+
+    static class LinkHandler {
+
+        private LinkHandler() {
+        }
+
+        private static MainController controller;
+
+        private static class Holder {
+            private static final LinkHandler INSTANCE = new LinkHandler();
+        }
+
+        public static LinkHandler getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return Holder.INSTANCE;
+        }
+
+        public void initLinkListSelection() {
+
+            defineBibleLinkSelection();
+            defineEllenLinkSelection();
+
+        }
+
+        private void defineBibleLinkSelection() {
+
+            controller.bibleLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+                if (_new != null) {
+                    List<IndexStruct> selectedReferences = _new.getReferences();
+
+                    controller.bibleLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
+
+                    controller.bibleListView.getSelectionModel().select(selectedReferences.getFirst().getBookID());
+                    controller.bibleListView.scrollTo(selectedReferences.getFirst().getBookID());
+
+                    controller.chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID() - 1);
+                    controller.chapterListView.scrollTo(selectedReferences.getFirst().getChapterID());
+
+                    controller.highlightText(selectedReferences, _new.getWords());
+                }
+            });
+
+        }
+
+        private void defineEllenLinkSelection() {
+
+            controller.ellenLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+                if (_new != null) {
+                    List<IndexStruct> selectedReferences = _new.getReferences();
+                    controller.ellenLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
+
+                    controller.ellenListView.getSelectionModel().select(selectedReferences.getFirst().getBookID());
+                    controller.ellenListView.scrollTo(selectedReferences.getFirst().getBookID());
+
+                    controller.chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID() - 1);
+                    controller.chapterListView.scrollTo(selectedReferences.getFirst().getChapterID());
+
+                    controller.highlightText(selectedReferences, _new.getWords());
+                }
+            });
+
+        }
+
+    }
+
+    static class EraseButtonHandler {
+
+        private static MainController controller;
+
+        private static class Holder {
+            private static final EraseButtonHandler INSTANCE = new EraseButtonHandler();
+        }
+
+        public static EraseButtonHandler getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return EraseButtonHandler.Holder.INSTANCE;
+        }
+
+        public void initEraseButtons() throws URISyntaxException {
+
+            defineEraseButtonGraphics();
+            defineEraseButtonAction();
+
+        }
+
+        private StackPane defineEraseGraphic(Image image) {
+
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(15);
+            imageView.setFitHeight(15);
+
+            StackPane stackPane = new StackPane(imageView);
+            stackPane.setPrefSize(16, 29);
+            stackPane.setMaxSize(16, 29);
+            stackPane.setMinSize(16, 29);
+            StackPane.setAlignment(imageView, Pos.CENTER);
+            return stackPane;
+
+        }
+
+        private void defineEraseButtonVisibilityRule(TextField textField, Button button) {
+
+            textField.textProperty().addListener(listener -> {
+                button.setVisible(!textField.getText().isEmpty());
+            });
+
+        }
+
+        private void defineEraseButtonGraphics() throws URISyntaxException {
+
+            String url = Objects.requireNonNull(Symphony.class.getResource("buttons/erase2.png")).toURI().getPath();
+            if (url.startsWith("/")) url = url.replaceFirst("/", "");
+
+            System.err.println(url);
+
+            Image image = new Image(url);
+            StackPane byText = defineEraseGraphic(image);
+            StackPane byLink = defineEraseGraphic(image);
+
+            controller.eraseSearchByText.setVisible(false);
+            controller.eraseSearchByLink.setVisible(false);
+            controller.eraseSearchByText.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            controller.eraseSearchByText.setGraphic(byText);
+            controller.eraseSearchByText.setAlignment(Pos.CENTER);
+
+            controller.eraseSearchByLink.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            controller.eraseSearchByLink.setGraphic(byLink);
+            controller.eraseSearchByLink.setAlignment(Pos.CENTER);
+
+            defineEraseButtonVisibilityRule(controller.searchByTextField, controller.eraseSearchByText);
+            defineEraseButtonVisibilityRule(controller.searchByLinkField, controller.eraseSearchByLink);
+
+        }
+
+        private void defineEraseButtonAction() {
+
+            controller.eraseSearchByText.setOnAction(action -> {
+                controller.searchByTextField.setText("");
+                controller.searchByTextField.requestFocus();
+            });
+            controller.eraseSearchByLink.setOnAction(action -> {
+                controller.searchByLinkField.setText("");
+                controller.searchByLinkField.requestFocus();
+            });
+
+        }
+
+    }
+
+    static class MainTextAreaHandler {
+
+        private static MainController controller;
+
+        private static class Holder {
+            private static final MainTextAreaHandler INSTANCE = new MainTextAreaHandler();
+        }
+
+        public static MainTextAreaHandler getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return MainTextAreaHandler.Holder.INSTANCE;
+        }
+
+        public void initMainTextAreaHandler() {
+
+            controller.mainTextArea.setOnMouseClicked(mouse -> {
+                String text = controller.mainTextArea.getText();
+                int caretPosition = controller.mainTextArea.getCaretPosition();
+
+                int start = caretPosition;
+                int end = caretPosition;
+
+                while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
+                    start--;
+                }
+
+                while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
+                    end++;
+                }
+
+                controller.mainTextArea.selectRange(start, end);
+            });
+
+        }
+
     }
 }
