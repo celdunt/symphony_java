@@ -46,6 +46,11 @@
                   <MenuItem mnemonicParsing="false" onAction="#openBookmarkWindowOnAction" text="Открыть окно" />
                   <MenuItem mnemonicParsing="false" text="Создать закладку" />
                </items></Menu>
+            <Menu fx:id="bookmarksMenu1" mnemonicParsing="false" text="Темы">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#openArticleWindowOnAction" text="Открыть окно" />
+               </items>
+            </Menu>
         </menus>
       </MenuBar>
       <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="search-field" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">

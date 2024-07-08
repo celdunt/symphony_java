@@ -16,6 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -29,6 +30,7 @@ import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
 import org.fxmisc.richtext.StyleClassedTextArea;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,12 +64,13 @@ public class MainController {
     public ListView<Book> ellenListView;
     public ListView<Link> bibleLinkView;
     public ListView<Link> ellenLinkView;
-    FilteredList<Link> filteredBibleList;
-    FilteredList<Link> filteredEllenList;
-    ObservableList<Link> obsBibleLink = FXCollections.observableArrayList();
-    ObservableList<Link> obsEllenLink = FXCollections.observableArrayList();
-    public Tab bibleTab;
 
+    public FilteredList<Link> filteredBibleList;
+    public FilteredList<Link> filteredEllenList;
+    public ObservableList<Link> obsBibleLink = FXCollections.observableArrayList();
+    public ObservableList<Link> obsEllenLink = FXCollections.observableArrayList();
+
+    public Tab bibleTab;
     private Book selectedBook;
 
     private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
@@ -79,6 +82,7 @@ public class MainController {
     public static AtomicReference<Double> currentWindowHeight = new AtomicReference<>(0d);
 
     public BookmarksWindow bookmarksWindow;
+    public ArticlesWindow articlesWindow;
 
     public static SimpleStringProperty listener = new SimpleStringProperty();
     public static SimpleStringProperty usabilityButtonListener = new SimpleStringProperty();
@@ -91,63 +95,56 @@ public class MainController {
 
     public void initialize() throws IOException, URISyntaxException {
 
-        bookmarksWindow = new BookmarksWindow();
-
-        b_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.Bible);
-        e_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.EllenWhite);
-
-        b_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.Bible);
-        e_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.EllenWhite);
-
-        initializeMainTextArea();
-
-        initializeLeafButtons("left");
-        initializeLeafButtons("right");
-
-        initializeHoverSelectionPanel();
-
+        initBookmarkWindow();
+        initArticlesWindow();
+        initUniqueWordsFields();
+        MainTextAreaComponent.getInstance(this).initMainTextArea();
+        LeafButtonComponent.getInstance(this).initLeafButtons();
+        HoverPanelComponent.getInstance(this).initHoverPanel();
         initializeBookFiles__OnAction();
-
         selectedBibleList__OnAction();
         selectedEllenList__OnAction();
-
         selectedChapterList__OnAction();
-
-        LinkHandler.getInstance(this).initLinkListSelection();
-        EraseButtonHandler.getInstance(this).initEraseButtons();
-        MainTextAreaHandler.getInstance(this).initMainTextAreaHandler();
-
+        LinkComponent.getInstance(this).initLinkListSelection();
+        EraseButtonComponent.getInstance(this).initEraseButtons();
         initOpenBookmarkAction();
-
         initSearchByLink();
-
         initSearchByLinkCut();
-
         Platform.runLater(this::initializeSceneHandler);
-
         bibleListView.setCellFactory(param -> new RichCell<>());
         bibleLinkView.setCellFactory(param -> new RichCell<>());
         ellenListView.setCellFactory(param -> new RichCell<>());
         ellenLinkView.setCellFactory(param -> new RichCell<>());
-
-
         logger.info("resource is set");
-
         searchButton.setDisable(true);
-
         usabilityButtonListener.addListener(listener -> {
             searchButton.setDisable(false);
         });
-
-
         b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
         b_searcher.setResource(bibleListView.getItems());
         e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
         e_searcher.setResource(ellenListView.getItems());
-
         mainTextArea.editableProperty().set(false);
-
         selectTabBible__OnAction();
+    }
+
+    public void initBookmarkWindow() throws IOException {
+
+        bookmarksWindow = new BookmarksWindow();
+
+    }
+
+    public void initArticlesWindow() throws IOException {
+        articlesWindow = new ArticlesWindow();
+    }
+
+    public void initUniqueWordsFields() throws IOException {
+
+        b_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.Bible);
+        e_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.EllenWhite);
+        b_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.Bible);
+        e_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.EllenWhite);
+
     }
 
     public void initOpenBookmarkAction() {
@@ -199,7 +196,7 @@ public class MainController {
 
     }
 
-    public void initCreateBookmarkAction() {
+    public void doCreateBookmark() {
         BookmarksController.additionBookmark.set(createBookmark());
     }
 
@@ -226,14 +223,6 @@ public class MainController {
 
     }
 
-    private void initializeSearchByLink() {
-        searchByLinkField.textProperty().addListener(action -> {
-            if (bibleLinkTab.isSelected()) {
-
-            }
-        });
-    }
-
     private void initializeSceneHandler() {
         Set<KeyCode> pressedKeys = new HashSet<>();
 
@@ -256,172 +245,6 @@ public class MainController {
             }
         });
 
-    }
-
-    private void initializeMainTextArea() {
-        mainTextArea = new StyleClassedTextArea();
-
-        mainTextArea.setWrapText(true);
-
-        mainGridPane.getChildren().add(mainTextArea);
-        GridPane.setColumnIndex(mainTextArea, 1);
-        GridPane.setRowIndex(mainTextArea, 3);
-        GridPane.setHgrow(mainTextArea, Priority.ALWAYS);
-        GridPane.setVgrow(mainTextArea, Priority.ALWAYS);
-        GridPane.setMargin(mainTextArea, new Insets(3, 0, 0, 0));
-    }
-
-    private void initializeLeafButtons(String side) throws URISyntaxException {
-
-        String path;
-        HPos pos;
-        if (side.equals("right")) {
-            path = "buttons/forward.png";
-            pos = HPos.RIGHT;
-        } else if (side.equals("left")) {
-            path = "buttons/backward.png";
-            pos = HPos.LEFT;
-        } else {
-            return;
-        }
-
-        String url = Symphony.class.getResource(path).toURI().getPath();
-        if (url.startsWith("/")) url = url.replaceFirst("/", "");
-        Image image = new Image(url);
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(50);
-        imageView.setFitHeight(50);
-
-        Button leafButton = new Button();
-        leafButton.setStyle("-fx-background-color: transparent;");
-        leafButton.setOpacity(0.5);
-        leafButton.setOnMouseEntered(mouse -> {
-            leafButton.setOpacity(1);
-        });
-        leafButton.setOnMouseExited(mouse -> {
-            leafButton.setOpacity(0.5);
-        });
-        leafButton.setPrefWidth(50);
-        leafButton.setPrefHeight(50);
-        leafButton.setMaxWidth(50);
-        leafButton.setMaxHeight(50);
-        leafButton.setGraphic(imageView);
-
-        mainGridPane.getChildren().add(leafButton);
-        GridPane.setColumnIndex(leafButton, 1);
-        GridPane.setRowIndex(leafButton, 3);
-        GridPane.setValignment(leafButton, VPos.BOTTOM);
-        GridPane.setHalignment(leafButton, pos);
-
-        initializeLeafButtonsBehavior(leafButton, side);
-
-    }
-
-    public void initializeLeafButtonsBehavior(Button leafButton, String side) {
-        leafButton.setOnAction(action -> {
-            if (side.equals("right")) chapterListView.getSelectionModel().selectNext();
-            else chapterListView.getSelectionModel().selectPrevious();
-        });
-    }
-
-    private void initializeHoverSelectionPanel() {
-
-        HBox hoverSelectionPanel = new HBox();
-        hoverSelectionPanel.setVisible(false);
-        hoverSelectionPanel.setMaxHeight(30);
-        hoverSelectionPanel.setMaxWidth(200);
-        hoverSelectionPanel.getStyleClass().add("hover_selection_panel");
-
-        mainGridPane.getChildren().add(hoverSelectionPanel);
-        initializeHoverSelectionPanelCopyButton(hoverSelectionPanel);
-
-        GridPane.setColumnIndex(hoverSelectionPanel, 0);
-        GridPane.setColumnSpan(hoverSelectionPanel, 3);
-        GridPane.setRowIndex(hoverSelectionPanel, 0);
-        GridPane.setRowSpan(hoverSelectionPanel, 4);
-        GridPane.setValignment(hoverSelectionPanel, VPos.TOP);
-        GridPane.setHalignment(hoverSelectionPanel, HPos.LEFT);
-
-        initializeHoverSelectionPanelBehavior(hoverSelectionPanel);
-        initializeHoverSelectionPanelBookmarkButton(hoverSelectionPanel);
-
-    }
-
-    private void initializeHoverSelectionPanelCopyButton(HBox hoverSelectionPanel) {
-
-        Button copyButton = new Button();
-        copyButton.setText("");
-        copyButton.setPrefWidth(26);
-        copyButton.setPrefHeight(26);
-        HBox.setMargin(copyButton, new Insets(0, 0, 1, 3));
-        copyButton.getStyleClass().add("copy_button");
-        hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
-        hoverSelectionPanel.getChildren().add(copyButton);
-        initializeHoverSelectionPanelCopyButtonBehavior(copyButton);
-
-    }
-
-    private void initializeHoverSelectionPanelBookmarkButton(HBox hoverSelectionPanel) {
-
-        Button createBookmarkButton = new Button();
-        createBookmarkButton.setText("");
-        createBookmarkButton.setPrefWidth(26);
-        createBookmarkButton.setPrefHeight(26);
-        HBox.setMargin(createBookmarkButton, new Insets(0, 0, 1, 3));
-        createBookmarkButton.getStyleClass().add("copy_button");
-        hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
-        hoverSelectionPanel.getChildren().add(createBookmarkButton);
-        createBookmarkButton.onActionProperty().set(actionEvent -> {
-            initCreateBookmarkAction();
-        });
-
-    }
-
-    private void initializeHoverSelectionPanelCopyButtonBehavior(Button copyButton) {
-
-        copyButton.onActionProperty().set(action -> {
-            if (!mainTextArea.getSelectedText().isEmpty()) {
-
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent content = new ClipboardContent();
-                content.putString(mainTextArea.getSelectedText());
-                clipboard.setContent(content);
-
-            }
-        });
-
-    }
-
-    private void initializeHoverSelectionPanelBehavior(HBox hoverSelectionPanel) {
-        AtomicReference<Double> deltaX = new AtomicReference<>(0d);
-        AtomicReference<Double> deltaY = new AtomicReference<>(0d);
-
-        mainTextArea.setOnMousePressed(mouseEvent -> {
-            deltaX.set(mouseEvent.getScreenX() - mouseEvent.getSceneX());
-            deltaY.set(mouseEvent.getScreenY() - mouseEvent.getSceneY());
-        });
-
-
-        mainTextArea.selectionProperty().addListener((ov, i1, i2) -> {
-            if (i1.getStart() != i1.getEnd() && !mainTextArea.getSelectedText().isEmpty()) {
-                hoverSelectionPanel.setVisible(true);
-                Bounds bounds = mainTextArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart() + 2).orElse(null);
-
-                if (bounds != null) {
-                    hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
-                    hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getMaxHeight());
-
-                    if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getMaxWidth()
-                            > currentWindowWidth.get() - 200) {
-                        hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getMaxWidth());
-                    }
-
-                }
-            }
-            if (mainTextArea.getSelectedText().isEmpty()) {
-                hoverSelectionPanel.setVisible(false);
-            }
-        });
     }
 
     private void initializeBookFiles__OnAction() throws IOException {
@@ -563,7 +386,6 @@ public class MainController {
 
     }
 
-
     private List<File> selectFiles() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("text files (*.txt, *.docx)", "*.txt", "*.docx"));
@@ -627,6 +449,9 @@ public class MainController {
         bookmarksWindow.stage().show();
     }
 
+    public void openArticleWindowOnAction() {
+        articlesWindow.stage().show();
+    }
 
     public void loadIndex__OnAction() throws URISyntaxException, IOException {
 
@@ -642,7 +467,6 @@ public class MainController {
         ellenListView.getSelectionModel().select(0);
         selectEllenList();
     }
-
 
     public void initSearchByLink() {
 
@@ -802,19 +626,20 @@ public class MainController {
         return true;
     }
 
+    /* * * Component description * * */
 
-    static class LinkHandler {
+    static class LinkComponent {
 
-        private LinkHandler() {
+        private LinkComponent() {
         }
 
         private static MainController controller;
 
         private static class Holder {
-            private static final LinkHandler INSTANCE = new LinkHandler();
+            private static final LinkComponent INSTANCE = new LinkComponent();
         }
 
-        public static LinkHandler getInstance(MainController _controller) {
+        public static LinkComponent getInstance(MainController _controller) {
             if (controller == null) controller = _controller;
             return Holder.INSTANCE;
         }
@@ -867,17 +692,17 @@ public class MainController {
 
     }
 
-    static class EraseButtonHandler {
+    static class EraseButtonComponent {
 
         private static MainController controller;
 
         private static class Holder {
-            private static final EraseButtonHandler INSTANCE = new EraseButtonHandler();
+            private static final EraseButtonComponent INSTANCE = new EraseButtonComponent();
         }
 
-        public static EraseButtonHandler getInstance(MainController _controller) {
+        public static EraseButtonComponent getInstance(MainController _controller) {
             if (controller == null) controller = _controller;
-            return EraseButtonHandler.Holder.INSTANCE;
+            return EraseButtonComponent.Holder.INSTANCE;
         }
 
         public void initEraseButtons() throws URISyntaxException {
@@ -951,40 +776,280 @@ public class MainController {
 
     }
 
-    static class MainTextAreaHandler {
+    static class MainTextAreaComponent {
 
         private static MainController controller;
 
         private static class Holder {
-            private static final MainTextAreaHandler INSTANCE = new MainTextAreaHandler();
+            private static final MainTextAreaComponent INSTANCE = new MainTextAreaComponent();
         }
 
-        public static MainTextAreaHandler getInstance(MainController _controller) {
+        public static MainTextAreaComponent getInstance(MainController _controller) {
             if (controller == null) controller = _controller;
-            return MainTextAreaHandler.Holder.INSTANCE;
+            return MainTextAreaComponent.Holder.INSTANCE;
         }
 
-        public void initMainTextAreaHandler() {
+        public void initMainTextArea() {
+
+            defineMainTextArea();
+            defineMainTextAreaHandler();
+
+        }
+
+        public void defineMainTextArea() {
+
+            controller.mainTextArea = new StyleClassedTextArea();
+
+            controller.mainTextArea.setWrapText(true);
+
+            controller.mainGridPane.getChildren().add(controller.mainTextArea);
+            GridPane.setColumnIndex(controller.mainTextArea, 1);
+            GridPane.setRowIndex(controller.mainTextArea, 3);
+            GridPane.setHgrow(controller.mainTextArea, Priority.ALWAYS);
+            GridPane.setVgrow(controller.mainTextArea, Priority.ALWAYS);
+            GridPane.setMargin(controller.mainTextArea, new Insets(3, 0, 0, 0));
+
+        }
+
+        public void defineMainTextAreaHandler() {
 
             controller.mainTextArea.setOnMouseClicked(mouse -> {
-                String text = controller.mainTextArea.getText();
-                int caretPosition = controller.mainTextArea.getCaretPosition();
+                if (controller.mainTextArea.getSelectedText().isEmpty()) {
+                    String text = controller.mainTextArea.getText();
+                    int caretPosition = controller.mainTextArea.getCaretPosition();
 
-                int start = caretPosition;
-                int end = caretPosition;
+                    int start = caretPosition;
+                    int end = caretPosition;
 
-                while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
-                    start--;
+                    while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
+                        start--;
+                    }
+
+                    while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
+                        end++;
+                    }
+
+                    controller.mainTextArea.selectRange(start, end+1);
+                    controller.mainTextArea.selectRange(start, end);
                 }
-
-                while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
-                    end++;
-                }
-
-                controller.mainTextArea.selectRange(start, end);
             });
 
         }
 
     }
+
+    static class LeafButtonComponent {
+
+        private static MainController controller;
+
+        private static class Holder {
+            private static final LeafButtonComponent INSTANCE = new LeafButtonComponent();
+        }
+
+        public static LeafButtonComponent getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return LeafButtonComponent.Holder.INSTANCE;
+        }
+
+        public void initLeafButtons() throws URISyntaxException {
+
+            defineLeafButton("left");
+            defineLeafButton("right");
+
+        }
+
+        private void defineLeafButton(String side) throws URISyntaxException {
+
+            String path;
+            HPos pos;
+            if (side.equals("right")) {
+                path = "buttons/forward.png";
+                pos = HPos.RIGHT;
+            } else if (side.equals("left")) {
+                path = "buttons/backward.png";
+                pos = HPos.LEFT;
+            } else {
+                return;
+            }
+
+            String url = Objects.requireNonNull(Symphony.class.getResource(path)).toURI().getPath();
+            if (url.startsWith("/")) url = url.replaceFirst("/", "");
+            Button leafButton = getLeafButton(url);
+
+            controller.mainGridPane.getChildren().add(leafButton);
+            GridPane.setColumnIndex(leafButton, 1);
+            GridPane.setRowIndex(leafButton, 3);
+            GridPane.setValignment(leafButton, VPos.BOTTOM);
+            GridPane.setHalignment(leafButton, pos);
+
+            defineLeafButtonBehavior(leafButton, side);
+
+        }
+
+        private @NotNull Button getLeafButton(String url) {
+            Image image = new Image(url);
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(50);
+            imageView.setFitHeight(50);
+
+            Button leafButton = new Button();
+            leafButton.setStyle("-fx-background-color: transparent;");
+            leafButton.setOpacity(0.5);
+            leafButton.setOnMouseEntered(mouse -> {
+                leafButton.setOpacity(1);
+            });
+            leafButton.setOnMouseExited(mouse -> {
+                leafButton.setOpacity(0.5);
+            });
+            leafButton.setPrefWidth(50);
+            leafButton.setPrefHeight(50);
+            leafButton.setMaxWidth(50);
+            leafButton.setMaxHeight(50);
+            leafButton.setGraphic(imageView);
+            return leafButton;
+        }
+
+        private void defineLeafButtonBehavior(Button leafButton, String side) {
+            leafButton.setOnAction(action -> {
+                if (side.equals("right")) controller.chapterListView.getSelectionModel().selectNext();
+                else controller.chapterListView.getSelectionModel().selectPrevious();
+            });
+        }
+
+    }
+
+    static class HoverPanelComponent {
+
+        private static MainController controller;
+
+        private static class Holder {
+            private static final HoverPanelComponent INSTANCE = new HoverPanelComponent();
+        }
+
+        public static HoverPanelComponent getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return HoverPanelComponent.Holder.INSTANCE;
+        }
+
+        public void initHoverPanel() {
+
+            defineHoverPanel();
+
+        }
+
+        private void defineHoverPanel() {
+
+            HBox hoverSelectionPanel = new HBox();
+            hoverSelectionPanel.setVisible(false);
+            hoverSelectionPanel.setMaxHeight(30);
+            hoverSelectionPanel.setMaxWidth(200);
+            hoverSelectionPanel.getStyleClass().add("hover_selection_panel");
+
+            controller.mainGridPane.getChildren().add(hoverSelectionPanel);
+
+            GridPane.setColumnIndex(hoverSelectionPanel, 0);
+            GridPane.setColumnSpan(hoverSelectionPanel, 3);
+            GridPane.setRowIndex(hoverSelectionPanel, 0);
+            GridPane.setRowSpan(hoverSelectionPanel, 4);
+            GridPane.setValignment(hoverSelectionPanel, VPos.TOP);
+            GridPane.setHalignment(hoverSelectionPanel, HPos.LEFT);
+            defineHoverPanelBehavior(hoverSelectionPanel);
+            defineHoverPanelCopyButton(hoverSelectionPanel);
+            defineHoverPanelBookmarkButton(hoverSelectionPanel);
+
+        }
+
+        private void defineHoverPanelBehavior(HBox hoverSelectionPanel) {
+            AtomicReference<Double> deltaX = new AtomicReference<>(0d);
+            AtomicReference<Double> deltaY = new AtomicReference<>(0d);
+
+            defineDeltas(deltaX, deltaY);
+
+            controller.mainTextArea.selectionProperty().addListener((ov, i1, i2) -> {
+
+                if (i1.getStart() != i1.getEnd() && !controller.mainTextArea.getSelectedText().isEmpty()) {
+                    hoverSelectionPanel.setVisible(true);
+                    Bounds bounds = controller.mainTextArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()).orElse(null);
+
+                    if (bounds != null) {
+                        hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
+                        hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getMaxHeight());
+
+                        if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getMaxWidth()
+                                > currentWindowWidth.get() - 200) {
+                            hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getMaxWidth());
+                        }
+
+                    }
+                }
+                if (controller.mainTextArea.getSelectedText().isEmpty()) {
+                    hoverSelectionPanel.setVisible(false);
+                }
+            });
+        }
+
+        private void defineDeltas(AtomicReference<Double> deltaX, AtomicReference<Double> deltaY) {
+
+            controller.mainTextArea.setOnMousePressed(mouseEvent -> {
+                deltaX.set(getDeltaX(mouseEvent));
+                deltaY.set(getDeltaY(mouseEvent));
+            });
+
+        }
+
+        private double getDeltaX(MouseEvent mouse) {
+            return mouse.getScreenX() - mouse.getSceneX();
+        }
+
+        private double getDeltaY(MouseEvent mouse) {
+            return mouse.getScreenY() - mouse.getSceneY();
+        }
+
+        private void defineHoverPanelCopyButton(HBox hoverSelectionPanel) {
+
+            Button copyButton = new Button();
+            copyButton.setText("");
+            copyButton.setPrefWidth(26);
+            copyButton.setPrefHeight(26);
+            HBox.setMargin(copyButton, new Insets(0, 0, 1, 3));
+            copyButton.getStyleClass().add("copy_button");
+            hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+            hoverSelectionPanel.getChildren().add(copyButton);
+            defineCopyButtonBehavior(copyButton);
+
+        }
+
+        private void defineHoverPanelBookmarkButton(HBox hoverSelectionPanel) {
+
+            Button createBookmarkButton = new Button();
+            createBookmarkButton.setText("");
+            createBookmarkButton.setPrefWidth(26);
+            createBookmarkButton.setPrefHeight(26);
+            HBox.setMargin(createBookmarkButton, new Insets(0, 0, 1, 3));
+            createBookmarkButton.getStyleClass().add("copy_button");
+            hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+            hoverSelectionPanel.getChildren().add(createBookmarkButton);
+            createBookmarkButton.onActionProperty().set(actionEvent -> {
+                controller.doCreateBookmark();
+            });
+
+        }
+
+        private void defineCopyButtonBehavior(Button copyButton) {
+
+            copyButton.onActionProperty().set(action -> {
+                if (!controller.mainTextArea.getSelectedText().isEmpty()) {
+
+                    Clipboard clipboard = Clipboard.getSystemClipboard();
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString(controller.mainTextArea.getSelectedText());
+                    clipboard.setContent(content);
+
+                }
+            });
+
+        }
+
+    }
+
 }
