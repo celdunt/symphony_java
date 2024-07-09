@@ -3,6 +3,7 @@ package loc.ex.symphony.listview;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import java.util.List;
@@ -12,13 +13,16 @@ public class Article {
 
     @JsonCreator
     public Article(
-                @JsonProperty("date") StringProperty date,
-                @JsonProperty("name") StringProperty name,
-                @JsonProperty("links") List<Link> links) {
-        this.date = date;
-        this.name = name;
-        this.links = links;
+                @JsonProperty("date") String date,
+                @JsonProperty("name") String name,
+                @JsonProperty("bLinks") List<Link> bLinks,
+                @JsonProperty("eLinks") List<Link> eLinks) {
+        this.date = new SimpleStringProperty(date);
+        this.name = new SimpleStringProperty(name);
+        this.bLinks = bLinks;
+        this.eLinks = eLinks;
     }
+
 
     public String getDate() {
         return date.get();
@@ -44,18 +48,25 @@ public class Article {
         this.name.set(name);
     }
 
-    public List<Link> getLinks() {
-        return links;
+    public List<Link> getbLinks() {
+        return bLinks;
     }
 
-    public void setLinks(List<Link> links) {
-        this.links = links;
+    public void setbLinks(List<Link> bLinks) {
+        this.bLinks = bLinks;
     }
 
-    public StringProperty date;
-    public StringProperty name;
-    public List<Link> links;
+    public List<Link> geteLinks() {
+        return eLinks;
+    }
 
+    public void seteLinks(List<Link> eLinks) {
+        this.eLinks = eLinks;
+    }
 
+    public SimpleStringProperty date;
+    public SimpleStringProperty name;
+    public List<Link> bLinks;
+    public List<Link> eLinks;
 
 }

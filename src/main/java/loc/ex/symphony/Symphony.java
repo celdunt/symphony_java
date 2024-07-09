@@ -15,7 +15,7 @@ public class Symphony extends Application {
     @Override
     public void start(Stage window) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(Symphony.class.getResource("windows/main-window_design.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 800, 450);
+        Scene scene = new Scene(fxmlLoader.load(), 1000, 650);
         Symphony.window = window;
         Symphony.scene = scene;
 
@@ -27,7 +27,7 @@ public class Symphony extends Application {
             MainController.currentWindowHeight.set(window.getHeight());
         });
 
-        window.setTitle("Symphony");
+        window.setTitle("Симфония");
         window.setScene(scene);
         window.show();
     }

@@ -16,7 +16,7 @@ public class BookmarksWindow {
 
         Scene scene = new Scene(fxmlLoader.load(), 400, 300);
 
-        window.setTitle("Bookmark's");
+        window.setTitle("Закладки");
         window.setScene(scene);
     }
 

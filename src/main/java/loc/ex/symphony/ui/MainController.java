@@ -17,10 +17,7 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.FileAdapter;
@@ -36,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -89,6 +89,7 @@ public class MainController {
     private final Logger logger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     public static ObjectProperty<BookmarkStruct> openingBookmark = new SimpleObjectProperty<>();
+    public static ObjectProperty<Article> openingArticle = new SimpleObjectProperty<>();
 
     public MainController() {
     }
@@ -107,7 +108,9 @@ public class MainController {
         selectedChapterList__OnAction();
         LinkComponent.getInstance(this).initLinkListSelection();
         EraseButtonComponent.getInstance(this).initEraseButtons();
+        defineSearchButtonGraphic();
         initOpenBookmarkAction();
+        initOpenArticleAction();
         initSearchByLink();
         initSearchByLinkCut();
         Platform.runLater(this::initializeSceneHandler);
@@ -177,6 +180,22 @@ public class MainController {
 
     }
 
+    public void initOpenArticleAction() {
+
+        openingArticle.addListener(change -> {
+
+            if (openingArticle.get() != null) {
+                obsBibleLink.clear();
+                obsEllenLink.clear();
+                obsBibleLink.addAll(openingArticle.get().getbLinks());
+                obsEllenLink.addAll(openingArticle.get().geteLinks());
+                openingArticle.set(null);
+            }
+
+        });
+
+    }
+
     public void highlightBookmark(BookmarkStruct bookmark) {
 
         String mainText = mainTextArea.getText();
@@ -198,6 +217,18 @@ public class MainController {
 
     public void doCreateBookmark() {
         BookmarksController.additionBookmark.set(createBookmark());
+    }
+
+    public void doCreateArticle() throws IOException {
+
+        Article article = new Article(
+                LocalDateTime.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)),
+                "",
+                bibleLinkView.getItems(),
+                ellenLinkView.getItems());
+
+        new ConfirmNamingWindow(article).stage().show();
+
     }
 
     public BookmarkStruct createBookmark() {
@@ -586,8 +617,13 @@ public class MainController {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
             if (bibleTab.isSelected()) {
-                filteredBibleList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
-                /*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+                /* *********** ПРОПИСАТЬ ОПЦИИ ПОИСКА ************* */
+
+                obsBibleLink.clear();
+                obsBibleLink.addAll(b_searcher.search(prompt, PathsEnum.Bible));
+
+                /*filteredBibleList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
+                *//*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
                     filteredBibleList.setPredicate(data -> {
                         if (newValue == null || newValue.isEmpty()) {
                             return true;
@@ -596,12 +632,16 @@ public class MainController {
 
                         return checkContains(data.getLinkContent().toLowerCase(), findTexts);
                     });
-                });*/
-                bibleLinkView.setItems(filteredBibleList);
+                });*//*
+                bibleLinkView.setItems(filteredBibleList);*/
             }
             if (ellenTab.isSelected()) {
-                filteredEllenList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
-                /*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+
+                obsEllenLink.clear();
+                obsEllenLink.addAll(e_searcher.search(prompt, PathsEnum.EllenWhite));
+
+                /*filteredEllenList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
+                *//*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
                     filteredEllenList.setPredicate(data -> {
                         if (newValue == null || newValue.isEmpty()) {
                             return true;
@@ -610,8 +650,8 @@ public class MainController {
 
                         return checkContains(data.getLinkContent().toLowerCase(), findTexts);
                     });
-                });*/
-                ellenLinkView.setItems(filteredEllenList);
+                });*//*
+                ellenLinkView.setItems(filteredEllenList);*/
             }
 
 
@@ -625,6 +665,36 @@ public class MainController {
 
         return true;
     }
+
+    private void defineSearchButtonGraphic() throws URISyntaxException {
+
+        String url = Objects.requireNonNull(Symphony.class.getResource("buttons/search.png")).toURI().getPath();
+        if (url.startsWith("/")) url = url.replaceFirst("/", "");
+
+        System.err.println(url);
+
+        Image image = new Image(url);
+
+        searchButton.setGraphic(defineSearchGraphic(image));
+        searchButton.setAlignment(Pos.CENTER);
+
+    }
+
+    private StackPane defineSearchGraphic(Image image) {
+
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(23);
+        imageView.setFitHeight(23);
+
+        StackPane stackPane = new StackPane(imageView);
+        stackPane.setPrefSize(16, 16);
+        stackPane.setMaxSize(16, 16);
+        stackPane.setMinSize(16, 16);
+        StackPane.setAlignment(imageView, Pos.CENTER);
+        return stackPane;
+
+    }
+
 
     /* * * Component description * * */
 
@@ -739,8 +809,6 @@ public class MainController {
 
             String url = Objects.requireNonNull(Symphony.class.getResource("buttons/erase2.png")).toURI().getPath();
             if (url.startsWith("/")) url = url.replaceFirst("/", "");
-
-            System.err.println(url);
 
             Image image = new Image(url);
             StackPane byText = defineEraseGraphic(image);
@@ -931,18 +999,19 @@ public class MainController {
             return HoverPanelComponent.Holder.INSTANCE;
         }
 
-        public void initHoverPanel() {
+        public void initHoverPanel() throws URISyntaxException {
 
             defineHoverPanel();
 
         }
 
-        private void defineHoverPanel() {
+        private void defineHoverPanel() throws URISyntaxException {
 
             HBox hoverSelectionPanel = new HBox();
             hoverSelectionPanel.setVisible(false);
-            hoverSelectionPanel.setMaxHeight(30);
-            hoverSelectionPanel.setMaxWidth(200);
+            hoverSelectionPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
+            hoverSelectionPanel.setMaxHeight(35);
+            hoverSelectionPanel.setMaxWidth(100);
             hoverSelectionPanel.getStyleClass().add("hover_selection_panel");
 
             controller.mainGridPane.getChildren().add(hoverSelectionPanel);
@@ -956,6 +1025,7 @@ public class MainController {
             defineHoverPanelBehavior(hoverSelectionPanel);
             defineHoverPanelCopyButton(hoverSelectionPanel);
             defineHoverPanelBookmarkButton(hoverSelectionPanel);
+            defineHoverPaneArticleButton(hoverSelectionPanel);
 
         }
 
@@ -973,11 +1043,11 @@ public class MainController {
 
                     if (bounds != null) {
                         hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
-                        hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getMaxHeight());
+                        hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getHeight());
 
-                        if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getMaxWidth()
+                        if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getWidth()
                                 > currentWindowWidth.get() - 200) {
-                            hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getMaxWidth());
+                            hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getWidth());
                         }
 
                     }
@@ -1005,7 +1075,7 @@ public class MainController {
             return mouse.getScreenY() - mouse.getSceneY();
         }
 
-        private void defineHoverPanelCopyButton(HBox hoverSelectionPanel) {
+        private void defineHoverPanelCopyButton(HBox hoverSelectionPanel) throws URISyntaxException {
 
             Button copyButton = new Button();
             copyButton.setText("");
@@ -1013,13 +1083,33 @@ public class MainController {
             copyButton.setPrefHeight(26);
             HBox.setMargin(copyButton, new Insets(0, 0, 1, 3));
             copyButton.getStyleClass().add("copy_button");
+            copyButton.setGraphic(defineGraphic("buttons/to-copy.png"));
             hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverSelectionPanel.getChildren().add(copyButton);
             defineCopyButtonBehavior(copyButton);
 
         }
 
-        private void defineHoverPanelBookmarkButton(HBox hoverSelectionPanel) {
+        private StackPane defineGraphic(String url) throws URISyntaxException {
+
+            url = Objects.requireNonNull(Symphony.class.getResource(url)).toURI().getPath();
+            if (url.startsWith("/")) url = url.replaceFirst("/", "");
+            Image image = new Image(url);
+            double k = image.getWidth()/ image.getHeight();
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(26*k);
+            imageView.setFitHeight(26);
+
+            StackPane stackPane = new StackPane(imageView);
+            stackPane.setPrefSize(26, 26);
+            stackPane.setMaxSize(26, 26);
+            stackPane.setMinSize(26, 26);
+            StackPane.setAlignment(imageView, Pos.CENTER);
+            return stackPane;
+
+        }
+
+        private void defineHoverPanelBookmarkButton(HBox hoverSelectionPanel) throws URISyntaxException {
 
             Button createBookmarkButton = new Button();
             createBookmarkButton.setText("");
@@ -1027,6 +1117,7 @@ public class MainController {
             createBookmarkButton.setPrefHeight(26);
             HBox.setMargin(createBookmarkButton, new Insets(0, 0, 1, 3));
             createBookmarkButton.getStyleClass().add("copy_button");
+            createBookmarkButton.setGraphic(defineGraphic("buttons/to-bookmark.png"));
             hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverSelectionPanel.getChildren().add(createBookmarkButton);
             createBookmarkButton.onActionProperty().set(actionEvent -> {
@@ -1044,7 +1135,29 @@ public class MainController {
                     ClipboardContent content = new ClipboardContent();
                     content.putString(controller.mainTextArea.getSelectedText());
                     clipboard.setContent(content);
+                    controller.searchByTextField.setText(controller.mainTextArea.getSelectedText());
 
+                }
+            });
+
+        }
+
+        private void defineHoverPaneArticleButton(HBox hoverPanel) throws URISyntaxException {
+
+            Button createArticleButton = new Button();
+            createArticleButton.setText("");
+            createArticleButton.setPrefWidth(26);
+            createArticleButton.setPrefHeight(26);
+            HBox.setMargin(createArticleButton, new Insets(0, 0, 1, 3));
+            createArticleButton.getStyleClass().add("copy_button");
+            createArticleButton.setGraphic(defineGraphic("buttons/to-article.png"));
+            hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+            hoverPanel.getChildren().add(createArticleButton);
+            createArticleButton.onActionProperty().set(actionEvent -> {
+                try {
+                    controller.doCreateArticle();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             });
 

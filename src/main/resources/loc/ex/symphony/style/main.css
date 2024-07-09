@@ -59,10 +59,18 @@
 }
 
 .hover_selection_panel {
-    -fx-background-color: blue;
+    -fx-border-width: 2;
+    -fx-border-color: #4B3775;
+    -fx-background-color: white;
     -fx-background-radius: 7 7 0 0;
+    -fx-border-radius: 7 7 0 0;
 }
 
 .copy_button {
-    -fx-background-radius: 28;
+    -fx-background-radius: 3;
+    -fx-background-color: transparent;
+}
+
+.copy_button:hover {
+    -fx-translate-y: -3;
 }

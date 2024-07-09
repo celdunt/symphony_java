@@ -16,7 +16,7 @@ public class ArticlesWindow {
 
         Scene scene = new Scene(fxmlLoader.load(), 400, 300);
 
-        window.setTitle("Article's");
+        window.setTitle("Темы");
         window.setScene(scene);
     }
 

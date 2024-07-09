@@ -6,11 +6,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import loc.ex.symphony.file.ArticleSerializer;
+import loc.ex.symphony.file.BookmarksSerializer;
 import loc.ex.symphony.listview.Article;
+import loc.ex.symphony.listview.BookmarkStruct;
 
 import java.io.IOException;
 
@@ -30,6 +31,7 @@ public class ArticlesController {
         initArticleList();
         initLoadArticles();
         initAdditionArticle();
+        initArticleListViewMouseReaction();
 
     }
 
@@ -59,6 +61,46 @@ public class ArticlesController {
         linkColumn.setCellValueFactory(param -> param.getValue().nameProperty());
         linkColumn.setSortable(true);
         articlesTableView.getColumns().add(linkColumn);
+
+        articlesTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+    }
+
+    private void initArticleListViewMouseReaction() {
+
+        ContextMenu menu = new ContextMenu();
+        MenuItem delete = new MenuItem("Удалить тему");
+
+        delete.onActionProperty().set(action -> {
+
+            if (articlesTableView.getSelectionModel().getSelectedIndex() >= 0) {
+                articleObservableList.remove(articlesTableView.getSelectionModel().getSelectedIndex());
+                try {
+                    ArticleSerializer.save(articleObservableList);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        });
+
+        menu.getItems().add(delete);
+
+        articlesTableView.setRowFactory(rf -> {
+            TableRow<Article> row = new TableRow<>();
+            row.setOnMouseClicked(mouse -> {
+
+                if (!row.isEmpty() && mouse.getButton() == MouseButton.PRIMARY
+                        && mouse.getClickCount() == 2 && articlesTableView.getSelectionModel().getSelectedItem() != null) {
+                    MainController.openingArticle.set(row.getItem());
+                } else if (!row.isEmpty() && mouse.getButton() == MouseButton.SECONDARY
+                        && articlesTableView.getSelectionModel().getSelectedItem() != null) {
+                    menu.show(articlesTableView, mouse.getScreenX(), mouse.getScreenY());
+                } else menu.hide();
+
+            });
+            return row;
+        });
 
     }
 

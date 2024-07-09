@@ -3,6 +3,7 @@ package loc.ex.symphony.listview;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.search.Cutser;
@@ -14,23 +15,21 @@ import java.util.List;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class Link implements Serializable {
 
-    private final List<IndexStruct> references = new ArrayList<>();
+    public List<IndexStruct> references = new ArrayList<>();
 
-    public String getLinkContent() {
-        return linkContent;
-    }
+    public String linkContent;
 
-    private final String linkContent;
+    public String[] words;
 
-    private final String[] words;
 
-    @JsonCreator
     public Link(
-            @JsonProperty("references")List<IndexStruct> references,
-            @JsonProperty("book")ObservableList<Book> book,
+            List<IndexStruct> references,
+            ObservableList<Book> book,
             PathsEnum pathsEnum,
-            @JsonProperty("words")String... words) {
+            String... words) {
         this.references.addAll(references);
+
+
 
         String bookName = new Cutser().getCutByRoot(references.getFirst().getBookID(), pathsEnum); //book.get(references.getFirst().getBookID()).name.get();
         String chapterNumber = (book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID()).number.get()-1) + "";
@@ -41,10 +40,24 @@ public class Link implements Serializable {
         this.words = words;
     }
 
+    @JsonCreator
+    public Link(
+        @JsonProperty("references") List<IndexStruct> references,
+        @JsonProperty("linkContent") String linkContent,
+        @JsonProperty("words") String[] words
+    ) {
+        this.references = references;
+        this.linkContent = linkContent;
+        this.words = words;
+    }
+
+    public String getLinkContent() {
+        return linkContent;
+    }
+
     public String[] getWords() {
         return words;
     }
-
 
     public List<IndexStruct> getReferences() {
         return references;
