@@ -74,3 +74,14 @@
 .copy_button:hover {
     -fx-translate-y: -3;
 }
+
+.note {
+    -fx-fill: #4B3775;
+    -fx-stroke: #4B3775;
+    -fx-stroke-width: 0.5px;
+    -fx-cursor: hand;
+}
+
+.note:hover {
+    -fx-underline: true;
+}

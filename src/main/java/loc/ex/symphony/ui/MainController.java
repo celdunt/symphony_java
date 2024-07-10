@@ -13,10 +13,7 @@ import javafx.geometry.*;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
@@ -27,6 +24,8 @@ import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
 import org.fxmisc.richtext.StyleClassedTextArea;
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -231,6 +230,35 @@ public class MainController {
 
     }
 
+    private void doCreateNote() throws IOException {
+
+        if (!mainTextArea.getSelectedText().isEmpty()) {
+            int start = mainTextArea.getSelection().getStart();
+            int end = mainTextArea.getSelection().getEnd();
+
+            Note note = new Note(start, end, "");
+
+            getNotesForSelectedChapter().add(note);
+
+            getNotesForSelectedChapter().display(mainTextArea);
+        }
+
+    }
+
+    private NotesSubStorage getNotesForSelectedChapter() throws IOException {
+        if (bibleTab.isSelected()) {
+            return NotesStorage.getBible(
+                            bibleListView.getSelectionModel().getSelectedIndex(),
+                            chapterListView.getItems().size()
+                    ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        } else {
+            return NotesStorage.getEllen(
+                            ellenListView.getSelectionModel().getSelectedIndex(),
+                            chapterListView.getItems().size()
+                    ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        }
+    }
+
     public BookmarkStruct createBookmark() {
 
         String selectedText = mainTextArea.getSelectedText();
@@ -330,6 +358,12 @@ public class MainController {
 
                 mainTextArea.moveTo(0);
                 mainTextArea.requestFollowCaret();
+
+                try {
+                    getNotesForSelectedChapter().display(mainTextArea);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
@@ -882,25 +916,60 @@ public class MainController {
         public void defineMainTextAreaHandler() {
 
             controller.mainTextArea.setOnMouseClicked(mouse -> {
-                if (controller.mainTextArea.getSelectedText().isEmpty()) {
-                    String text = controller.mainTextArea.getText();
-                    int caretPosition = controller.mainTextArea.getCaretPosition();
-
-                    int start = caretPosition;
-                    int end = caretPosition;
-
-                    while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
-                        start--;
+                if (mouse.getButton() == MouseButton.PRIMARY) {
+                    try {
+                        selectNoteAction();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
+                    if (controller.mainTextArea.getSelectedText().isEmpty()) {
+                        String text = controller.mainTextArea.getText();
+                        int caretPosition = controller.mainTextArea.getCaretPosition();
 
-                    while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
-                        end++;
+                        int start = caretPosition;
+                        int end = caretPosition;
+
+                        while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
+                            start--;
+                        }
+
+                        while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
+                            end++;
+                        }
+
+                        controller.mainTextArea.selectRange(start, end+1);
+                        controller.mainTextArea.selectRange(start, end);
                     }
-
-                    controller.mainTextArea.selectRange(start, end+1);
-                    controller.mainTextArea.selectRange(start, end);
+                } else if (mouse.getButton() == MouseButton.SECONDARY) {
+                    //Удаление заметки
                 }
             });
+
+        }
+
+        private void selectNoteAction() throws IOException {
+
+            int clickPos =  controller.mainTextArea.getCaretPosition();
+            StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
+            int index = 0;
+            int inote = 0;
+            for (StyleSpan<Collection<String>> span : styles) {
+                if (span.getStyle().contains("note")) {
+                    if (clickPos >= index && clickPos <= index + span.getLength()) {
+                        String title;
+                        if (controller.bibleTab.isSelected())
+                            title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
+                        else
+                            title = new Cutser().getBibleCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
+                        title = String.format("%s %d", title, controller.chapterListView.getSelectionModel().getSelectedItem());
+                        new NoteWindow(title, controller.getNotesForSelectedChapter().get(inote)).stage().show();
+                        System.err.println("note is " + inote);
+                    }
+                    inote++;
+                }
+
+                index += span.getLength();
+            }
 
         }
 
@@ -1011,7 +1080,7 @@ public class MainController {
             hoverSelectionPanel.setVisible(false);
             hoverSelectionPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
             hoverSelectionPanel.setMaxHeight(35);
-            hoverSelectionPanel.setMaxWidth(100);
+            hoverSelectionPanel.setMaxWidth(120);
             hoverSelectionPanel.getStyleClass().add("hover_selection_panel");
 
             controller.mainGridPane.getChildren().add(hoverSelectionPanel);
@@ -1026,6 +1095,7 @@ public class MainController {
             defineHoverPanelCopyButton(hoverSelectionPanel);
             defineHoverPanelBookmarkButton(hoverSelectionPanel);
             defineHoverPaneArticleButton(hoverSelectionPanel);
+            defineHoverPaneNoteButton(hoverSelectionPanel);
 
         }
 
@@ -1156,6 +1226,27 @@ public class MainController {
             createArticleButton.onActionProperty().set(actionEvent -> {
                 try {
                     controller.doCreateArticle();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+        }
+
+        private void defineHoverPaneNoteButton(HBox hoverPanel) throws URISyntaxException {
+
+            Button createNoteButton = new Button();
+            createNoteButton.setText("");
+            createNoteButton.setPrefWidth(26);
+            createNoteButton.setPrefHeight(26);
+            HBox.setMargin(createNoteButton, new Insets(0, 0, 1, 3));
+            createNoteButton.getStyleClass().add("copy_button");
+            createNoteButton.setGraphic(defineGraphic("buttons/to-note.png"));
+            hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+            hoverPanel.getChildren().add(createNoteButton);
+            createNoteButton.onActionProperty().set(actionEvent -> {
+                try {
+                    controller.doCreateNote();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
