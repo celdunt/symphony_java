@@ -2,6 +2,7 @@ package loc.ex.symphony.listview;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonAutoDetect
@@ -18,9 +19,23 @@ public class Note {
         this.text = text;
     }
 
-    private int from;
-    private int to;
-    private String text;
+    public int from;
+    public int to;
+    public String text;
+    @JsonIgnore boolean isOpen = false;
+
+    public Note open() {
+        isOpen = true;
+        return this;
+    }
+
+    public void close() {
+        isOpen = false;
+    }
+
+    @JsonIgnore public boolean isOpened() {
+        return isOpen;
+    }
 
     public int getFrom() {
         return from;

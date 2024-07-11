@@ -136,7 +136,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>loc.ex.symphony/loc.ex.symphony.Symphony</mainClass>
+                            <mainClass>loc.ex.symphony.SymphonyLauncher</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

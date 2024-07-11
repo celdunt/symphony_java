@@ -14,7 +14,7 @@ public class NotesStorage {
     @JsonIgnore private static NotesStorage[] bibleNoteStorage;
     @JsonIgnore private static NotesStorage[] ellenNoteStorage;
 
-    private NotesSubStorage[] notesSubStorage;
+    public NotesSubStorage[] notesSubStorage;
 
     public static NotesStorage getBible(int index, int chapters) throws IOException {
         if (bibleNoteStorage == null) {

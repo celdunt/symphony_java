@@ -29,26 +29,25 @@
    <children>
       <MenuBar GridPane.columnSpan="3">
         <menus>
-          <Menu mnemonicParsing="false" text="Файл">
+          <!--<Menu mnemonicParsing="false" text="Файл">
             <items>
               <MenuItem mnemonicParsing="false" onAction="#openBibleFiles__onAction" text="Загрузка Б." />
               <MenuItem mnemonicParsing="false" onAction="#openEllenFiles__onAction" text="Загрузка Е." />
             </items>
-          </Menu>
+          </Menu>-->
             <Menu mnemonicParsing="false" text="Индекс">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#doIndex__OnAction" text="Индексировать" />
-                  <MenuItem mnemonicParsing="false" onAction="#loadIndex__OnAction" text="?Загрузка?" />
               </items>
             </Menu>
             <Menu fx:id="bookmarksMenu" mnemonicParsing="false" text="Закладки">
                <items>
                   <MenuItem mnemonicParsing="false" onAction="#openBookmarkWindowOnAction" text="Открыть окно" />
-                  <MenuItem mnemonicParsing="false" text="Создать закладку" />
                </items></Menu>
             <Menu fx:id="bookmarksMenu1" mnemonicParsing="false" text="Темы">
                <items>
                   <MenuItem mnemonicParsing="false" onAction="#openArticleWindowOnAction" text="Открыть окно" />
+                  <MenuItem mnemonicParsing="false" onAction="#doCreateArticle" text="Создать тему" />
                </items>
             </Menu>
         </menus>

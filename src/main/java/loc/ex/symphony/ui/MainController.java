@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -98,6 +99,8 @@ public class MainController {
         initBookmarkWindow();
         initArticlesWindow();
         initUniqueWordsFields();
+        initSearchByTextEnterPressed();
+        initBookLinkSelectionHandler();
         MainTextAreaComponent.getInstance(this).initMainTextArea();
         LeafButtonComponent.getInstance(this).initLeafButtons();
         HoverPanelComponent.getInstance(this).initHoverPanel();
@@ -129,6 +132,45 @@ public class MainController {
         mainTextArea.editableProperty().set(false);
         selectTabBible__OnAction();
     }
+
+    public void initSearchByTextEnterPressed() {
+
+        searchByTextField.setOnKeyPressed(key -> {
+            if (key.getCode() == KeyCode.ENTER) {
+                doSearch__OnAction();
+            }
+        });
+
+    }
+
+    public void initBookLinkSelectionHandler() {
+
+        bookLinkSelectionHandler(bibleLinkView);
+        bookLinkSelectionHandler(ellenLinkView);
+
+    }
+
+    public void bookLinkSelectionHandler(ListView<Link> linkView) {
+        linkView.setOnKeyPressed(key -> {
+            if (key.isControlDown() && key.getCode() == KeyCode.A) {
+                linkView.getSelectionModel().selectAll();
+            } else if (key.getCode() == KeyCode.CONTROL) {
+                linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            } else if (key.getCode() == KeyCode.DELETE) {
+                if (linkView == bibleLinkView) {
+                    obsBibleLink.removeAll(linkView.getSelectionModel().getSelectedItems());
+                } else if (linkView == ellenLinkView) {
+                    obsEllenLink.removeAll(linkView.getSelectionModel().getSelectedItems());
+                }
+            }
+        });
+        linkView.setOnKeyReleased(key -> {
+            if (key.getCode() == KeyCode.CONTROL) {
+                linkView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+            }
+        });
+    }
+
 
     public void initBookmarkWindow() throws IOException {
 
@@ -230,7 +272,7 @@ public class MainController {
 
     }
 
-    private void doCreateNote() throws IOException {
+    private void doCreateNote() throws IOException, URISyntaxException {
 
         if (!mainTextArea.getSelectedText().isEmpty()) {
             int start = mainTextArea.getSelection().getStart();
@@ -241,6 +283,8 @@ public class MainController {
             getNotesForSelectedChapter().add(note);
 
             getNotesForSelectedChapter().display(mainTextArea);
+
+            MainTextAreaComponent.getInstance(this).selectNoteAction();
         }
 
     }
@@ -380,6 +424,7 @@ public class MainController {
         if (_selectedBook != null) {
             selectedBook = _selectedBook;
             setChapterListView(_selectedBook);
+            bibleLinkView.getSelectionModel().select(-1);
             if (bibleListView.getSelectionModel().getSelectedIndex() > -1 && !bibleLinkView.getItems().isEmpty())
                 sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
         }
@@ -443,6 +488,7 @@ public class MainController {
 
         Book _selectedBook = ellenListView.getSelectionModel().getSelectedItem();
         if (_selectedBook != null) {
+            ellenLinkView.getSelectionModel().select(-1);
             selectedBook = _selectedBook;
             setChapterListView(_selectedBook);
             if (ellenListView.getSelectionModel().getSelectedIndex() > -1 && !ellenLinkView.getItems().isEmpty())
@@ -518,11 +564,6 @@ public class MainController {
         articlesWindow.stage().show();
     }
 
-    public void loadIndex__OnAction() throws URISyntaxException, IOException {
-
-
-    }
-
     public void selectTabBible__OnAction() {
         bibleListView.getSelectionModel().select(0);
         selectBibleList();
@@ -576,12 +617,12 @@ public class MainController {
     public void searchByCut(String prompt) {
 
         Cutprompt cutprompt = Cutprompt.validationBuild(prompt);
-        if (cutprompt instanceof ErrorCutprompt)
-            System.err.println("link isn't valid: error prompt");
-        else if (cutprompt instanceof BibleCutprompt) {
-            searchByCutBiblePart((BibleCutprompt) cutprompt);
-        } else if (cutprompt instanceof EllenCutprompt) {
-            searchByCutEllenPart((EllenCutprompt) cutprompt);
+        switch (cutprompt) {
+            case ErrorCutprompt errorCutprompt -> System.err.println("link isn't valid: error prompt");
+            case BibleCutprompt bibleCutprompt -> searchByCutBiblePart(bibleCutprompt);
+            case EllenCutprompt ellenCutprompt -> searchByCutEllenPart(ellenCutprompt);
+            default -> {
+            }
         }
 
     }
@@ -702,12 +743,12 @@ public class MainController {
 
     private void defineSearchButtonGraphic() throws URISyntaxException {
 
-        String url = Objects.requireNonNull(Symphony.class.getResource("buttons/search.png")).toURI().getPath();
-        if (url.startsWith("/")) url = url.replaceFirst("/", "");
+        InputStream urlStream = Symphony.class.getResourceAsStream("buttons/search.png");
+        if (urlStream == null) {
+            throw new RuntimeException("Resource not found url");
+        }
 
-        System.err.println(url);
-
-        Image image = new Image(url);
+        Image image = new Image(urlStream);
 
         searchButton.setGraphic(defineSearchGraphic(image));
         searchButton.setAlignment(Pos.CENTER);
@@ -761,7 +802,7 @@ public class MainController {
                 if (_new != null) {
                     List<IndexStruct> selectedReferences = _new.getReferences();
 
-                    controller.bibleLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
+                    //controller.bibleLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
 
                     controller.bibleListView.getSelectionModel().select(selectedReferences.getFirst().getBookID());
                     controller.bibleListView.scrollTo(selectedReferences.getFirst().getBookID());
@@ -841,10 +882,12 @@ public class MainController {
 
         private void defineEraseButtonGraphics() throws URISyntaxException {
 
-            String url = Objects.requireNonNull(Symphony.class.getResource("buttons/erase2.png")).toURI().getPath();
-            if (url.startsWith("/")) url = url.replaceFirst("/", "");
+            InputStream urlStream = Symphony.class.getResourceAsStream("buttons/erase2.png");
+            if (urlStream == null) {
+                throw new RuntimeException("Resource not found url");
+            }
 
-            Image image = new Image(url);
+            Image image = new Image(urlStream);
             StackPane byText = defineEraseGraphic(image);
             StackPane byLink = defineEraseGraphic(image);
 
@@ -882,6 +925,8 @@ public class MainController {
 
         private static MainController controller;
 
+        private ContextMenu contextMenu;
+
         private static class Holder {
             private static final MainTextAreaComponent INSTANCE = new MainTextAreaComponent();
         }
@@ -893,6 +938,7 @@ public class MainController {
 
         public void initMainTextArea() {
 
+            defineContextMenu();
             defineMainTextArea();
             defineMainTextAreaHandler();
 
@@ -913,13 +959,22 @@ public class MainController {
 
         }
 
+        private void defineContextMenu() {
+
+            contextMenu = new ContextMenu();
+            MenuItem delete = new MenuItem("Удалить заметку");
+            contextMenu.getItems().add(delete);
+
+        }
+
         public void defineMainTextAreaHandler() {
 
             controller.mainTextArea.setOnMouseClicked(mouse -> {
                 if (mouse.getButton() == MouseButton.PRIMARY) {
+                    contextMenu.hide();
                     try {
                         selectNoteAction();
-                    } catch (IOException e) {
+                    } catch (IOException | URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
                     if (controller.mainTextArea.getSelectedText().isEmpty()) {
@@ -941,13 +996,52 @@ public class MainController {
                         controller.mainTextArea.selectRange(start, end);
                     }
                 } else if (mouse.getButton() == MouseButton.SECONDARY) {
-                    //Удаление заметки
+                    try {
+                        int pos = controller.mainTextArea.hit(mouse.getX(), mouse.getY()).getInsertionIndex();
+                        controller.mainTextArea.moveTo(pos);
+                        deleteNoteAction(mouse);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
 
         }
 
-        private void selectNoteAction() throws IOException {
+        private void deleteNoteAction(MouseEvent mouse) throws IOException {
+
+            int clickPos =  controller.mainTextArea.getCaretPosition();
+            StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
+            int index = 0;
+            int inote = 0;
+            for (StyleSpan<Collection<String>> span : styles) {
+                if (span.getStyle().contains("note")) {
+                    if (clickPos >= index && clickPos <= index + span.getLength()) {
+
+                        int finalInote = inote;
+                        contextMenu.getItems().getFirst().onActionProperty().set(actionEvent -> {
+                            Note note = null;
+                            try {
+                                note = controller.getNotesForSelectedChapter().get(finalInote);
+                                controller.mainTextArea.setStyleClass(note.from, note.to, "");
+                                controller.getNotesForSelectedChapter().remove(finalInote);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                        contextMenu.show(controller.mainTextArea,
+                                mouse.getScreenX(), mouse.getScreenY());
+
+                    }
+                    inote++;
+                }
+
+                index += span.getLength();
+            }
+
+        }
+
+        private void selectNoteAction() throws IOException, URISyntaxException {
 
             int clickPos =  controller.mainTextArea.getCaretPosition();
             StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
@@ -961,9 +1055,12 @@ public class MainController {
                             title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
                         else
                             title = new Cutser().getBibleCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
-                        title = String.format("%s %d", title, controller.chapterListView.getSelectionModel().getSelectedItem());
-                        new NoteWindow(title, controller.getNotesForSelectedChapter().get(inote)).stage().show();
-                        System.err.println("note is " + inote);
+                        title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
+                                controller.mainTextArea.getText(index, index+span.getLength()));
+                        Note note = controller.getNotesForSelectedChapter().get(inote);
+                        if (!note.isOpened()) {
+                            new NoteWindow(title, note).stage().show();
+                        }
                     }
                     inote++;
                 }
@@ -1009,9 +1106,8 @@ public class MainController {
                 return;
             }
 
-            String url = Objects.requireNonNull(Symphony.class.getResource(path)).toURI().getPath();
-            if (url.startsWith("/")) url = url.replaceFirst("/", "");
-            Button leafButton = getLeafButton(url);
+
+            Button leafButton = getLeafButton(path);
 
             controller.mainGridPane.getChildren().add(leafButton);
             GridPane.setColumnIndex(leafButton, 1);
@@ -1024,11 +1120,20 @@ public class MainController {
         }
 
         private @NotNull Button getLeafButton(String url) {
-            Image image = new Image(url);
+            InputStream urlStream = Symphony.class.getResourceAsStream(url);
+            if (urlStream == null) {
+                throw new RuntimeException("Resource not found url");
+            }
+
+            Image image = new Image(urlStream);
             ImageView imageView = new ImageView(image);
             imageView.setFitWidth(50);
             imageView.setFitHeight(50);
 
+            return getButton(imageView);
+        }
+
+        private static @NotNull Button getButton(ImageView imageView) {
             Button leafButton = new Button();
             leafButton.setStyle("-fx-background-color: transparent;");
             leafButton.setOpacity(0.5);
@@ -1162,9 +1267,12 @@ public class MainController {
 
         private StackPane defineGraphic(String url) throws URISyntaxException {
 
-            url = Objects.requireNonNull(Symphony.class.getResource(url)).toURI().getPath();
-            if (url.startsWith("/")) url = url.replaceFirst("/", "");
-            Image image = new Image(url);
+            InputStream urlStream = Symphony.class.getResourceAsStream(url);
+            if (urlStream == null) {
+                throw new RuntimeException("Resource not found url");
+            }
+
+            Image image = new Image(urlStream);
             double k = image.getWidth()/ image.getHeight();
             ImageView imageView = new ImageView(image);
             imageView.setFitWidth(26*k);
@@ -1247,7 +1355,7 @@ public class MainController {
             createNoteButton.onActionProperty().set(actionEvent -> {
                 try {
                     controller.doCreateNote();
-                } catch (IOException e) {
+                } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
             });

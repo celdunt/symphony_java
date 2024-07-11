@@ -18,7 +18,7 @@ public class NotesSubStorage {
 
     public NotesSubStorage() {}
 
-    private List<Note> notes = new ArrayList<>();
+    public List<Note> notes = new ArrayList<>();
 
     public Note get(int index) {
         if (index >= 0 && index < notes.size())
@@ -28,6 +28,10 @@ public class NotesSubStorage {
 
     public void add(Note note) {
         notes.add(note);
+    }
+
+    public void remove(int index) {
+        notes.remove(index);
     }
 
     public void display(StyleClassedTextArea textArea) {

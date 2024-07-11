@@ -1,7 +1,6 @@
 package loc.ex.symphony.indexdata;
 
 import javafx.collections.ObservableList;
-import loc.ex.symphony.db.DbHandler;
 import loc.ex.symphony.listview.Book;
 
 import java.io.IOException;

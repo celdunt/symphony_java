@@ -13,7 +13,6 @@ module loc.ex.symphony {
     requires java.logging;
     requires org.fxmisc.richtext;
     requires java.sql;
-    requires org.xerial.sqlitejdbc;
     requires com.fasterxml.jackson.databind;
 
 
