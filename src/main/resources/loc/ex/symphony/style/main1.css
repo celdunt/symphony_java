@@ -1,0 +1,96 @@
+@font-face {
+
+	font-family: 'Cruinn';
+	src: url('../fonts/Cruinn-Regular.ttf');
+
+}
+
+.root {
+	-fx-font-family: 'Cruinn';
+	-fx-font-size: 14px;
+}
+
+.round-text-field {
+	-fx-background-radius: 10;
+	-fx-padding: 0 0 0 20;
+}
+
+.erase-button {
+	-fx-background-radius: 10 2 2 10;
+	-fx-background-color: transparent;
+	-fx-border-width: 0;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+	-fx-background-insets: 0;
+	-fx-opacity: 0.7;
+	-fx-padding: 0 0 0 2;
+}
+
+.transparent-list-view {
+	-fx-background-color: red;
+}
+
+.erase-button:hover {
+	-fx-opacity: 1;
+}
+
+.erase-button:focused {
+	-fx-border-color: transparent;
+	-fx-background-insets: 0;
+}
+
+.round-button {
+	-fx-background-radius: 40;
+	-fx-border-radius: 40;
+}
+
+.tab-pane .tab-header-background {
+	-fx-background-color: transparent;
+}
+
+.h-listview, .v-listview {
+	-fx-border-width: 1;
+	-fx-border-color: lightgray;
+}
+
+.h-listview, .v-listview > .scroll-pane {
+    -fx-padding: 0;
+}
+
+.v-listview .list-cell {
+	-fx-wrap-text: true;
+}
+
+.fill-text {
+	-fx-fill: black;
+	-fx-stroke: red;
+	-fx-stroke-width: 1px
+}
+
+.hover-selection-panel {
+	-fx-border-width: 2;
+	-fx-border-color: #685697;
+	-fx-background-color: white;
+	-fx-background-radius: 7 7 0 0;
+	-fx-border-radius: 7 7 0 0;
+}
+
+.hover-panel-button {
+	-fx-background-radius: 3;
+	-fx-background-color: transparent;
+}
+
+.hover-panel-button:hover {
+	-fx-translate-y: -3;
+}
+
+.note {
+	-fx-fill: #4B3775;
+	-fx-stroke: #4B3775;
+	-fx-stroke-width: 1px;
+	-fx-cursor: hand;
+}
+
+.note:hover {
+	-fx-underline: true;
+}

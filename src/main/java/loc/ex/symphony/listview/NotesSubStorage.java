@@ -23,7 +23,7 @@ public class NotesSubStorage {
     public Note get(int index) {
         if (index >= 0 && index < notes.size())
             return notes.get(index);
-        else return notes.getFirst();
+        else return notes.get(0);
     }
 
     public void add(Note note) {

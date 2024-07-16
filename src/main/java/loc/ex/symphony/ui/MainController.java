@@ -249,7 +249,7 @@ public class MainController {
             end++;
         }
 
-        mainTextArea.setStyleClass(start, end, "ftext");
+        mainTextArea.setStyleClass(start, end, "fill-text");
 
         mainTextArea.moveTo(start);
         mainTextArea.requestFollowCaret();
@@ -360,7 +360,7 @@ public class MainController {
 
         String mainText = mainTextArea.getText();
 
-        int positionCarret = 0;
+        int positionCaret = 0;
 
         selectedReferences.sort(Comparator.comparingInt(IndexStruct::getPosition));
 
@@ -384,12 +384,12 @@ public class MainController {
                 end++;
             }
 
-            if (positionCarret == 0) positionCarret = start;
-            mainTextArea.setStyleClass(start, end, "ftext");
+            if (positionCaret == 0) positionCaret = start;
+            mainTextArea.setStyleClass(start, end, "fill-text");
 
         }
 
-        mainTextArea.moveTo(positionCarret);
+        mainTextArea.moveTo(positionCaret);
         mainTextArea.requestFollowCaret();
     }
 
@@ -472,7 +472,7 @@ public class MainController {
     private void setChapterListView(Book _new) {
         ObservableList<Integer> chapterList = FXCollections.observableArrayList();
         chapterList.addAll(_new.getChapters().stream().map(x -> x.number.get()).toList());
-        chapterList.removeLast();
+        chapterList.remove(chapterList.size()-1);
         chapterListView.setItems(chapterList);
 
         chapterListView.getSelectionModel().select(0);
@@ -762,9 +762,9 @@ public class MainController {
         imageView.setFitHeight(23);
 
         StackPane stackPane = new StackPane(imageView);
-        stackPane.setPrefSize(16, 16);
-        stackPane.setMaxSize(16, 16);
-        stackPane.setMinSize(16, 16);
+        stackPane.setPrefSize(13, 13);
+        stackPane.setMaxSize(13, 13);
+        stackPane.setMinSize(13, 13);
         StackPane.setAlignment(imageView, Pos.CENTER);
         return stackPane;
 
@@ -804,11 +804,11 @@ public class MainController {
 
                     //controller.bibleLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
 
-                    controller.bibleListView.getSelectionModel().select(selectedReferences.getFirst().getBookID());
-                    controller.bibleListView.scrollTo(selectedReferences.getFirst().getBookID());
+                    controller.bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
+                    controller.bibleListView.scrollTo(selectedReferences.get(0).getBookID());
 
-                    controller.chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID() - 1);
-                    controller.chapterListView.scrollTo(selectedReferences.getFirst().getChapterID());
+                    controller.chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
+                    controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                     controller.highlightText(selectedReferences, _new.getWords());
                 }
@@ -823,11 +823,11 @@ public class MainController {
                     List<IndexStruct> selectedReferences = _new.getReferences();
                     controller.ellenLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
 
-                    controller.ellenListView.getSelectionModel().select(selectedReferences.getFirst().getBookID());
-                    controller.ellenListView.scrollTo(selectedReferences.getFirst().getBookID());
+                    controller.ellenListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
+                    controller.ellenListView.scrollTo(selectedReferences.get(0).getBookID());
 
-                    controller.chapterListView.getSelectionModel().select(selectedReferences.getFirst().getChapterID() - 1);
-                    controller.chapterListView.scrollTo(selectedReferences.getFirst().getChapterID());
+                    controller.chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
+                    controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                     controller.highlightText(selectedReferences, _new.getWords());
                 }
@@ -1019,7 +1019,7 @@ public class MainController {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
 
                         int finalInote = inote;
-                        contextMenu.getItems().getFirst().onActionProperty().set(actionEvent -> {
+                        contextMenu.getItems().get(0).onActionProperty().set(actionEvent -> {
                             Note note = null;
                             try {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
@@ -1186,7 +1186,7 @@ public class MainController {
             hoverSelectionPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
             hoverSelectionPanel.setMaxHeight(35);
             hoverSelectionPanel.setMaxWidth(120);
-            hoverSelectionPanel.getStyleClass().add("hover_selection_panel");
+            hoverSelectionPanel.getStyleClass().add("hover-selection-panel");
 
             controller.mainGridPane.getChildren().add(hoverSelectionPanel);
 

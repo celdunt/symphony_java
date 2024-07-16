@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.text.Font?>
 
-<GridPane fx:id="mainGridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
+<GridPane fx:id="mainGridPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="800.0" stylesheets="@../style/main1.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.MainController">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" maxWidth="175.0" minWidth="10.0" prefWidth="175.0" />
     <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
@@ -51,28 +51,31 @@
                </items>
             </Menu>
         </menus>
+         <GridPane.margin>
+            <Insets bottom="5.0" />
+         </GridPane.margin>
       </MenuBar>
-      <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="search-field" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
+      <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="round-text-field" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets right="35.0" top="3.0" />
          </GridPane.margin>
       </TextField>
-      <Button fx:id="searchButton" mnemonicParsing="false" onAction="#doSearch__OnAction" prefHeight="32.0" prefWidth="32.0" styleClass="search-button" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+      <Button fx:id="searchButton" mnemonicParsing="false" onAction="#doSearch__OnAction" prefHeight="32.0" prefWidth="32.0" styleClass="round-button" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
          <GridPane.margin>
             <Insets top="3.0" />
          </GridPane.margin>
       </Button>
-      <TextField fx:id="searchByNameField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по названию" styleClass="search-field" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+      <TextField fx:id="searchByNameField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по названию" styleClass="round-text-field" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets left="3.0" right="3.0" top="3.0" />
          </GridPane.margin>
       </TextField>
-      <TextField fx:id="searchByLinkField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по ссылкам" styleClass="search-field" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+      <TextField fx:id="searchByLinkField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по ссылкам" styleClass="round-text-field" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets left="3.0" right="3.0" top="3.0" />
          </GridPane.margin>
       </TextField>
-      <ListView fx:id="chapterListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" orientation="HORIZONTAL" styleClass="chapter-list" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+      <ListView fx:id="chapterListView" blendMode="SRC_ATOP" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" orientation="HORIZONTAL" styleClass="h-listview" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets top="3.0" />
          </GridPane.margin>
@@ -81,12 +84,12 @@
         <tabs>
           <Tab fx:id="bibleTab" onSelectionChanged="#selectTabBible__OnAction" text="Библия">
                <content>
-                  <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-list" />
+                  <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-listview" />
                </content>
             </Tab>
           <Tab fx:id="ellenTab" onSelectionChanged="#selectTabEllen__OnAction" text="Э. Уайт">
                <content>
-                  <ListView fx:id="ellenListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+                  <ListView fx:id="ellenListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
                </content></Tab>
         </tabs>
          <padding>
@@ -96,11 +99,11 @@
       <TabPane nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
         <tabs>
           <Tab fx:id="bibleLinkTab" text="Библия">
-              <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+              <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
           </Tab>
           <Tab fx:id="ellenLinkTab" text="Э. Уайт">
                <content>
-                  <ListView fx:id="ellenLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-list" />
+                  <ListView fx:id="ellenLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
                </content></Tab>
         </tabs>
          <padding>

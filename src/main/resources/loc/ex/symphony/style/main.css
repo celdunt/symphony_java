@@ -1,6 +1,22 @@
+@font-face {
+
+    font-family: 'Fregat';
+    src: url('../fonts/Fregat.otf');
+
+}
+
+.root {
+    -fx-font-family: 'Fregat';
+    -fx-font-size: 14px;
+}
+
 .search-field {
 	-fx-background-radius: 10;
 	-fx-padding: 0 0 0 20;
+}
+
+.text-field {
+    -fx-prompt-text-fill: gray;
 }
 
 .erase-button {
@@ -50,12 +66,8 @@
 
 .ftext {
     -fx-fill: black;
-    -fx-stroke: green;
+    -fx-stroke: red;
     -fx-stroke-width: 1px;
-}
-
-.jtext {
-    -fx-fill: black;
 }
 
 .hover_selection_panel {
@@ -78,7 +90,7 @@
 .note {
     -fx-fill: #4B3775;
     -fx-stroke: #4B3775;
-    -fx-stroke-width: 0.5px;
+    -fx-stroke-width: 1px;
     -fx-cursor: hand;
 }
 

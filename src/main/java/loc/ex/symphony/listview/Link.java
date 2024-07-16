@@ -3,7 +3,6 @@ package loc.ex.symphony.listview;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.search.Cutser;
@@ -31,10 +30,10 @@ public class Link implements Serializable {
 
 
 
-        String bookName = new Cutser().getCutByRoot(references.getFirst().getBookID(), pathsEnum); //book.get(references.getFirst().getBookID()).name.get();
-        String chapterNumber = (book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID()).number.get()-1) + "";
-        String fragmentText = book.get(references.getFirst().getBookID()).getChapters().get(references.getFirst().getChapterID())
-                .getFragments().get(references.getFirst().getFragmentID());
+        String bookName = new Cutser().getCutByRoot(references.get(0).getBookID(), pathsEnum); //book.get(references.getFirst().getBookID()).name.get();
+        String chapterNumber = (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "";
+        String fragmentText = book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
+                .getFragments().get(references.get(0).getFragmentID());
         linkContent = bookName + " : " + chapterNumber + "\n" + fragmentText;
 
         this.words = words;

@@ -69,7 +69,7 @@ public class Searcher {
             List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
             List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
 
-            for (int synonymKey : primaryWords.getFirst().getSynonymsKeys()) {
+            for (int synonymKey : primaryWords.get(0).getSynonymsKeys()) {
                 fullWords.addAll(indexData.get(uniqueWords.get(synonymKey)));
             }
 
@@ -200,7 +200,7 @@ public class Searcher {
 
         for (List<IndexStruct> wordsList : wordsMatrix) {
             if (wordsList.isEmpty()) return;
-            references.add(wordsList.getFirst());
+            references.add(wordsList.get(0));
             iterators.add(wordsList.listIterator());
         }
 

@@ -108,8 +108,8 @@ public class IndexatorSingleThreaded {
 
                     if (fixed == null || fixed.isEmpty() || next == null || next.isEmpty()) continue;
 
-                    fixed.getFirst().getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[nextWord]));
-                    next.getFirst().getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[fixedWord]));
+                    fixed.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[nextWord]));
+                    next.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[fixedWord]));
 
 
                    /* keyOfFixed = morphSynonymGroupsOfWord[fixedWord].toLowerCase().charAt(0);
