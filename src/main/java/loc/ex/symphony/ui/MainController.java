@@ -289,6 +289,22 @@ public class MainController {
 
     }
 
+    private void doCreateParallelLink() throws IOException, URISyntaxException {
+
+        if (!mainTextArea.getSelectedText().isEmpty()){
+            int start = mainTextArea.getSelection().getStart();
+            int end = mainTextArea.getSelection().getEnd();
+
+            ParallelLink link = new ParallelLink(start, end, new ArrayList<>());
+
+            getParallelLinkForSelectedChapter().add(link);
+            getParallelLinkForSelectedChapter().display(mainTextArea);
+
+            MainTextAreaComponent.getInstance(this).selectNoteAction();
+        }
+
+    }
+
     private NotesSubStorage getNotesForSelectedChapter() throws IOException {
         if (bibleTab.isSelected()) {
             return NotesStorage.getBible(
@@ -300,6 +316,20 @@ public class MainController {
                             ellenListView.getSelectionModel().getSelectedIndex(),
                             chapterListView.getItems().size()
                     ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        }
+    }
+
+    private ParallelsLinksSubStorage getParallelLinkForSelectedChapter() throws IOException {
+        if (bibleTab.isSelected()) {
+            return ParallelsLinksStorage.getBible(
+                    bibleListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        } else {
+            return ParallelsLinksStorage.getEllen(
+                    ellenListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
         }
     }
 
@@ -405,6 +435,7 @@ public class MainController {
 
                 try {
                     getNotesForSelectedChapter().display(mainTextArea);
+                    getParallelLinkForSelectedChapter().display(mainTextArea);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -1047,6 +1078,7 @@ public class MainController {
             StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
             int index = 0;
             int inote = 0;
+            int ilink = 0;
             for (StyleSpan<Collection<String>> span : styles) {
                 if (span.getStyle().contains("note")) {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
@@ -1063,6 +1095,11 @@ public class MainController {
                         }
                     }
                     inote++;
+                } else if (span.getStyle().contains("parallel-link")) {
+                    if (clickPos >= index && clickPos <= index + span.getLength()) {
+                        String oldPrompt = controller.searchByLinkField.getPromptText();
+                        controller.searchByLinkField.setPromptText("Добавление ссылки");
+                    }
                 }
 
                 index += span.getLength();
@@ -1185,7 +1222,7 @@ public class MainController {
             hoverSelectionPanel.setVisible(false);
             hoverSelectionPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
             hoverSelectionPanel.setMaxHeight(35);
-            hoverSelectionPanel.setMaxWidth(120);
+            hoverSelectionPanel.setMaxWidth(146);
             hoverSelectionPanel.getStyleClass().add("hover-selection-panel");
 
             controller.mainGridPane.getChildren().add(hoverSelectionPanel);
@@ -1201,6 +1238,7 @@ public class MainController {
             defineHoverPanelBookmarkButton(hoverSelectionPanel);
             defineHoverPaneArticleButton(hoverSelectionPanel);
             defineHoverPaneNoteButton(hoverSelectionPanel);
+            defineHoverPaneParallelLinkButton(hoverSelectionPanel);
 
         }
 
@@ -1257,7 +1295,7 @@ public class MainController {
             copyButton.setPrefWidth(26);
             copyButton.setPrefHeight(26);
             HBox.setMargin(copyButton, new Insets(0, 0, 1, 3));
-            copyButton.getStyleClass().add("copy_button");
+            copyButton.getStyleClass().add("hover-panel-button");
             copyButton.setGraphic(defineGraphic("buttons/to-copy.png"));
             hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverSelectionPanel.getChildren().add(copyButton);
@@ -1294,7 +1332,7 @@ public class MainController {
             createBookmarkButton.setPrefWidth(26);
             createBookmarkButton.setPrefHeight(26);
             HBox.setMargin(createBookmarkButton, new Insets(0, 0, 1, 3));
-            createBookmarkButton.getStyleClass().add("copy_button");
+            createBookmarkButton.getStyleClass().add("hover-panel-button");
             createBookmarkButton.setGraphic(defineGraphic("buttons/to-bookmark.png"));
             hoverSelectionPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverSelectionPanel.getChildren().add(createBookmarkButton);
@@ -1327,7 +1365,7 @@ public class MainController {
             createArticleButton.setPrefWidth(26);
             createArticleButton.setPrefHeight(26);
             HBox.setMargin(createArticleButton, new Insets(0, 0, 1, 3));
-            createArticleButton.getStyleClass().add("copy_button");
+            createArticleButton.getStyleClass().add("hover-panel-button");
             createArticleButton.setGraphic(defineGraphic("buttons/to-article.png"));
             hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverPanel.getChildren().add(createArticleButton);
@@ -1348,7 +1386,7 @@ public class MainController {
             createNoteButton.setPrefWidth(26);
             createNoteButton.setPrefHeight(26);
             HBox.setMargin(createNoteButton, new Insets(0, 0, 1, 3));
-            createNoteButton.getStyleClass().add("copy_button");
+            createNoteButton.getStyleClass().add("hover-panel-button");
             createNoteButton.setGraphic(defineGraphic("buttons/to-note.png"));
             hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverPanel.getChildren().add(createNoteButton);
@@ -1359,6 +1397,52 @@ public class MainController {
                     throw new RuntimeException(e);
                 }
             });
+
+        }
+
+        private void defineHoverPaneParallelLinkButton(HBox hoverPanel) throws URISyntaxException {
+
+            Button createParallelLinkButton = new Button();
+            createParallelLinkButton.setText("");
+            createParallelLinkButton.setPrefWidth(26);
+            createParallelLinkButton.setPrefHeight(26);
+            HBox.setMargin(createParallelLinkButton, new Insets(0, 0, 1, 3));
+            createParallelLinkButton.getStyleClass().add("hover-panel-button");
+            createParallelLinkButton.setGraphic(defineGraphic("buttons/to-parallel.png"));
+            hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+            hoverPanel.getChildren().add(createParallelLinkButton);
+            createParallelLinkButton.onActionProperty().set(actionEvent -> {
+                try {
+                    controller.doCreateParallelLink();
+                } catch (IOException | URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+        }
+
+    }
+
+    static class ParallelsLinkComponent {
+
+        private static MainController controller;
+
+        private static class Holder {
+            private static final ParallelsLinkComponent INSTANCE = new ParallelsLinkComponent();
+        }
+
+        public static ParallelsLinkComponent getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return ParallelsLinkComponent.Holder.INSTANCE;
+        }
+
+        public void initParallelsLinkPanel() {
+
+        }
+
+        private void defineParallelsLinkPanel() {
+
+
 
         }
 

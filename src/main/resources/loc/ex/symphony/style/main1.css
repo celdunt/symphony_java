@@ -94,3 +94,15 @@
 .note:hover {
 	-fx-underline: true;
 }
+
+.parallel-link {
+	-fx-stroke-width: 1px;
+	-fx-stroke: #126579;
+	-fx-fill: #126579;
+	-fx-cursor: hand;
+	-fx-underline: true;
+}
+
+.parallel-link:hover {
+	-fx-strikethrough: true;
+}

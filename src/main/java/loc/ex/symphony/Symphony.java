@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import loc.ex.symphony.listview.NotesStorage;
+import loc.ex.symphony.listview.ParallelsLinksStorage;
 import loc.ex.symphony.ui.MainController;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class Symphony extends Application {
         window.setOnCloseRequest(request -> {
             try {
                 NotesStorage.update();
+                ParallelsLinksStorage.update();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
