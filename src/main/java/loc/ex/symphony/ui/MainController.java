@@ -23,11 +23,9 @@ import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
-import org.controlsfx.control.spreadsheet.Grid;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -54,6 +52,7 @@ public class MainController {
     public Button eraseSearchByText;
     public Button eraseSearchByName;
     public Button eraseSearchByLink;
+    public TabPane linkTabPane;
     private Searcher b_searcher;
     private Searcher e_searcher;
 
@@ -285,7 +284,7 @@ public class MainController {
 
             getNotesForSelectedChapter().display(mainTextArea);
 
-            MainTextAreaComponent.getInstance(this).selectNoteAction();
+            MainTextAreaComponent.getInstance(this).selectSpecialTextAction();
         }
 
     }
@@ -301,7 +300,7 @@ public class MainController {
             getParallelLinkForSelectedChapter().add(link);
             getParallelLinkForSelectedChapter().display(mainTextArea);
 
-            MainTextAreaComponent.getInstance(this).selectNoteAction();
+            MainTextAreaComponent.getInstance(this).selectSpecialTextAction();
         }
 
     }
@@ -841,6 +840,10 @@ public class MainController {
 
                     //controller.bibleLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
 
+                    if (_new.root == PathsEnum.Bible)
+                        controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
+                    else controller.bookTabPane.getSelectionModel().select(controller.ellenTab);
+
                     controller.bibleListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                     controller.bibleListView.scrollTo(selectedReferences.get(0).getBookID());
 
@@ -859,6 +862,10 @@ public class MainController {
                 if (_new != null) {
                     List<IndexStruct> selectedReferences = _new.getReferences();
                     controller.ellenLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
+
+                    if (_new.root == PathsEnum.Bible)
+                        controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
+                    else controller.bookTabPane.getSelectionModel().select(controller.ellenTab);
 
                     controller.ellenListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                     controller.ellenListView.scrollTo(selectedReferences.get(0).getBookID());
@@ -962,7 +969,9 @@ public class MainController {
 
         private static MainController controller;
 
-        private ContextMenu contextMenu;
+        private ContextMenu noteContextMenu;
+        private ContextMenu linkContextMenu;
+
 
         private static class Holder {
             private static final MainTextAreaComponent INSTANCE = new MainTextAreaComponent();
@@ -998,9 +1007,12 @@ public class MainController {
 
         private void defineContextMenu() {
 
-            contextMenu = new ContextMenu();
+            noteContextMenu = new ContextMenu();
+            linkContextMenu = new ContextMenu();
             MenuItem delete = new MenuItem("Удалить заметку");
-            contextMenu.getItems().add(delete);
+            MenuItem delete1 = new MenuItem("Удалить параллельное место");
+            noteContextMenu.getItems().add(delete);
+            linkContextMenu.getItems().add(delete1);
 
         }
 
@@ -1008,9 +1020,10 @@ public class MainController {
 
             controller.mainTextArea.setOnMouseClicked(mouse -> {
                 if (mouse.getButton() == MouseButton.PRIMARY) {
-                    contextMenu.hide();
+                    noteContextMenu.hide();
+                    linkContextMenu.hide();
                     try {
-                        selectNoteAction();
+                        selectSpecialTextAction();
                     } catch (IOException | URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
@@ -1036,7 +1049,7 @@ public class MainController {
                     try {
                         int pos = controller.mainTextArea.hit(mouse.getX(), mouse.getY()).getInsertionIndex();
                         controller.mainTextArea.moveTo(pos);
-                        deleteNoteAction(mouse);
+                        deleteSpecialTextAction(mouse);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -1045,18 +1058,19 @@ public class MainController {
 
         }
 
-        private void deleteNoteAction(MouseEvent mouse) throws IOException {
+        private void deleteSpecialTextAction(MouseEvent mouse) throws IOException {
 
             int clickPos =  controller.mainTextArea.getCaretPosition();
             StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
             int index = 0;
             int inote = 0;
+            int ilink = 0;
             for (StyleSpan<Collection<String>> span : styles) {
                 if (span.getStyle().contains("note")) {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
 
                         int finalInote = inote;
-                        contextMenu.getItems().get(0).onActionProperty().set(actionEvent -> {
+                        noteContextMenu.getItems().get(0).onActionProperty().set(actionEvent -> {
                             Note note = null;
                             try {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
@@ -1066,11 +1080,33 @@ public class MainController {
                                 throw new RuntimeException(e);
                             }
                         });
-                        contextMenu.show(controller.mainTextArea,
+                        noteContextMenu.show(controller.mainTextArea,
                                 mouse.getScreenX(), mouse.getScreenY());
-
+                        break;
                     }
                     inote++;
+                } else if (span.getStyle().contains("parallel-link")) {
+                    if (clickPos >= index && clickPos <= index + span.getLength()) {
+
+                        int finalLink = ilink;
+                        linkContextMenu.getItems().get(0).onActionProperty().set(actionEvent -> {
+                            ParallelLink link = null;
+                            try {
+                                link = controller.getParallelLinkForSelectedChapter().get(finalLink);
+                                controller.mainTextArea.setStyleClass(link.from, link.to, "");
+                                controller.getParallelLinkForSelectedChapter().remove(finalLink);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                        linkContextMenu.show(controller.mainTextArea,
+                                mouse.getScreenX(), mouse.getScreenY());
+                        break;
+                    }
+                    ilink++;
+                } else {
+                    noteContextMenu.hide();
+                    linkContextMenu.hide();
                 }
 
                 index += span.getLength();
@@ -1078,7 +1114,7 @@ public class MainController {
 
         }
 
-        private void selectNoteAction() throws IOException, URISyntaxException {
+        private void selectSpecialTextAction() throws IOException, URISyntaxException {
 
             int clickPos =  controller.mainTextArea.getCaretPosition();
             StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
@@ -1506,8 +1542,64 @@ public class MainController {
                 hide();
                 controller.searchByLinkField.setPromptText("Поиск по ссылке");
             });
+            defineCloseButtonGraphic();
+            defineParallelLinkSelection();
 
         }
+
+        private void defineParallelLinkSelection() {
+
+            listView.getSelectionModel().selectedItemProperty().addListener((obs, old, new_) -> {
+                if (new_ != null) {
+                    List<IndexStruct> selectedReferences = new_.getReferences();
+                    ListView<Book> bookView;
+
+                    if (new_.root == PathsEnum.Bible) {
+                        controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
+                        controller.linkTabPane.getSelectionModel().select(controller.bibleLinkTab);
+                        bookView = controller.bibleListView;
+                    }
+                    else {
+                        bookView = controller.ellenListView;
+                        controller.bookTabPane.getSelectionModel().select(controller.ellenTab);
+                        controller.linkTabPane.getSelectionModel().select(controller.ellenLinkTab);
+                    }
+
+                    bookView.getSelectionModel().select(selectedReferences.get(0).getBookID());
+                    bookView.scrollTo(selectedReferences.get(0).getBookID());
+
+                    controller.chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
+                    controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
+
+                    controller.highlightText(selectedReferences, new_.getWords());
+                }
+            });
+
+        }
+
+        private void defineCloseButtonGraphic() {
+
+            InputStream urlStream = Symphony.class.getResourceAsStream("buttons/close.png");
+            if (urlStream == null) {
+                throw new RuntimeException("Resource not found url");
+            }
+
+            Image image = new Image(urlStream);
+
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(10);
+            imageView.setFitHeight(10);
+
+            StackPane stackPane = new StackPane(imageView);
+            stackPane.setPrefSize(13, 13);
+            stackPane.setMaxSize(13, 13);
+            stackPane.setMinSize(13, 13);
+            StackPane.setAlignment(imageView, Pos.CENTER);
+
+            close.setGraphic(stackPane);
+
+        }
+
 
     }
 

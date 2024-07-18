@@ -96,7 +96,7 @@
             <Insets right="3.0" />
          </padding>
       </TabPane>
-      <TabPane nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
+      <TabPane fx:id="linkTabPane" nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
         <tabs>
           <Tab fx:id="bibleLinkTab" text="Библия">
               <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />

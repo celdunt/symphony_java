@@ -8,6 +8,7 @@ import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.search.Cutser;
 
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class Link implements Serializable {
     public String linkContent;
 
     public String[] words;
+    public PathsEnum root;
 
 
     public Link(
@@ -28,7 +30,7 @@ public class Link implements Serializable {
             String... words) {
         this.references.addAll(references);
 
-
+        root = pathsEnum;
 
         String bookName = new Cutser().getCutByRoot(references.get(0).getBookID(), pathsEnum); //book.get(references.getFirst().getBookID()).name.get();
         String chapterNumber = (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "";
@@ -43,10 +45,12 @@ public class Link implements Serializable {
     public Link(
         @JsonProperty("references") List<IndexStruct> references,
         @JsonProperty("linkContent") String linkContent,
+        @JsonProperty("root") PathsEnum root,
         @JsonProperty("words") String[] words
     ) {
         this.references = references;
         this.linkContent = linkContent;
+        this.root = root;
         this.words = words;
     }
 
