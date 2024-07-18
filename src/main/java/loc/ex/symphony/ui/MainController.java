@@ -23,9 +23,11 @@ import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
+import org.controlsfx.control.spreadsheet.Grid;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -170,7 +172,6 @@ public class MainController {
             }
         });
     }
-
 
     public void initBookmarkWindow() throws IOException {
 
@@ -693,7 +694,9 @@ public class MainController {
                         e_uniqueWordH.get(String.valueOf(page)),
                         null
                 )), ellenListView.getItems(), cutprompt.getMode(), String.valueOf(page));
-                obsEllenLink.add(link);
+                if (ParallelsLinkComponent.getInstance(this).isOpened())
+                    ParallelsLinkComponent.getInstance(this).add(link);
+                else obsEllenLink.add(link);
             } else System.err.println("link isn't valid: invalid values");
         } else System.err.println("link isn't valid: invalid values");
 
@@ -714,7 +717,10 @@ public class MainController {
                     b_uniqueWordH.get(String.valueOf(fragmentId + 1)),
                     null
             )), bibleListView.getItems(), cutprompt.getMode(), String.valueOf(fragmentId + 1));
-            obsBibleLink.add(link);
+
+            if (ParallelsLinkComponent.getInstance(this).isOpened())
+                ParallelsLinkComponent.getInstance(this).add(link);
+            else obsBibleLink.add(link);
         } else System.err.println("link isn't valid: invalid values");
 
     }
@@ -1099,7 +1105,9 @@ public class MainController {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
                         String oldPrompt = controller.searchByLinkField.getPromptText();
                         controller.searchByLinkField.setPromptText("Добавление ссылки");
+                        ParallelsLinkComponent.getInstance(controller).display(controller.getParallelLinkForSelectedChapter().get(ilink));
                     }
+                    ilink++;
                 }
 
                 index += span.getLength();
@@ -1426,6 +1434,11 @@ public class MainController {
     static class ParallelsLinkComponent {
 
         private static MainController controller;
+        private ListView<Link> listView;
+        private ObservableList<Link> obs = FXCollections.observableArrayList();
+        private Button close;
+        private ParallelLink link;
+        private boolean isOpened = false;
 
         private static class Holder {
             private static final ParallelsLinkComponent INSTANCE = new ParallelsLinkComponent();
@@ -1436,13 +1449,63 @@ public class MainController {
             return ParallelsLinkComponent.Holder.INSTANCE;
         }
 
-        public void initParallelsLinkPanel() {
+        public void display(ParallelLink link) {
+
+             if (listView == null) {
+                 defineParallelLinkGraphic();
+             }
+             if (isOpened)
+                 hide();
+
+             this.link = link;
+             isOpened = true;
+             controller.mainGridPane.getChildren().addAll(listView, close);
+             obs.addAll(link.getParallelLink());
+             listView.setItems(obs);
 
         }
 
-        private void defineParallelsLinkPanel() {
+        public void hide() {
+            this.link = null;
+            obs.clear();
+            isOpened = false;
+            controller.mainGridPane.getChildren().removeAll(listView, close);
+        }
 
+        public void add(Link link) {
+            if (this.link != null) {
+                this.link.addLink(link);
+                this.obs.add(link);
+            }
+        }
 
+        public boolean isOpened() {
+            return isOpened;
+        }
+
+        private void defineParallelLinkGraphic() {
+
+            listView = new ListView<>();
+            listView.setPadding(new Insets(15, 0, 0, 0));
+            listView.getStyleClass().add("v-listview");
+            listView.setCellFactory(cell -> new RichCell<>());
+            close = new Button("");
+            close.setMaxSize(15, 15);
+            close.setMinSize(15, 15);
+            close.setPrefSize(15, 15);
+            GridPane.setColumnIndex(listView, 2);
+            GridPane.setColumnIndex(close, 2);
+            GridPane.setRowIndex(listView, 2);
+            GridPane.setRowIndex(close, 2);
+            GridPane.setRowSpan(listView, 2);
+            GridPane.setMargin(listView, new Insets(3, 0, 0, 3));
+            GridPane.setMargin(close, new Insets(3, 0, 0, 0));
+            GridPane.setHalignment(close, HPos.RIGHT);
+            GridPane.setValignment(close, VPos.TOP);
+            close.onActionProperty().set(action -> {
+                hide();
+                controller.searchByLinkField.setPromptText("Поиск по ссылке");
+            });
 
         }
 
