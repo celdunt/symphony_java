@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.VBox?>
 
 
-<VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="100.0" prefWidth="300.0" spacing="10.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
+<VBox alignment="CENTER" stylesheets="@../style/main1.css" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="100.0" prefWidth="300.0" spacing="10.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
 fx:controller="loc.ex.symphony.ui.ConfirmNamingController">
    <children>
       <TextField fx:id="nameField" prefHeight="30.0" promptText="Имя">

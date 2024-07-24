@@ -102,17 +102,20 @@ public class BookmarksController {
         TableColumn<BookmarkStruct, String> dateColumn = new TableColumn<>("Дата");
         dateColumn.setCellValueFactory(param -> param.getValue().dateProperty());
         dateColumn.setSortable(true);
+        dateColumn.setMinWidth(80);
         bookmarksTableView.getColumns().add(dateColumn);
 
         TableColumn<BookmarkStruct, String> linkColumn = new TableColumn<>("Ссылка");
         linkColumn.setCellValueFactory(param -> param.getValue().linkProperty());
         linkColumn.setSortable(true);
+        linkColumn.setMinWidth(80);
         bookmarksTableView.getColumns().add(linkColumn);
 
         TableColumn<BookmarkStruct, String> contentColumn = new TableColumn<>("Текст");
         contentColumn.setCellValueFactory(param -> param.getValue().contentProperty());
         contentColumn.setSortable(true);
-        bookmarksTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        contentColumn.setMinWidth(80);
+        bookmarksTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_SUBSEQUENT_COLUMNS);
         bookmarksTableView.getColumns().add(contentColumn);
 
     }

@@ -1,19 +1,24 @@
 package loc.ex.symphony.ui;
 
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
+import javafx.stage.Stage;
 import loc.ex.symphony.file.ArticleSerializer;
 import loc.ex.symphony.file.BookmarksSerializer;
 import loc.ex.symphony.listview.Article;
 import loc.ex.symphony.listview.BookmarkStruct;
+import loc.ex.symphony.listview.Link;
 
 import java.io.IOException;
+import java.util.List;
 
 public class ArticlesController {
 
@@ -24,6 +29,10 @@ public class ArticlesController {
     SortedList<Article> sortedList;
 
     public static ObjectProperty<Article> additionArticle = new SimpleObjectProperty<>();
+
+    public static SimpleBooleanProperty isAdditionArticle = new SimpleBooleanProperty();
+    public static List<Link> elinks;
+    public static List<Link> blinks;
 
     public void initialize() throws IOException {
 
@@ -92,7 +101,20 @@ public class ArticlesController {
 
                 if (!row.isEmpty() && mouse.getButton() == MouseButton.PRIMARY
                         && mouse.getClickCount() == 2 && articlesTableView.getSelectionModel().getSelectedItem() != null) {
-                    MainController.openingArticle.set(row.getItem());
+                    if (isAdditionArticle.get()) {
+                        isAdditionArticle.set(false);
+                        row.getItem().bLinks.addAll(ArticlesController.blinks);
+                        row.getItem().eLinks.addAll(ArticlesController.elinks);
+                        try {
+                            ArticleSerializer.save(articleObservableList);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        ((Stage) ((Node) articlesTableView).getScene().getWindow()).close();
+                    } else {
+                        MainController.openingArticle.set(row.getItem());
+                    }
+
                 } else if (!row.isEmpty() && mouse.getButton() == MouseButton.SECONDARY
                         && articlesTableView.getSelectionModel().getSelectedItem() != null) {
                     menu.show(articlesTableView, mouse.getScreenX(), mouse.getScreenY());

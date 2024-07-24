@@ -25,12 +25,35 @@ public class Cutser {
             "сх.", "кмс.", "одпд.", "рхл.", "чну.", "грп."
     };
 
+    String[] otherCuts = new String[]{
+            "ув.", "нсм.", "уни.", "сбпч.", "сшкс.", "вр.", "брда.", "та.", "зва.", "мп.",
+            "жпс.", "омега", "оидп.", "зц.", "свет.", "впк.", "кмибб.", "мбв.", "кп.", "хцтв.",
+            "рв.", "евт.", "пдс.", "опкхс.", "вз.", "ов.", "впе.", "нс.", "ждм.", "рецепты.", "мзтд."
+    };
+
     public String getCutByRoot(int index, PathsEnum root) {
 
         if (root == PathsEnum.Bible)
             return getBibleCut(index);
-        else return getEllenCut(index);
+        else if (root == PathsEnum.EllenWhite)
+            return getEllenCut(index);
+        else return getOtherCut(index);
 
+    }
+
+    public String getOtherCut(int index) {
+        if (index >= 0 && index < otherCuts.length) {
+            return otherCuts[index].toUpperCase();
+        } else return "error";
+    }
+
+    public int getOtherIndex(String cut) {
+        int findIndex = -1;
+        for (var cut_ : otherCuts) {
+            findIndex++;
+            if (cut_.equalsIgnoreCase(cut)) return findIndex;
+        }
+        return -1;
     }
 
     public String getEllenCut(int ellenIndex) {

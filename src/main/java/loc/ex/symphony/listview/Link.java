@@ -33,10 +33,12 @@ public class Link implements Serializable {
         root = pathsEnum;
 
         String bookName = new Cutser().getCutByRoot(references.get(0).getBookID(), pathsEnum); //book.get(references.getFirst().getBookID()).name.get();
-        String chapterNumber = (book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get()-1) + "";
+        String chapterNumber = STR."\{book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID()).number.get() - 1}";
         String fragmentText = book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
                 .getFragments().get(references.get(0).getFragmentID());
-        linkContent = bookName + " : " + chapterNumber + "\n" + fragmentText;
+        linkContent = STR."""
+\{bookName} : \{chapterNumber}
+\{fragmentText}""";
 
         this.words = words;
     }

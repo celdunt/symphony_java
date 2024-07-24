@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.VBox?>
 
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" stylesheets="@../style/main1.css" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
 fx:controller="loc.ex.symphony.ui.NoteController">
    <children>
       <TextArea fx:id="textArea" VBox.vgrow="ALWAYS" />

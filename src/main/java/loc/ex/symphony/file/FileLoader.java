@@ -35,6 +35,26 @@ public class FileLoader {
         return books;
     }
 
+    public List<RawBook> getOther() {
+        Path otherPath = Paths.get("other");
+        List<RawBook> books = new ArrayList<>();
+
+        if (!Files.isReadable(otherPath)) return books;
+
+        try(Stream<Path> paths = Files.walk(otherPath)) {
+            for (Path path : paths.filter(Files::isRegularFile).toList()) {
+                books.add(new RawBook(path.getFileName().toString()
+                        .replace(".txt", "")
+                        .substring(3),
+                        String.join("\n", Files.readAllLines(path, StandardCharsets.UTF_8))));
+            }
+        } catch (IOException exception) {
+            logger.info(exception.getMessage());
+        }
+
+        return books;
+    }
+
     public List<RawBook> getEllen() {
         Path ellenPath = Paths.get("ellen");
         List<RawBook> books = new ArrayList<>();

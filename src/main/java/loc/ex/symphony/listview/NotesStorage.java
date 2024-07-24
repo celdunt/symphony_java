@@ -13,6 +13,7 @@ public class NotesStorage {
 
     @JsonIgnore private static NotesStorage[] bibleNoteStorage;
     @JsonIgnore private static NotesStorage[] ellenNoteStorage;
+    @JsonIgnore private static NotesStorage[] otherNoteStorage;
 
     public NotesSubStorage[] notesSubStorage;
 
@@ -44,9 +45,24 @@ public class NotesStorage {
         else return new NotesStorage();
     }
 
+    public static NotesStorage getOther(int index, int chapters) throws IOException {
+        if (otherNoteStorage == null) {
+            otherNoteStorage = NotesSerializer.load("other");
+        }
+        if (otherNoteStorage == null || otherNoteStorage.length == 0)
+            otherNoteStorage = new NotesStorage[55];
+        if (index >= 0 && index < otherNoteStorage.length){
+            if (otherNoteStorage[index] == null)
+                otherNoteStorage[index] = new NotesStorage(chapters);
+            return otherNoteStorage[index];
+        }
+        else return new NotesStorage();
+    }
+
     public static void update() throws IOException {
         NotesSerializer.save(bibleNoteStorage, "bible");
         NotesSerializer.save(ellenNoteStorage, "ellen");
+        NotesSerializer.save(otherNoteStorage, "other");
     }
 
     @JsonCreator

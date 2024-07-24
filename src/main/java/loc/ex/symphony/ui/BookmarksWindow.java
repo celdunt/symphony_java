@@ -3,6 +3,7 @@ package loc.ex.symphony.ui;
 import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import loc.ex.symphony.Symphony;
 
@@ -20,9 +21,9 @@ public class BookmarksWindow {
 
         Scene scene = new Scene(fxmlLoader.load(), 400, 300);
 
-        InputStream urlStream = Symphony.class.getResourceAsStream("buttons/to-bookmark.png");
+        InputStream urlStream = Symphony.class.getResourceAsStream("main-window/bookmarks-ico.png");
         if (urlStream == null) {
-            throw new RuntimeException("Resource not found: buttons/to-bookmark.png");
+            throw new RuntimeException("Resource not found: main-window/bookmarks-ico.png");
         }
 
         window.getIcons().add(new Image(urlStream));

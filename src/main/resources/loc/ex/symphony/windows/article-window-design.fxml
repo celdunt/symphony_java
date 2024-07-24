@@ -5,7 +5,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" stylesheets="@../style/main.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.ArticlesController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" stylesheets="@../style/main1.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.ArticlesController">
    <children>
       <TextField fx:id="searchField" prefHeight="30.0" promptText="Поиск по темам" styleClass="search-field" />
       <TableView fx:id="articlesTableView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">

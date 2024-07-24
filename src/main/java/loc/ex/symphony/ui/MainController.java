@@ -3,6 +3,7 @@ package loc.ex.symphony.ui;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -17,12 +18,15 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.file.BookSerializer;
 import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
 import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
+import org.controlsfx.control.spreadsheet.Grid;
+import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
@@ -53,8 +57,17 @@ public class MainController {
     public Button eraseSearchByName;
     public Button eraseSearchByLink;
     public TabPane linkTabPane;
+    public Button indexButton;
+    public Button articleButton;
+    public Button bookmarkButton;
+    public Button createArticleButton;
+    public Button resaveArticleButton;
+    public ListView<Book> otherListView;
+    public ListView<Link> otherLinkView;
+    public Tab booksTab;
     private Searcher b_searcher;
     private Searcher e_searcher;
+    private Searcher o_searcher;
 
     public TextField searchByTextField;
     public Button searchButton;
@@ -68,16 +81,20 @@ public class MainController {
 
     public FilteredList<Link> filteredBibleList;
     public FilteredList<Link> filteredEllenList;
+    public FilteredList<Link> filteredOtherList;
     public ObservableList<Link> obsBibleLink = FXCollections.observableArrayList();
     public ObservableList<Link> obsEllenLink = FXCollections.observableArrayList();
+    public ObservableList<Link> obsOtherLink = FXCollections.observableArrayList();
 
     public Tab bibleTab;
     private Book selectedBook;
 
     private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
     private HashMap<Integer, String> e_uniqueWord = new HashMap<>();
+    private HashMap<Integer, String> o_uniqueWord = new HashMap<>();
     private HashMap<String, Integer> b_uniqueWordH = new HashMap<>();
     private HashMap<String, Integer> e_uniqueWordH = new HashMap<>();
+    private HashMap<String, Integer> o_uniqueWordH = new HashMap<>();
 
     public static AtomicReference<Double> currentWindowWidth = new AtomicReference<>(0d);
     public static AtomicReference<Double> currentWindowHeight = new AtomicReference<>(0d);
@@ -102,16 +119,20 @@ public class MainController {
         initUniqueWordsFields();
         initSearchByTextEnterPressed();
         initBookLinkSelectionHandler();
+        initIndexButtonHandler();
+        initBookmarkButton();
+        initSearchButton();
+        initArticleButtons();
         MainTextAreaComponent.getInstance(this).initMainTextArea();
         LeafButtonComponent.getInstance(this).initLeafButtons();
         HoverPanelComponent.getInstance(this).initHoverPanel();
         initializeBookFiles__OnAction();
         selectedBibleList__OnAction();
         selectedEllenList__OnAction();
+        selectedOtherList__OnAction();
         selectedChapterList__OnAction();
         LinkComponent.getInstance(this).initLinkListSelection();
         EraseButtonComponent.getInstance(this).initEraseButtons();
-        defineSearchButtonGraphic();
         initOpenBookmarkAction();
         initOpenArticleAction();
         initSearchByLink();
@@ -121,6 +142,8 @@ public class MainController {
         bibleLinkView.setCellFactory(param -> new RichCell<>());
         ellenListView.setCellFactory(param -> new RichCell<>());
         ellenLinkView.setCellFactory(param -> new RichCell<>());
+        otherListView.setCellFactory(param -> new RichCell<>());
+        otherLinkView.setCellFactory(param -> new RichCell<>());
         logger.info("resource is set");
         searchButton.setDisable(true);
         usabilityButtonListener.addListener(listener -> {
@@ -130,6 +153,8 @@ public class MainController {
         b_searcher.setResource(bibleListView.getItems());
         e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
         e_searcher.setResource(ellenListView.getItems());
+        o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+        o_searcher.setResource(otherListView.getItems());
         mainTextArea.editableProperty().set(false);
         selectTabBible__OnAction();
     }
@@ -148,16 +173,15 @@ public class MainController {
 
         bookLinkSelectionHandler(bibleLinkView);
         bookLinkSelectionHandler(ellenLinkView);
+        bookLinkSelectionHandler(otherLinkView);
 
     }
 
     public void bookLinkSelectionHandler(ListView<Link> linkView) {
+
+        linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         linkView.setOnKeyPressed(key -> {
-            if (key.isControlDown() && key.getCode() == KeyCode.A) {
-                linkView.getSelectionModel().selectAll();
-            } else if (key.getCode() == KeyCode.CONTROL) {
-                linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            } else if (key.getCode() == KeyCode.DELETE) {
+           if (key.getCode() == KeyCode.DELETE) {
                 if (linkView == bibleLinkView) {
                     obsBibleLink.removeAll(linkView.getSelectionModel().getSelectedItems());
                 } else if (linkView == ellenLinkView) {
@@ -165,11 +189,7 @@ public class MainController {
                 }
             }
         });
-        linkView.setOnKeyReleased(key -> {
-            if (key.getCode() == KeyCode.CONTROL) {
-                linkView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-            }
-        });
+
     }
 
     public void initBookmarkWindow() throws IOException {
@@ -188,6 +208,8 @@ public class MainController {
         e_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.EllenWhite);
         b_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.Bible);
         e_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.EllenWhite);
+        o_uniqueWord = IndexSaverSingleThreaded.loadUniqueWords(PathsEnum.Other);
+        o_uniqueWordH = IndexSaverSingleThreaded.loadUniqueWordsHelp(PathsEnum.Other);
 
     }
 
@@ -311,11 +333,16 @@ public class MainController {
                             bibleListView.getSelectionModel().getSelectedIndex(),
                             chapterListView.getItems().size()
                     ).get(chapterListView.getSelectionModel().getSelectedIndex());
-        } else {
+        } else if (ellenTab.isSelected()) {
             return NotesStorage.getEllen(
                             ellenListView.getSelectionModel().getSelectedIndex(),
                             chapterListView.getItems().size()
                     ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        } else {
+            return NotesStorage.getOther(
+                    otherListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
         }
     }
 
@@ -381,12 +408,29 @@ public class MainController {
     }
 
     private void initializeBookFiles__OnAction() throws IOException {
-        bibleListView.setItems(new FileAdapter().getBible());
-        ellenListView.setItems(new FileAdapter().getEllen());
+
+        bibleListView.setItems(
+                FXCollections.observableArrayList(BookSerializer.load(PathsEnum.Bible)));
+        ellenListView.setItems(
+                FXCollections.observableArrayList(BookSerializer.load(PathsEnum.EllenWhite)));
+        otherListView.setItems(
+                FXCollections.observableArrayList(BookSerializer.load(PathsEnum.Other)));
+
+        if (bibleListView.getItems().isEmpty() &&
+        ellenListView.getItems().isEmpty() &&
+        otherListView.getItems().isEmpty()) {
+            bibleListView.setItems(new FileAdapter().getBible());
+            ellenListView.setItems(new FileAdapter().getEllen());
+            otherListView.setItems(new FileAdapter().getOther());
+            BookSerializer.save(bibleListView.getItems());
+            BookSerializer.save(ellenListView.getItems());
+            BookSerializer.save(otherListView.getItems());
+        }
+
     }
 
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
-        HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected() ? b_uniqueWord : ellenLinkTab.isSelected() ? e_uniqueWord : b_uniqueWord;
+        HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected() ? b_uniqueWord : ellenLinkTab.isSelected() ? e_uniqueWord : o_uniqueWord;
 
         String mainText = mainTextArea.getText();
 
@@ -472,10 +516,14 @@ public class MainController {
             enu = PathsEnum.Bible;
             listView = bibleLinkView;
             filteredList = filteredBibleList;
-        } else {
+        } else if (ellenTab.isSelected()) {
             enu = PathsEnum.EllenWhite;
             listView = ellenLinkView;
             filteredList = filteredEllenList;
+        } else {
+            enu = PathsEnum.Other;
+            listView = otherLinkView;
+            filteredList = filteredOtherList;
         }
 
         SortedList<Link> sortedList = new SortedList<>(filteredList);
@@ -515,6 +563,12 @@ public class MainController {
         });
     }
 
+    private void selectedOtherList__OnAction() {
+        otherListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+            selectOtherList();
+        });
+    }
+
     private void selectEllenList() {
 
         Book _selectedBook = ellenListView.getSelectionModel().getSelectedItem();
@@ -526,6 +580,17 @@ public class MainController {
                 sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
         }
 
+    }
+
+    private void selectOtherList() {
+        Book _selectedBook = otherListView.getSelectionModel().getSelectedItem();
+        if (_selectedBook != null) {
+            otherLinkView.getSelectionModel().select(-1);
+            selectedBook = _selectedBook;
+            setChapterListView(_selectedBook);
+            if (otherListView.getSelectionModel().getSelectedIndex() > -1 && !otherListView.getItems().isEmpty())
+                sortLinkView(otherListView.getSelectionModel().getSelectedIndex());
+        }
     }
 
     private List<File> selectFiles() {
@@ -556,7 +621,22 @@ public class MainController {
         }
     }
 
+    public void initIndexButtonHandler() {
+        indexButton.onActionProperty().set(action -> {
+            try {
+                doIndex__OnAction();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     public void doIndex__OnAction() throws IOException, SQLException, ClassNotFoundException {
+
         IndexatorSingleThreaded indexator = new IndexatorSingleThreaded(bibleListView.getItems());
 
         indexator.index();
@@ -564,12 +644,6 @@ public class MainController {
         IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.Bible);
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Bible);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
-
-        /*for (var key : indexator.getDictionary().keySet()) {
-            IndexSaverSingleThreaded.save(indexator.getDictionary().get(key), PathsEnum.Bible, String.valueOf(key));
-        }*/
-
-        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
 
         indexator = new IndexatorSingleThreaded(ellenListView.getItems());
@@ -580,18 +654,49 @@ public class MainController {
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.EllenWhite);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
 
-       /* for (var key : indexator.getDictionary().keySet()) {
-            IndexSaverSingleThreaded.save(indexator.getDictionary().get(key), PathsEnum.EllenWhite, String.valueOf(key));
-        }*/
+        indexator = new IndexatorSingleThreaded(otherListView.getItems());
 
-        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
+        indexator.index();
+
+        IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.Other);
+        IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Other);
+        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Other);
+
+    }
+
+    public void initArticleButtons() {
+        articleButton.onActionProperty().set(action -> {
+            try {
+                openArticleWindowOnAction();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        createArticleButton.onActionProperty().set(action -> {
+            try {
+                doCreateArticle();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public void initBookmarkButton() {
+        bookmarkButton.onActionProperty().set(action -> {
+            try {
+                openBookmarkWindowOnAction();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void openBookmarkWindowOnAction() throws IOException {
         bookmarksWindow.stage().show();
     }
 
-    public void openArticleWindowOnAction() {
+    public void openArticleWindowOnAction() throws IOException {
+        articlesWindow = new ArticlesWindow();
         articlesWindow.stage().show();
     }
 
@@ -603,6 +708,11 @@ public class MainController {
     public void selectTabEllen__OnAction() {
         ellenListView.getSelectionModel().select(0);
         selectEllenList();
+    }
+
+    public void selectTabOther__OnAction() {
+        otherListView.getSelectionModel().select(0);
+        selectOtherList();
     }
 
     public void initSearchByLink() {
@@ -632,6 +742,19 @@ public class MainController {
             });
         });
         ellenLinkView.setItems(filteredEllenList);
+
+        filteredOtherList = new FilteredList<>(obsOtherLink, p -> true);
+        searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredOtherList.setPredicate(data -> {
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+                String[] findTexts = newValue.toLowerCase().split(" ");
+
+                return checkContains(data.getLinkContent().toLowerCase(), findTexts);
+            });
+        });
+        otherLinkView.setItems(filteredOtherList);
 
     }
 
@@ -724,6 +847,12 @@ public class MainController {
 
     }
 
+    public void initSearchButton() {
+        searchButton.setOnAction(action -> {
+            doSearch__OnAction();
+        });
+    }
+
     public void doSearch__OnAction() {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
@@ -764,8 +893,10 @@ public class MainController {
                 });*//*
                 ellenLinkView.setItems(filteredEllenList);*/
             }
-
-
+            if (booksTab.isSelected()) {
+                obsOtherLink.clear();
+                obsOtherLink.addAll(o_searcher.search(prompt, PathsEnum.Other));
+            }
         }
     }
 
@@ -776,36 +907,6 @@ public class MainController {
 
         return true;
     }
-
-    private void defineSearchButtonGraphic() throws URISyntaxException {
-
-        InputStream urlStream = Symphony.class.getResourceAsStream("buttons/search.png");
-        if (urlStream == null) {
-            throw new RuntimeException("Resource not found url");
-        }
-
-        Image image = new Image(urlStream);
-
-        searchButton.setGraphic(defineSearchGraphic(image));
-        searchButton.setAlignment(Pos.CENTER);
-
-    }
-
-    private StackPane defineSearchGraphic(Image image) {
-
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(23);
-        imageView.setFitHeight(23);
-
-        StackPane stackPane = new StackPane(imageView);
-        stackPane.setPrefSize(13, 13);
-        stackPane.setMaxSize(13, 13);
-        stackPane.setMinSize(13, 13);
-        StackPane.setAlignment(imageView, Pos.CENTER);
-        return stackPane;
-
-    }
-
 
     /* * * Component description * * */
 
@@ -829,6 +930,7 @@ public class MainController {
 
             defineBibleLinkSelection();
             defineEllenLinkSelection();
+            defineOtherLinkSelection();
 
         }
 
@@ -861,7 +963,7 @@ public class MainController {
             controller.ellenLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
                 if (_new != null) {
                     List<IndexStruct> selectedReferences = _new.getReferences();
-                    controller.ellenLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
+                    controller.ellenLinkView.scrollTo(controller.ellenLinkView.getSelectionModel().getSelectedIndex());
 
                     if (_new.root == PathsEnum.Bible)
                         controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
@@ -869,6 +971,27 @@ public class MainController {
 
                     controller.ellenListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
                     controller.ellenListView.scrollTo(selectedReferences.get(0).getBookID());
+
+                    controller.chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
+                    controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
+
+                    controller.highlightText(selectedReferences, _new.getWords());
+                }
+            });
+
+        }
+
+        private void defineOtherLinkSelection() {
+
+            controller.otherLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
+                if (_new != null) {
+                    List<IndexStruct> selectedReferences = _new.getReferences();
+                    controller.otherLinkView.scrollTo(controller.otherLinkView.getSelectionModel().getSelectedIndex());
+
+                    controller.bookTabPane.getSelectionModel().select(controller.booksTab);
+
+                    controller.otherListView.getSelectionModel().select(selectedReferences.get(0).getBookID());
+                    controller.otherListView.scrollTo(selectedReferences.get(0).getBookID());
 
                     controller.chapterListView.getSelectionModel().select(selectedReferences.get(0).getChapterID() - 1);
                     controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
@@ -992,16 +1115,21 @@ public class MainController {
 
         public void defineMainTextArea() {
 
+
             controller.mainTextArea = new StyleClassedTextArea();
 
             controller.mainTextArea.setWrapText(true);
 
-            controller.mainGridPane.getChildren().add(controller.mainTextArea);
-            GridPane.setColumnIndex(controller.mainTextArea, 1);
-            GridPane.setRowIndex(controller.mainTextArea, 3);
-            GridPane.setHgrow(controller.mainTextArea, Priority.ALWAYS);
-            GridPane.setVgrow(controller.mainTextArea, Priority.ALWAYS);
-            GridPane.setMargin(controller.mainTextArea, new Insets(3, 0, 0, 0));
+            VirtualizedScrollPane scroll = new VirtualizedScrollPane(controller.mainTextArea);
+
+            controller.mainGridPane.getChildren().add(scroll);
+            controller.mainTextArea.setPadding(new Insets(0, 0, 0, 5));
+
+            GridPane.setColumnIndex(scroll, 1);
+            GridPane.setRowIndex(scroll, 3);
+            GridPane.setHgrow(scroll, Priority.ALWAYS);
+            GridPane.setVgrow(scroll, Priority.ALWAYS);
+            GridPane.setMargin(scroll, new Insets(3, 0, 0, 0));
 
         }
 
@@ -1135,6 +1263,7 @@ public class MainController {
                         if (!note.isOpened()) {
                             new NoteWindow(title, note).stage().show();
                         }
+                        break;
                     }
                     inote++;
                 } else if (span.getStyle().contains("parallel-link")) {
@@ -1142,6 +1271,7 @@ public class MainController {
                         String oldPrompt = controller.searchByLinkField.getPromptText();
                         controller.searchByLinkField.setPromptText("Добавление ссылки");
                         ParallelsLinkComponent.getInstance(controller).display(controller.getParallelLinkForSelectedChapter().get(ilink));
+                        break;
                     }
                     ilink++;
                 }
@@ -1265,7 +1395,9 @@ public class MainController {
             HBox hoverSelectionPanel = new HBox();
             hoverSelectionPanel.setVisible(false);
             hoverSelectionPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
-            hoverSelectionPanel.setMaxHeight(35);
+            hoverSelectionPanel.setMaxHeight(40);
+            hoverSelectionPanel.setPrefHeight(40);
+            hoverSelectionPanel.setMinHeight(40);
             hoverSelectionPanel.setMaxWidth(146);
             hoverSelectionPanel.getStyleClass().add("hover-selection-panel");
 
@@ -1335,6 +1467,7 @@ public class MainController {
         private void defineHoverPanelCopyButton(HBox hoverSelectionPanel) throws URISyntaxException {
 
             Button copyButton = new Button();
+            copyButton.setTooltip(new Tooltip("Добавить в поиск"));
             copyButton.setText("");
             copyButton.setPrefWidth(26);
             copyButton.setPrefHeight(26);
@@ -1373,6 +1506,7 @@ public class MainController {
 
             Button createBookmarkButton = new Button();
             createBookmarkButton.setText("");
+            createBookmarkButton.setTooltip(new Tooltip("Создать закладку"));
             createBookmarkButton.setPrefWidth(26);
             createBookmarkButton.setPrefHeight(26);
             HBox.setMargin(createBookmarkButton, new Insets(0, 0, 1, 3));
@@ -1406,6 +1540,7 @@ public class MainController {
 
             Button createArticleButton = new Button();
             createArticleButton.setText("");
+            createArticleButton.setTooltip(new Tooltip("Добавить в тему"));
             createArticleButton.setPrefWidth(26);
             createArticleButton.setPrefHeight(26);
             HBox.setMargin(createArticleButton, new Insets(0, 0, 1, 3));
@@ -1414,13 +1549,73 @@ public class MainController {
             hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverPanel.getChildren().add(createArticleButton);
             createArticleButton.onActionProperty().set(actionEvent -> {
-                try {
-                    controller.doCreateArticle();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                PathsEnum mode = controller.bibleTab.isSelected()? PathsEnum.Bible: PathsEnum.EllenWhite;
+                ListView<Book> listView = mode == PathsEnum.Bible? controller.bibleListView: controller.ellenListView;
+                HashMap<String, Integer> whelp = mode == PathsEnum.Bible? controller.b_uniqueWordH: controller.e_uniqueWordH;
+
+                Link link = getLink(listView, mode, whelp);
+
+                if (mode == PathsEnum.Bible) {
+                    try {
+                        new ArticlesWindow(List.of(link), new ArrayList<>()).stage().show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    try {
+                        new ArticlesWindow(new ArrayList<>(), List.of(link)).stage().show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
+
+
             });
 
+        }
+
+        private static @NotNull Link getLink(ListView<Book> listView, PathsEnum mode, HashMap<String, Integer> whelp) {
+            int fragmentId = 0;
+            int index = 0;
+            int pos = 0;
+            int endPos = 0;
+            String text = "";
+            for (String fragment : listView.getSelectionModel().getSelectedItem().getChapters().get(
+                    controller.chapterListView.getSelectionModel().getSelectedIndex()+1).fragments) {
+                if (controller.mainTextArea.getSelection().getStart() >= index &&
+                        controller.mainTextArea.getSelection().getStart() <= index + fragment.length()) {
+                   pos = fragment.indexOf(controller.mainTextArea.getSelectedText());
+                   endPos = pos;
+                   if (pos > 0) {
+                       while (pos-1 > 0 && Character.isLetterOrDigit(fragment.charAt(pos-1))) {
+                           pos--;
+                       }
+                   } else endPos = pos = 0;
+                   while (endPos < fragment.length() && Character.isLetterOrDigit(fragment.charAt(endPos))) {
+                        endPos++;
+                   }
+                   text = fragment.substring(pos, endPos);
+                   break;
+                }
+
+                fragmentId++;
+                index += fragment.length();
+            }
+
+            int wordKey = 0;
+
+
+            wordKey = whelp.get(text.split(" ")[0].toLowerCase());
+
+
+            Link link = new Link(List.of(new IndexStruct(
+                    listView.getSelectionModel().getSelectedIndex(),
+                    controller.chapterListView.getSelectionModel().getSelectedIndex()+1,
+                    fragmentId, pos,
+                    wordKey,
+                    null
+            )), listView.getItems(), mode, controller.mainTextArea.getSelectedText());
+            return link;
         }
 
         private void defineHoverPaneNoteButton(HBox hoverPanel) throws URISyntaxException {
@@ -1429,6 +1624,7 @@ public class MainController {
             createNoteButton.setText("");
             createNoteButton.setPrefWidth(26);
             createNoteButton.setPrefHeight(26);
+            createNoteButton.setTooltip(new Tooltip("Создать заметку"));
             HBox.setMargin(createNoteButton, new Insets(0, 0, 1, 3));
             createNoteButton.getStyleClass().add("hover-panel-button");
             createNoteButton.setGraphic(defineGraphic("buttons/to-note.png"));
@@ -1450,6 +1646,7 @@ public class MainController {
             createParallelLinkButton.setText("");
             createParallelLinkButton.setPrefWidth(26);
             createParallelLinkButton.setPrefHeight(26);
+            createParallelLinkButton.setTooltip(new Tooltip("Создать параллельное место"));
             HBox.setMargin(createParallelLinkButton, new Insets(0, 0, 1, 3));
             createParallelLinkButton.getStyleClass().add("hover-panel-button");
             createParallelLinkButton.setGraphic(defineGraphic("buttons/to-parallel.png"));
@@ -1496,6 +1693,7 @@ public class MainController {
              this.link = link;
              isOpened = true;
              controller.mainGridPane.getChildren().addAll(listView, close);
+             GridPane.setMargin(close, new Insets(8, 8, 0, 0));
              obs.addAll(link.getParallelLink());
              listView.setItems(obs);
 
@@ -1522,7 +1720,7 @@ public class MainController {
         private void defineParallelLinkGraphic() {
 
             listView = new ListView<>();
-            listView.setPadding(new Insets(15, 0, 0, 0));
+            listView.setPadding(new Insets(23, 0, 0, 0));
             listView.getStyleClass().add("v-listview");
             listView.setCellFactory(cell -> new RichCell<>());
             close = new Button("");
@@ -1548,6 +1746,17 @@ public class MainController {
         }
 
         private void defineParallelLinkSelection() {
+
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            listView.setOnKeyPressed(key -> {
+                if (key.getCode() == KeyCode.DELETE) {
+                    if (link != null) {
+                        link.parallelLink.removeAll(listView.getSelectionModel().getSelectedItems());
+                        obs.removeAll(listView.getSelectionModel().getSelectedItems());
+                    }
+                }
+            });
 
             listView.getSelectionModel().selectedItemProperty().addListener((obs, old, new_) -> {
                 if (new_ != null) {
@@ -1579,7 +1788,7 @@ public class MainController {
 
         private void defineCloseButtonGraphic() {
 
-            InputStream urlStream = Symphony.class.getResourceAsStream("buttons/close.png");
+            InputStream urlStream = Symphony.class.getResourceAsStream("buttons/erase2.png");
             if (urlStream == null) {
                 throw new RuntimeException("Resource not found url");
             }
@@ -1587,8 +1796,8 @@ public class MainController {
             Image image = new Image(urlStream);
 
             ImageView imageView = new ImageView(image);
-            imageView.setFitWidth(10);
-            imageView.setFitHeight(10);
+            imageView.setFitWidth(15);
+            imageView.setFitHeight(15);
 
             StackPane stackPane = new StackPane(imageView);
             stackPane.setPrefSize(13, 13);
@@ -1597,6 +1806,7 @@ public class MainController {
             StackPane.setAlignment(imageView, Pos.CENTER);
 
             close.setGraphic(stackPane);
+            close.getStyleClass().add("erase-button");
 
         }
 

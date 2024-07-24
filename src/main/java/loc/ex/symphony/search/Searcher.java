@@ -31,7 +31,7 @@ public class Searcher {
         task.setOnSucceeded(a -> {
             indexData = task.getValue();
             COUNT_OF_LOADED_BOOK_INDICES++;
-            if (COUNT_OF_LOADED_BOOK_INDICES == 2)
+            if (COUNT_OF_LOADED_BOOK_INDICES == 3)
                 MainController.usabilityButtonListener.set("enable_button");
         });
 

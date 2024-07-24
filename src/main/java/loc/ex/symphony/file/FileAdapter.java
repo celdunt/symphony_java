@@ -19,6 +19,10 @@ public class FileAdapter {
         return doHandleEllenList();
     }
 
+    public ObservableList<Book> getOther() throws IOException {
+        return doHandleOtherList();
+    }
+
     private ObservableList<Book> doHandleBibleList() throws IOException {
         List<RawBook> rawBible = new FileLoader().getBible();
 
@@ -64,6 +68,52 @@ public class FileAdapter {
         for (RawBook rawBook : rawEllen) {
             String[] rawChapters = rawBook.text.get().split("Г1лава\\s*\\d+\\.\\n*|Г1лава\\s*\\d+\\n*|Г1лава\\s*\\n*|г1лава\\s*\\n*");
             Book handledBook = new Book(rawBook.name.get(), PathsEnum.EllenWhite);
+
+            for(int ichapter = 0; ichapter < rawChapters.length; ichapter++) {
+                String[] rawFragments = rawChapters[ichapter].split("\\."); //\[\d+]\s+
+                List<String> splitedFragmets = new ArrayList<>();
+                int minLength = 25;
+                StringBuilder buffer = new StringBuilder();
+
+                for (String part : rawFragments) {
+                    part = part.trim(); // Убираем пробелы по краям
+
+                    if (buffer.isEmpty()) {
+                        buffer.append(part);
+                    } else {
+                        if (buffer.length() + part.length() + 1 < minLength) {
+                            buffer.append(".").append(part);
+                        } else {
+                            splitedFragmets.add(buffer.append(".").toString());
+                            buffer.setLength(0);
+                            buffer.append(part);
+                        }
+                    }
+                }
+                if (!buffer.isEmpty())
+                    splitedFragmets.add(buffer.append(".").toString());
+
+                List<String> fragments = new ArrayList<>(splitedFragmets)
+                        .stream().map(fr -> fr.replaceAll("^\\s*\\n+", ""))
+                        .toList();
+                Chapter chapter = new Chapter(ichapter+1);
+                chapter.getFragments().addAll(fragments);
+                handledBook.getChapters().add(chapter);
+            }
+
+            observableBooks.add(handledBook);
+        }
+
+        return  observableBooks;
+    }
+
+    private ObservableList<Book> doHandleOtherList() throws IOException {
+        ObservableList<Book> observableBooks = FXCollections.observableArrayList();
+        List<RawBook> rawOther = new FileLoader().getOther();
+
+        for (RawBook rawBook : rawOther) {
+            String[] rawChapters = rawBook.text.get().split("Г1лава\\s*\\d+\\.\\n*|Г1лава\\s*\\d+\\n*|Г1лава\\s*\\n*|г1лава\\s*\\n*");
+            Book handledBook = new Book(rawBook.name.get(), PathsEnum.Other);
 
             for(int ichapter = 0; ichapter < rawChapters.length; ichapter++) {
                 String[] rawFragments = rawChapters[ichapter].split("\\."); //\[\d+]\s+

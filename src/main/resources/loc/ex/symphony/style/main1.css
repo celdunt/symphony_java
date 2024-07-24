@@ -1,19 +1,141 @@
 @font-face {
 
-	font-family: 'Cruinn';
-	src: url('../fonts/Cruinn-Regular.ttf');
+	font-family: 'Museo Sans Cyrl';
+	src: url('../fonts/MuseoSansCyrl.otf');
 
 }
 
 .root {
-	-fx-font-family: 'Cruinn';
+	-fx-font-family: 'Museo Sans Cyrl';
 	-fx-font-size: 14px;
 }
 
+
+.list-cell {
+	-fx-background-color: transparent; /* Фон ячеек ListView */
+}
+
+/* Цвет выделенной ячейки */
+.list-cell:selected {
+	-fx-background-color: #c791d3; /* Цвет фона для выделенной ячейки */
+	-fx-text-fill: #000000; /* Цвет текста для выделенной ячейки */
+}
+
+/* Цвет выделенной ячейки, но не в фокусе */
+.list-cell:selected:focused {
+	-fx-background-color: #c791d3; /* Цвет фона для выделенной ячейки с фокусом */
+	-fx-text-fill: #000000; /* Цвет текста для выделенной ячейки с фокусом */
+}
+
+
+.scroll-pane {
+	-fx-background-color: white; /* Установите фон прокручиваемой области */
+}
+
+/* Вертикальный ползунок */
+.scroll-bar:vertical .thumb {
+	-fx-background-color: #fce5f9; /* Цвет ползунка */
+}
+
+.scroll-bar:vertical .track {
+	-fx-background-color: white; /* Цвет трека ползунка */
+}
+
+/* Горизонтальный ползунок */
+.scroll-bar:horizontal .thumb {
+	-fx-background-color: #fce5f9; /* Цвет ползунка */
+}
+
+.scroll-bar:horizontal .track {
+	-fx-background-color: white; /* Цвет трека ползунка */
+}
+
+/* Кнопки вверх и вниз */
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button {
+	-fx-background-color: #fce5f9; /* Цвет кнопок */
+}
+
+.scroll-bar:vertical .increment-arrow,
+.scroll-bar:vertical .decrement-arrow {
+	-fx-background-color: #000; /* Цвет стрелок на кнопках */
+}
+
+/* Кнопки влево и вправо */
+.scroll-bar:horizontal .increment-button,
+.scroll-bar:horizontal .decrement-button {
+	-fx-background-color: #fce5f9; /* Цвет кнопок */
+}
+
+.scroll-bar:horizontal .increment-arrow,
+.scroll-bar:horizontal .decrement-arrow {
+	-fx-background-color: #000; /* Цвет стрелок на кнопках */
+}
+
 .round-text-field {
-	-fx-background-radius: 10;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+	-fx-border-width: 0;
+	-fx-background-insets: 0;
+	-fx-background-color: white;
+	-fx-padding: 0 0 0 25;
+	-fx-prompt-text-fill: #5f5462;
+	-fx-font-weight: bold;
+}
+
+.round-left-text-field {
+
+}
+
+.round-right-text-field {
+	-fx-background-radius: 10 0 0 10;
 	-fx-padding: 0 0 0 20;
 }
+
+.index-button {
+	-fx-background-image: url('../main-window/index.png');
+	-fx-background-size: 28px 30px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.article-button {
+	-fx-background-image: url('../main-window/articles.png');
+	-fx-background-size: 20px 22px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.bookmark-button {
+	-fx-background-image: url('../main-window/bookmarks.png');
+	-fx-background-size: 17px 23px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.create-article-button {
+	-fx-background-image: url('../main-window/create-article.png');
+	-fx-background-size: 24px 24px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.resave-article-button {
+	-fx-background-image: url('../main-window/resave-article.png');
+	-fx-background-size: 24px 24px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.index-button:hover, .article-button:hover, .bookmark-button:hover, .create-article-button:hover, .resave-article-button:hover {
+	-fx-background-color: lightgray;
+}
+
 
 .erase-button {
 	-fx-background-radius: 10 2 2 10;
@@ -40,17 +162,45 @@
 }
 
 .round-button {
-	-fx-background-radius: 40;
-	-fx-border-radius: 40;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+	-fx-border-width: 0;
+	-fx-background-insets: 0;
+	-fx-background-color: #c791d3;
+	-fx-background-image: url('../main-window/search.png');
+	-fx-background-size: 35px 35px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+
+}
+
+.round-button:hover {
+	-fx-background-color: #ffffff;
 }
 
 .tab-pane .tab-header-background {
 	-fx-background-color: transparent;
 }
 
+.tab {
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+	-fx-border-width: 0;
+	-fx-background-insets: 0;
+	-fx-background-color: #fce5f9;
+	-fx-background-radius: 0;
+}
+
+.tab:selected {
+	-fx-background-color: white;
+}
+
 .h-listview, .v-listview {
-	-fx-border-width: 1;
-	-fx-border-color: lightgray;
+	-fx-focus-color: transparent;
+	-fx-faint-focus-color: transparent;
+	-fx-border-width: 0;
+	-fx-background-insets: 0;
+	-fx-background-color: white;
 }
 
 .h-listview, .v-listview > .scroll-pane {
@@ -81,14 +231,13 @@
 }
 
 .hover-panel-button:hover {
-	-fx-translate-y: -3;
+	-fx-border-width: 0 0 3 0;
+	-fx-border-color: #c791d3;
 }
 
 .note {
-	-fx-fill: #4B3775;
-	-fx-stroke: #4B3775;
-	-fx-stroke-width: 1px;
 	-fx-cursor: hand;
+	-fx-font-style: italic;
 }
 
 .note:hover {
@@ -100,9 +249,8 @@
 	-fx-stroke: #126579;
 	-fx-fill: #126579;
 	-fx-cursor: hand;
-	-fx-underline: true;
 }
 
 .parallel-link:hover {
-	-fx-strikethrough: true;
+	-fx-underline: true;
 }
