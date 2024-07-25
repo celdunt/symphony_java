@@ -33,6 +33,7 @@ public class ArticlesController {
     public static SimpleBooleanProperty isAdditionArticle = new SimpleBooleanProperty();
     public static List<Link> elinks;
     public static List<Link> blinks;
+    public static List<Link> olinks;
 
     public void initialize() throws IOException {
 
@@ -105,6 +106,7 @@ public class ArticlesController {
                         isAdditionArticle.set(false);
                         row.getItem().bLinks.addAll(ArticlesController.blinks);
                         row.getItem().eLinks.addAll(ArticlesController.elinks);
+                        row.getItem().oLinks.addAll(ArticlesController.olinks);
                         try {
                             ArticleSerializer.save(articleObservableList);
                         } catch (IOException e) {

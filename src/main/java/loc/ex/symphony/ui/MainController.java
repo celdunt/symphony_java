@@ -65,6 +65,11 @@ public class MainController {
     public ListView<Book> otherListView;
     public ListView<Link> otherLinkView;
     public Tab booksTab;
+    public Button eraseCurLink;
+    public Button eraseAllLink;
+    public ToggleButton searchMode;
+    public StackPane toggleContainer;
+    public Label searchModeLabel;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -122,6 +127,7 @@ public class MainController {
         initIndexButtonHandler();
         initBookmarkButton();
         initSearchButton();
+        initEraseLinkButtons();
         initArticleButtons();
         MainTextAreaComponent.getInstance(this).initMainTextArea();
         LeafButtonComponent.getInstance(this).initLeafButtons();
@@ -131,6 +137,7 @@ public class MainController {
         selectedEllenList__OnAction();
         selectedOtherList__OnAction();
         selectedChapterList__OnAction();
+        initSearchModeButton();
         LinkComponent.getInstance(this).initLinkListSelection();
         EraseButtonComponent.getInstance(this).initEraseButtons();
         initOpenBookmarkAction();
@@ -222,9 +229,12 @@ public class MainController {
                 if (openingBookmark.get().getRoot() == PathsEnum.Bible) {
                     openingBook = bibleListView;
                     bookTabPane.getSelectionModel().select(bibleTab);
-                } else {
+                } else if (openingBookmark.get().getRoot() == PathsEnum.EllenWhite) {
                     openingBook = ellenListView;
                     bookTabPane.getSelectionModel().select(ellenTab);
+                } else {
+                    openingBook = otherListView;
+                    bookTabPane.getSelectionModel().select(booksTab);
                 }
 
                 openingBook.getSelectionModel().select(-1);
@@ -250,8 +260,10 @@ public class MainController {
             if (openingArticle.get() != null) {
                 obsBibleLink.clear();
                 obsEllenLink.clear();
+                obsOtherLink.clear();
                 obsBibleLink.addAll(openingArticle.get().getbLinks());
                 obsEllenLink.addAll(openingArticle.get().geteLinks());
+                obsOtherLink.addAll(openingArticle.get().getoLinks());
                 openingArticle.set(null);
             }
 
@@ -288,7 +300,8 @@ public class MainController {
                 LocalDateTime.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)),
                 "",
                 bibleLinkView.getItems(),
-                ellenLinkView.getItems());
+                ellenLinkView.getItems(),
+                otherLinkView.getItems());
 
         new ConfirmNamingWindow(article).stage().show();
 
@@ -352,9 +365,14 @@ public class MainController {
                     bibleListView.getSelectionModel().getSelectedIndex(),
                     chapterListView.getItems().size()
             ).get(chapterListView.getSelectionModel().getSelectedIndex());
-        } else {
+        } else if (ellenTab.isSelected()){
             return ParallelsLinksStorage.getEllen(
                     ellenListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        } else {
+            return ParallelsLinksStorage.getOther(
+                    otherListView.getSelectionModel().getSelectedIndex(),
                     chapterListView.getItems().size()
             ).get(chapterListView.getSelectionModel().getSelectedIndex());
         }
@@ -363,8 +381,8 @@ public class MainController {
     public BookmarkStruct createBookmark() {
 
         String selectedText = mainTextArea.getSelectedText();
-        ListView<Book> selectedList = bibleTab.isSelected() ? bibleListView : ellenListView;
-        PathsEnum root = bibleTab.isSelected() ? PathsEnum.Bible : PathsEnum.EllenWhite;
+        ListView<Book> selectedList = bibleTab.isSelected() ? bibleListView : ellenTab.isSelected()? ellenListView : otherListView;
+        PathsEnum root = bibleTab.isSelected() ? PathsEnum.Bible : ellenTab.isSelected()? PathsEnum.EllenWhite : PathsEnum.Other;
         String link = "";
         if (!selectedText.isEmpty()) {
             link += String.format("%s %d", new Cutser().getCutByRoot(selectedList.getSelectionModel().getSelectedIndex(), root), chapterListView.getSelectionModel().getSelectedItem());
@@ -908,6 +926,39 @@ public class MainController {
         return true;
     }
 
+    private void initEraseLinkButtons() {
+        eraseAllLink.setOnAction(action -> {
+            obsEllenLink.clear();
+            obsBibleLink.clear();
+            obsOtherLink.clear();
+        });
+        eraseCurLink.setOnAction(action-> {
+            if (bibleLinkTab.isSelected()) obsBibleLink.clear();
+            else if (ellenLinkTab.isSelected()) obsEllenLink.clear();
+            else obsOtherLink.clear();
+        });
+    }
+
+    private void initSearchModeButton() {
+        searchMode.selectedProperty().addListener(lis -> {
+            if (searchMode.isSelected()) {
+                toggleContainer.getStyleClass().remove("stack-pane-unselected");
+                toggleContainer.getStyleClass().add("stack-pane-selected");
+                searchModeLabel.setText("Поиск частей слов");
+            }
+            else {
+                toggleContainer.getStyleClass().remove("stack-pane-selected");
+                toggleContainer.getStyleClass().add("stack-pane-unselected");
+                searchModeLabel.setText("Морфологический поиск");
+            }
+        });
+        searchMode.setSelected(!searchMode.isSelected());
+        searchMode.setSelected(!searchMode.isSelected());
+        toggleContainer.setOnMouseClicked(action -> {
+            searchMode.setSelected(!searchMode.isSelected());
+        });
+    }
+
     /* * * Component description * * */
 
     static class LinkComponent {
@@ -1255,8 +1306,9 @@ public class MainController {
                         String title;
                         if (controller.bibleTab.isSelected())
                             title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
-                        else
+                        else if (controller.ellenTab.isSelected())
                             title = new Cutser().getBibleCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
+                        else title = new Cutser().getOtherCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
                         title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
                                 controller.mainTextArea.getText(index, index+span.getLength()));
                         Note note = controller.getNotesForSelectedChapter().get(inote);
@@ -1549,21 +1601,30 @@ public class MainController {
             hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverPanel.getChildren().add(createArticleButton);
             createArticleButton.onActionProperty().set(actionEvent -> {
-                PathsEnum mode = controller.bibleTab.isSelected()? PathsEnum.Bible: PathsEnum.EllenWhite;
-                ListView<Book> listView = mode == PathsEnum.Bible? controller.bibleListView: controller.ellenListView;
-                HashMap<String, Integer> whelp = mode == PathsEnum.Bible? controller.b_uniqueWordH: controller.e_uniqueWordH;
+                PathsEnum mode = controller.bibleTab.isSelected()? PathsEnum.Bible:
+                        controller.ellenTab.isSelected()? PathsEnum.EllenWhite: PathsEnum.Other;
+                ListView<Book> listView = mode == PathsEnum.Bible? controller.bibleListView:
+                        mode == PathsEnum.EllenWhite? controller.ellenListView : controller.otherListView;
+                HashMap<String, Integer> whelp = mode == PathsEnum.Bible? controller.b_uniqueWordH:
+                        mode == PathsEnum.EllenWhite? controller.e_uniqueWordH : controller.o_uniqueWordH;
 
                 Link link = getLink(listView, mode, whelp);
 
                 if (mode == PathsEnum.Bible) {
                     try {
-                        new ArticlesWindow(List.of(link), new ArrayList<>()).stage().show();
+                        new ArticlesWindow(List.of(link), new ArrayList<>(), new ArrayList<>()).stage().show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else if (mode == PathsEnum.EllenWhite){
+                    try {
+                        new ArticlesWindow(new ArrayList<>(), List.of(link), new ArrayList<>()).stage().show();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 } else {
                     try {
-                        new ArticlesWindow(new ArrayList<>(), List.of(link)).stage().show();
+                        new ArticlesWindow(new ArrayList<>(), new ArrayList<>(), List.of(link)).stage().show();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

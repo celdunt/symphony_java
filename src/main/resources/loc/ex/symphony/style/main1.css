@@ -17,13 +17,25 @@
 
 /* Цвет выделенной ячейки */
 .list-cell:selected {
-	-fx-background-color: #c791d3; /* Цвет фона для выделенной ячейки */
+	-fx-background-color: #ffdcdc; /* Цвет фона для выделенной ячейки */
 	-fx-text-fill: #000000; /* Цвет текста для выделенной ячейки */
+}
+
+.styled-text-area {
+	-fx-background-color: #fffff8;
+}
+
+.styled-text-area .selection {
+	-fx-fill: #ffdcdc;
+}
+
+.menu-item {
+	-fx-accent: #ffdcdc;
 }
 
 /* Цвет выделенной ячейки, но не в фокусе */
 .list-cell:selected:focused {
-	-fx-background-color: #c791d3; /* Цвет фона для выделенной ячейки с фокусом */
+	-fx-background-color: #ffdcdc; /* Цвет фона для выделенной ячейки с фокусом */
 	-fx-text-fill: #000000; /* Цвет текста для выделенной ячейки с фокусом */
 }
 
@@ -124,6 +136,22 @@
 	-fx-background-color: transparent;
 }
 
+.erase-all-link-button {
+	-fx-background-image: url('../main-window/erase-link-all.png');
+	-fx-background-size: 27px 27px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.erase-cur-link-button {
+	-fx-background-image: url('../main-window/erase-link-cur.png');
+	-fx-background-size: 27px 27px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
 .resave-article-button {
 	-fx-background-image: url('../main-window/resave-article.png');
 	-fx-background-size: 24px 24px;
@@ -132,10 +160,45 @@
 	-fx-background-color: transparent;
 }
 
-.index-button:hover, .article-button:hover, .bookmark-button:hover, .create-article-button:hover, .resave-article-button:hover {
-	-fx-background-color: lightgray;
+.index-button:hover, .article-button:hover, .bookmark-button:hover,
+.create-article-button:hover, .resave-article-button:hover,
+.erase-cur-link-button:hover, .erase-all-link-button:hover {
+	-fx-background-color: #ffdcdc;
 }
 
+.toggle-button {
+	-fx-background-insets: 0;
+	-fx-background-color: #3971a1;
+	-fx-pref-width: 14px;
+	-fx-min-width: 14px;
+	-fx-max-width: 14px;
+	-fx-pref-height: 14px;
+	-fx-min-height: 14px;
+	-fx-max-height: 14px;
+	-fx-background-radius: 14;
+}
+
+.toggle-button:selected {
+	-fx-translate-x: 11px;
+}
+
+.stack-pane {
+	-fx-background-radius: 20;
+	-fx-border-width: 2px;
+	-fx-pref-height: 19px;
+	-fx-min-height: 19px;
+	-fx-max-height: 19px;
+	-fx-border-radius: 20;
+	-fx-border-color: #23445e;
+}
+
+.stack-pane-unselected {
+	-fx-background-color: transparent;
+}
+
+.stack-pane-selected {
+	-fx-background-color: #fce5f9;
+}
 
 .erase-button {
 	-fx-background-radius: 10 2 2 10;
@@ -166,7 +229,7 @@
 	-fx-faint-focus-color: transparent;
 	-fx-border-width: 0;
 	-fx-background-insets: 0;
-	-fx-background-color: #c791d3;
+	-fx-background-color: #fce5f9;
 	-fx-background-image: url('../main-window/search.png');
 	-fx-background-size: 35px 35px;
 	-fx-background-repeat: no-repeat;

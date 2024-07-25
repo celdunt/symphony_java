@@ -13,6 +13,7 @@ public class ParallelsLinksStorage {
 
     @JsonIgnore private static ParallelsLinksStorage[] bibleParallelsLinksStorage;
     @JsonIgnore private static ParallelsLinksStorage[] ellenParallelsLinksStorage;
+    @JsonIgnore private static ParallelsLinksStorage[] otherParallelsLinksStorage;
 
     public ParallelsLinksSubStorage[] subStorage;
 
@@ -53,6 +54,19 @@ public class ParallelsLinksStorage {
         } else return new ParallelsLinksStorage();
     }
 
+    public static ParallelsLinksStorage getOther(int index, int chapters) throws IOException {
+        if (otherParallelsLinksStorage == null) {
+            otherParallelsLinksStorage = ParallelsLinksSerializer.load("other");
+        }
+        if (otherParallelsLinksStorage == null || otherParallelsLinksStorage.length == 0)
+            otherParallelsLinksStorage = new ParallelsLinksStorage[31];
+        if (index >= 0 && index < otherParallelsLinksStorage.length) {
+            if (otherParallelsLinksStorage[index] == null)
+                otherParallelsLinksStorage[index] = new ParallelsLinksStorage(chapters);
+            return otherParallelsLinksStorage[index];
+        } else return new ParallelsLinksStorage();
+    }
+
     public ParallelsLinksSubStorage get(int index) {
         if (subStorage != null && index >= 0 && index < subStorage.length) {
             if (subStorage[index] == null)
@@ -64,6 +78,7 @@ public class ParallelsLinksStorage {
     public static void update() throws IOException {
         ParallelsLinksSerializer.save(bibleParallelsLinksStorage, "bible");
         ParallelsLinksSerializer.save(ellenParallelsLinksStorage, "ellen");
+        ParallelsLinksSerializer.save(otherParallelsLinksStorage, "other");
     }
 
 }

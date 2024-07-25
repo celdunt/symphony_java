@@ -16,11 +16,13 @@ public class Article {
                 @JsonProperty("date") String date,
                 @JsonProperty("name") String name,
                 @JsonProperty("bLinks") List<Link> bLinks,
-                @JsonProperty("eLinks") List<Link> eLinks) {
+                @JsonProperty("eLinks") List<Link> eLinks,
+                @JsonProperty("oLinks") List<Link> oLinks) {
         this.date = new SimpleStringProperty(date);
         this.name = new SimpleStringProperty(name);
         this.bLinks = bLinks;
         this.eLinks = eLinks;
+        this.oLinks = oLinks;
     }
 
 
@@ -68,5 +70,15 @@ public class Article {
     public SimpleStringProperty name;
     public List<Link> bLinks;
     public List<Link> eLinks;
+
+    public List<Link> getoLinks() {
+        return oLinks;
+    }
+
+    public void setoLinks(List<Link> oLinks) {
+        this.oLinks = oLinks;
+    }
+
+    public List<Link> oLinks;
 
 }

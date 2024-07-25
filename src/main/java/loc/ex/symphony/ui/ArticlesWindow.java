@@ -20,12 +20,13 @@ public class ArticlesWindow {
         defineGraphic();
     }
 
-    public ArticlesWindow(List<Link> blinks, List<Link> elinks) throws IOException {
+    public ArticlesWindow(List<Link> blinks, List<Link> elinks, List<Link> olinks) throws IOException {
         initScene();
         defineGraphic();
         ArticlesController.isAdditionArticle.set(true);
         ArticlesController.elinks = elinks;
         ArticlesController.blinks = blinks;
+        ArticlesController.olinks = olinks;
     }
 
 
