@@ -18,6 +18,7 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.file.ArticleSerializer;
 import loc.ex.symphony.file.BookSerializer;
 import loc.ex.symphony.file.FileAdapter;
 import loc.ex.symphony.file.FileResaver;
@@ -43,6 +44,7 @@ import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class MainController {
 
@@ -193,6 +195,8 @@ public class MainController {
                     obsBibleLink.removeAll(linkView.getSelectionModel().getSelectedItems());
                 } else if (linkView == ellenLinkView) {
                     obsEllenLink.removeAll(linkView.getSelectionModel().getSelectedItems());
+                } else if (linkView == otherLinkView) {
+                    obsOtherLink.removeAll(linkView.getSelectionModel().getSelectedItems());
                 }
             }
         });
@@ -264,7 +268,6 @@ public class MainController {
                 obsBibleLink.addAll(openingArticle.get().getbLinks());
                 obsEllenLink.addAll(openingArticle.get().geteLinks());
                 obsOtherLink.addAll(openingArticle.get().getoLinks());
-                openingArticle.set(null);
             }
 
         });
@@ -697,6 +700,25 @@ public class MainController {
                 throw new RuntimeException(e);
             }
         });
+        resaveArticleButton.onActionProperty().set(action -> {
+            if (openingArticle.get() != null) {
+                try {
+                    ObservableList<Article> obs = FXCollections.observableArrayList(ArticleSerializer.load());
+
+                    for (Article article : obs) {
+                        if (article.getName().equals(openingArticle.get().getName())) {
+                            article.oLinks = obsOtherLink;
+                            article.bLinks = obsBibleLink;
+                            article.eLinks = obsEllenLink;
+                        }
+                    }
+
+                    ArticleSerializer.save(obs);
+                } catch (IOException exception) {
+                    System.err.println(exception.getMessage());
+                }
+            }
+        });
     }
 
     public void initBookmarkButton() {
@@ -878,7 +900,11 @@ public class MainController {
                 /* *********** ПРОПИСАТЬ ОПЦИИ ПОИСКА ************* */
 
                 obsBibleLink.clear();
-                obsBibleLink.addAll(b_searcher.search(prompt, PathsEnum.Bible));
+                if (!searchMode.isSelected())
+                    obsBibleLink.addAll(b_searcher.search(prompt, PathsEnum.Bible));
+                else obsBibleLink.addAll(b_searcher.search(prompt, PathsEnum.Bible, b_uniqueWordH));
+
+                sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
 
                 /*filteredBibleList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
                 *//*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -896,7 +922,11 @@ public class MainController {
             if (ellenTab.isSelected()) {
 
                 obsEllenLink.clear();
-                obsEllenLink.addAll(e_searcher.search(prompt, PathsEnum.EllenWhite));
+                if (!searchMode.isSelected())
+                    obsEllenLink.addAll(e_searcher.search(prompt, PathsEnum.EllenWhite));
+                else obsEllenLink.addAll(e_searcher.search(prompt, PathsEnum.EllenWhite, e_uniqueWordH));
+
+                sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
 
                 /*filteredEllenList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
                 *//*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -913,8 +943,12 @@ public class MainController {
             }
             if (booksTab.isSelected()) {
                 obsOtherLink.clear();
-                obsOtherLink.addAll(o_searcher.search(prompt, PathsEnum.Other));
+                if (!searchMode.isSelected())
+                    obsOtherLink.addAll(o_searcher.search(prompt, PathsEnum.Other));
+                else obsOtherLink.addAll(o_searcher.search(prompt, PathsEnum.Other, o_uniqueWordH));
+                sortLinkView(otherListView.getSelectionModel().getSelectedIndex());
             }
+
         }
     }
 
@@ -1307,8 +1341,8 @@ public class MainController {
                         if (controller.bibleTab.isSelected())
                             title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
                         else if (controller.ellenTab.isSelected())
-                            title = new Cutser().getBibleCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
-                        else title = new Cutser().getOtherCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
+                            title = new Cutser().getEllenCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
+                        else title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
                         title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
                                 controller.mainTextArea.getText(index, index+span.getLength()));
                         Note note = controller.getNotesForSelectedChapter().get(inote);

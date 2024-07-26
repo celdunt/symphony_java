@@ -8,6 +8,7 @@ import loc.ex.symphony.indexdata.IndexSaver;
 import loc.ex.symphony.indexdata.IndexSaverSingleThreaded;
 import loc.ex.symphony.indexdata.IndexStruct;
 import loc.ex.symphony.listview.Book;
+import loc.ex.symphony.listview.Chapter;
 import loc.ex.symphony.listview.Link;
 import loc.ex.symphony.listview.PathsEnum;
 import loc.ex.symphony.ui.MainController;
@@ -204,6 +205,66 @@ public class Searcher {
             iterators.add(wordsList.listIterator());
         }
 
+    }
+
+    public ObservableList<Link> search(String prompt, PathsEnum pathsEnum, HashMap<String, Integer> uniqueWordH) {
+        List<Link> foundOccurrences = new ArrayList<>();
+
+        String[] words = prompt.split("[\\s\\p{Punct}]+");
+
+        String[] fullWords = new String[words.length];
+
+        int bookID = 0;
+        int chapterID;
+        int fragmentID;
+        boolean isFound;
+
+        for (Book book : resource) {
+            chapterID = 0;
+            for (Chapter chapter : book.getChapters()) {
+                fragmentID = 0;
+                for (String fragment : chapter.getFragments()) {
+                    isFound = true;
+                    List<IndexStruct> indexStructs = new ArrayList<>();
+                    for (String word : words) {
+                        if (!fragment.toLowerCase().contains(word.toLowerCase())) {
+                            isFound = false;
+                            break;
+                        } else {
+                            indexStructs.add(getIndexStruct(
+                                    bookID, chapterID, fragmentID,
+                                    fragment, word, uniqueWordH
+                            ));
+                        }
+                    }
+
+                    if (isFound) {
+                        foundOccurrences.add(new Link(indexStructs, resource, pathsEnum,
+                                Arrays.toString(indexStructs.stream().map(f -> uniqueWords.get(f.getWordKey())).toArray())));
+                    }
+
+                    fragmentID++;
+                }
+                chapterID++;
+            }
+            bookID++;
+        }
+
+        return FXCollections.observableArrayList(foundOccurrences);
+
+    }
+
+    private IndexStruct getIndexStruct(int b, int c, int f, String fr, String w, HashMap<String, Integer> u) {
+        int p = fr.toLowerCase().indexOf(w.toLowerCase());
+        int e = p;
+        while (p-1 > 0 && Character.isLetterOrDigit(fr.charAt(p-1))) {
+            p--;
+        }
+        while (e < fr.length() && Character.isLetterOrDigit(fr.charAt(e))) {
+            e++;
+        }
+        w = fr.substring(p, e).toLowerCase();
+        return new IndexStruct(b, c, f, p, u.getOrDefault(w, 0), null);
     }
 
 }

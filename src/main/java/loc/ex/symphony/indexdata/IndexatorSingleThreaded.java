@@ -103,13 +103,13 @@ public class IndexatorSingleThreaded {
                     if (morphSynonymGroupsOfWord[fixedWord].isEmpty()) continue;
                     if (morphSynonymGroupsOfWord[nextWord].isEmpty()) continue;
 
-                    List<IndexStruct> fixed = indexData.get(morphSynonymGroupsOfWord[fixedWord]);
-                    List<IndexStruct> next = indexData.get(morphSynonymGroupsOfWord[nextWord]);
+                    List<IndexStruct> fixed = indexData.get(morphSynonymGroupsOfWord[fixedWord].trim());
+                    List<IndexStruct> next = indexData.get(morphSynonymGroupsOfWord[nextWord].trim());
 
                     if (fixed == null || fixed.isEmpty() || next == null || next.isEmpty()) continue;
 
-                    fixed.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[nextWord]));
-                    next.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[fixedWord]));
+                    fixed.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[nextWord].trim()));
+                    next.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[fixedWord].trim()));
 
 
                    /* keyOfFixed = morphSynonymGroupsOfWord[fixedWord].toLowerCase().charAt(0);
@@ -153,7 +153,7 @@ public class IndexatorSingleThreaded {
         List<String[]> handledGroupsOfWords = new ArrayList<>();
 
         for (String groupOfWords : groupsOfWords) {
-            handledGroupsOfWords.add(groupOfWords.split("[^a-zA-Zа-яА-Я0-9]+"));
+            handledGroupsOfWords.add(groupOfWords.toLowerCase().split("[^a-zA-Zа-яА-Я0-9]+"));
         }
 
         return handledGroupsOfWords;
