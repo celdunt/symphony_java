@@ -6,6 +6,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -90,6 +91,11 @@ public class MainController {
     public ListView<Link> bibleLinkView;
     public ListView<Link> ellenLinkView;
 
+    private OpenChapterData mainCD = new OpenChapterData();
+    private OpenChapterData secondCD = new OpenChapterData();
+
+    private StyleClassedTextArea currentTArea = new StyleClassedTextArea();
+
     public FilteredList<Link> filteredBibleList;
     public FilteredList<Link> filteredEllenList;
     public FilteredList<Link> filteredOtherList;
@@ -119,6 +125,41 @@ public class MainController {
 
     public static ObjectProperty<BookmarkStruct> openingBookmark = new SimpleObjectProperty<>();
     public static ObjectProperty<Article> openingArticle = new SimpleObjectProperty<>();
+
+    ChangeListener<Integer> selectedChapterListener = (_obs, _old, _new) -> {
+        if (_new != null) {
+            currentTArea.clear();
+            currentTArea.setStyleClass(0, 0, "jtext");
+            currentTArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
+
+            currentTArea.moveTo(0);
+            currentTArea.requestFollowCaret();
+
+            int bookID = Integer.max(Integer.max(
+                    bibleListView.getSelectionModel().getSelectedIndex(),
+                    ellenListView.getSelectionModel().getSelectedIndex()
+            ), otherListView.getSelectionModel().getSelectedIndex());
+
+            int tab = bibleTab.isSelected()? 0: ellenTab.isSelected()? 1: 2;
+
+            if (currentTArea == mainTextArea) {
+                mainCD.setBook(bookID);
+                mainCD.setChapter(chapterListView.getSelectionModel().getSelectedIndex());
+                mainCD.setTab(tab);
+            } else if (currentTArea == SplitReadComponent.getInstance(this).tarea) {
+                secondCD.setBook(bookID);
+                secondCD.setChapter(chapterListView.getSelectionModel().getSelectedIndex());
+                secondCD.setTab(tab);
+            }
+
+            try {
+                getNotesForSelectedChapter().display(currentTArea);
+                getParallelLinkForSelectedChapter().display(currentTArea);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    };
 
     public MainController() {
     }
@@ -171,6 +212,64 @@ public class MainController {
         o_searcher.setResource(otherListView.getItems());
         mainTextArea.editableProperty().set(false);
         selectTabBible__OnAction();
+    }
+
+    public void initFocusChange() {
+
+        currentTArea = mainTextArea;
+
+
+        mainTextArea.focusedProperty().addListener(lis -> {
+            if (mainTextArea.isFocused()) {
+                chapterListView.getSelectionModel().selectedItemProperty().removeListener(selectedChapterListener);
+
+
+                currentTArea = mainTextArea;
+                ListView<Book> lb;
+
+                bookTabPane.getSelectionModel().select(mainCD.getTab());
+                if (mainCD.getTab() == 0)
+                    lb = bibleListView;
+                else if (mainCD.getTab() == 1)
+                    lb = ellenListView;
+                else lb = otherListView;
+
+                lb.getSelectionModel().select(mainCD.getBook());
+                lb.scrollTo(mainCD.getBook());
+
+                chapterListView.getSelectionModel().select(mainCD.getChapter());
+                chapterListView.scrollTo(mainCD.getChapter());
+
+                chapterListView.getSelectionModel().selectedItemProperty().addListener(selectedChapterListener);
+            }
+        });
+
+        SplitReadComponent.getInstance(this).tarea.focusedProperty().addListener(lis -> {
+            if (SplitReadComponent.getInstance(this).tarea.isFocused()) {
+                chapterListView.getSelectionModel().selectedItemProperty().removeListener(selectedChapterListener);
+
+
+                currentTArea = SplitReadComponent.getInstance(this).tarea;
+
+                ListView<Book> lb;
+
+                bookTabPane.getSelectionModel().select(secondCD.getTab());
+                if (secondCD.getTab() == 0)
+                    lb = bibleListView;
+                else if (secondCD.getTab() == 1)
+                    lb = ellenListView;
+                else lb = otherListView;
+
+                lb.getSelectionModel().select(secondCD.getBook());
+                lb.scrollTo(secondCD.getBook());
+
+                chapterListView.getSelectionModel().select(secondCD.getChapter());
+                chapterListView.scrollTo(secondCD.getChapter());
+
+                chapterListView.getSelectionModel().selectedItemProperty().addListener(selectedChapterListener);
+            }
+        });
+
     }
 
     public void initSearchByTextEnterPressed() {
@@ -281,7 +380,7 @@ public class MainController {
 
     public void highlightBookmark(BookmarkStruct bookmark) {
 
-        String mainText = mainTextArea.getText();
+        String mainText = currentTArea.getText();
 
         int start = bookmark.getPosition();
         int end = start + bookmark.getText().length();
@@ -291,10 +390,10 @@ public class MainController {
             end++;
         }
 
-        mainTextArea.setStyleClass(start, end, "fill-text");
+        currentTArea.setStyleClass(start, end, "fill-text");
 
-        mainTextArea.moveTo(start);
-        mainTextArea.requestFollowCaret();
+        currentTArea.moveTo(start);
+        currentTArea.requestFollowCaret();
 
     }
 
@@ -317,33 +416,33 @@ public class MainController {
 
     private void doCreateNote() throws IOException, URISyntaxException {
 
-        if (!mainTextArea.getSelectedText().isEmpty()) {
-            int start = mainTextArea.getSelection().getStart();
-            int end = mainTextArea.getSelection().getEnd();
+        if (!currentTArea.getSelectedText().isEmpty()) {
+            int start = currentTArea.getSelection().getStart();
+            int end = currentTArea.getSelection().getEnd();
 
             Note note = new Note(start, end, "");
 
             getNotesForSelectedChapter().add(note);
 
-            getNotesForSelectedChapter().display(mainTextArea);
+            getNotesForSelectedChapter().display(currentTArea);
 
-            MainTextAreaComponent.getInstance(this).selectSpecialTextAction();
+            MainTextAreaComponent.getInstance(this).selectSpecialTextAction(currentTArea);
         }
 
     }
 
     private void doCreateParallelLink() throws IOException, URISyntaxException {
 
-        if (!mainTextArea.getSelectedText().isEmpty()){
-            int start = mainTextArea.getSelection().getStart();
-            int end = mainTextArea.getSelection().getEnd();
+        if (!currentTArea.getSelectedText().isEmpty()){
+            int start = currentTArea.getSelection().getStart();
+            int end = currentTArea.getSelection().getEnd();
 
             ParallelLink link = new ParallelLink(start, end, new ArrayList<>());
 
             getParallelLinkForSelectedChapter().add(link);
-            getParallelLinkForSelectedChapter().display(mainTextArea);
+            getParallelLinkForSelectedChapter().display(currentTArea);
 
-            MainTextAreaComponent.getInstance(this).selectSpecialTextAction();
+            MainTextAreaComponent.getInstance(this).selectSpecialTextAction(currentTArea);
         }
 
     }
@@ -388,7 +487,7 @@ public class MainController {
 
     public BookmarkStruct createBookmark() {
 
-        String selectedText = mainTextArea.getSelectedText();
+        String selectedText = currentTArea.getSelectedText();
         ListView<Book> selectedList = bibleTab.isSelected() ? bibleListView : ellenTab.isSelected()? ellenListView : otherListView;
         PathsEnum root = bibleTab.isSelected() ? PathsEnum.Bible : ellenTab.isSelected()? PathsEnum.EllenWhite : PathsEnum.Other;
         String link = "";
@@ -401,7 +500,7 @@ public class MainController {
                     .withRoot(root)
                     .withBookId(selectedList.getSelectionModel().getSelectedIndex())
                     .withChapterId(chapterListView.getSelectionModel().getSelectedItem())
-                    .withPosition(mainTextArea.getSelection().getStart())
+                    .withPosition(currentTArea.getSelection().getStart())
                     .withText(selectedText)
                     .build();
         }
@@ -413,7 +512,7 @@ public class MainController {
         Set<KeyCode> pressedKeys = new HashSet<>();
 
         Symphony.scene.setOnKeyPressed(e -> {
-            if (mainTextArea.isFocused()) {
+            if (currentTArea.isFocused()) {
                 if (e.getCode().getName().equals("Ctrl")) {
                     pressedKeys.add(e.getCode());
                 }
@@ -423,7 +522,7 @@ public class MainController {
                 if (pressedKeys.size() > 1) {
                     Clipboard clipboard = Clipboard.getSystemClipboard();
                     ClipboardContent content = new ClipboardContent();
-                    content.putString(mainTextArea.getSelectedText());
+                    content.putString(currentTArea.getSelectedText());
                     clipboard.setContent(content);
 
                     pressedKeys.clear();
@@ -458,7 +557,7 @@ public class MainController {
     private void highlightText(List<IndexStruct> selectedReferences, String[] words) {
         HashMap<Integer, String> uniqueWords = bibleLinkTab.isSelected() ? b_uniqueWord : ellenLinkTab.isSelected() ? e_uniqueWord : o_uniqueWord;
 
-        String mainText = mainTextArea.getText();
+        String mainText = currentTArea.getText();
 
         int positionCaret = 0;
 
@@ -485,32 +584,16 @@ public class MainController {
             }
 
             if (positionCaret == 0) positionCaret = start;
-            mainTextArea.setStyleClass(start, end, "fill-text");
+            currentTArea.setStyleClass(start, end, "fill-text");
 
         }
 
-        mainTextArea.moveTo(positionCaret);
-        mainTextArea.requestFollowCaret();
+        currentTArea.moveTo(positionCaret);
+        currentTArea.requestFollowCaret();
     }
 
     private void selectedChapterList__OnAction() {
-        chapterListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            if (_new != null) {
-                mainTextArea.clear();
-                mainTextArea.setStyleClass(0, 0, "jtext");
-                mainTextArea.insertText(0, selectedBook.getChapters().get(_new).getEntireText());
-
-                mainTextArea.moveTo(0);
-                mainTextArea.requestFollowCaret();
-
-                try {
-                    getNotesForSelectedChapter().display(mainTextArea);
-                    getParallelLinkForSelectedChapter().display(mainTextArea);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        chapterListView.getSelectionModel().selectedItemProperty().addListener(selectedChapterListener);
     }
 
     private void selectedBibleList__OnAction() {
@@ -1194,6 +1277,44 @@ public class MainController {
         private ContextMenu noteContextMenu;
         private ContextMenu linkContextMenu;
 
+        private void handle(MouseEvent mouse, StyleClassedTextArea tarea) {
+            if (mouse.getButton() == MouseButton.PRIMARY) {
+                noteContextMenu.hide();
+                linkContextMenu.hide();
+                try {
+                    selectSpecialTextAction(tarea);
+                } catch (IOException | URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+                if (tarea.getSelectedText().isEmpty()) {
+                    String text = tarea.getText();
+                    int caretPosition = tarea.getCaretPosition();
+
+                    int start = caretPosition;
+                    int end = caretPosition;
+
+                    while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
+                        start--;
+                    }
+
+                    while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
+                        end++;
+                    }
+
+                    tarea.selectRange(start, end + 1);
+                    tarea.selectRange(start, end);
+                }
+            } else if (mouse.getButton() == MouseButton.SECONDARY) {
+                try {
+                    int pos = controller.currentTArea.hit(mouse.getX(), mouse.getY()).getInsertionIndex();
+                    controller.currentTArea.moveTo(pos);
+                    deleteSpecialTextAction(mouse, tarea);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
 
         private static class Holder {
             private static final MainTextAreaComponent INSTANCE = new MainTextAreaComponent();
@@ -1209,6 +1330,7 @@ public class MainController {
             defineContextMenu();
             defineMainTextArea();
             defineMainTextAreaHandler();
+            controller.initFocusChange();
 
         }
 
@@ -1250,49 +1372,18 @@ public class MainController {
         public void defineMainTextAreaHandler() {
 
             controller.mainTextArea.setOnMouseClicked(mouse -> {
-                if (mouse.getButton() == MouseButton.PRIMARY) {
-                    noteContextMenu.hide();
-                    linkContextMenu.hide();
-                    try {
-                        selectSpecialTextAction();
-                    } catch (IOException | URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                    if (controller.mainTextArea.getSelectedText().isEmpty()) {
-                        String text = controller.mainTextArea.getText();
-                        int caretPosition = controller.mainTextArea.getCaretPosition();
-
-                        int start = caretPosition;
-                        int end = caretPosition;
-
-                        while (start > 0 && Character.isLetterOrDigit(text.charAt(start - 1))) {
-                            start--;
-                        }
-
-                        while (end < text.length() && Character.isLetterOrDigit(text.charAt(end))) {
-                            end++;
-                        }
-
-                        controller.mainTextArea.selectRange(start, end+1);
-                        controller.mainTextArea.selectRange(start, end);
-                    }
-                } else if (mouse.getButton() == MouseButton.SECONDARY) {
-                    try {
-                        int pos = controller.mainTextArea.hit(mouse.getX(), mouse.getY()).getInsertionIndex();
-                        controller.mainTextArea.moveTo(pos);
-                        deleteSpecialTextAction(mouse);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
+                handle(mouse, controller.mainTextArea);
+            });
+            SplitReadComponent.getInstance(controller).tarea.setOnMouseClicked(mouse -> {
+                handle(mouse, SplitReadComponent.getInstance(controller).tarea);
             });
 
         }
 
-        private void deleteSpecialTextAction(MouseEvent mouse) throws IOException {
+        private void deleteSpecialTextAction(MouseEvent mouse, StyleClassedTextArea tarea) throws IOException {
 
-            int clickPos =  controller.mainTextArea.getCaretPosition();
-            StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
+            int clickPos =  tarea.getCaretPosition();
+            StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
             int index = 0;
             int inote = 0;
             int ilink = 0;
@@ -1305,13 +1396,13 @@ public class MainController {
                             Note note = null;
                             try {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
-                                controller.mainTextArea.setStyleClass(note.from, note.to, "");
+                                tarea.setStyleClass(note.from, note.to, "");
                                 controller.getNotesForSelectedChapter().remove(finalInote);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         });
-                        noteContextMenu.show(controller.mainTextArea,
+                        noteContextMenu.show(tarea,
                                 mouse.getScreenX(), mouse.getScreenY());
                         break;
                     }
@@ -1324,13 +1415,13 @@ public class MainController {
                             ParallelLink link = null;
                             try {
                                 link = controller.getParallelLinkForSelectedChapter().get(finalLink);
-                                controller.mainTextArea.setStyleClass(link.from, link.to, "");
+                                tarea.setStyleClass(link.from, link.to, "");
                                 controller.getParallelLinkForSelectedChapter().remove(finalLink);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         });
-                        linkContextMenu.show(controller.mainTextArea,
+                        linkContextMenu.show(tarea,
                                 mouse.getScreenX(), mouse.getScreenY());
                         break;
                     }
@@ -1345,10 +1436,10 @@ public class MainController {
 
         }
 
-        private void selectSpecialTextAction() throws IOException, URISyntaxException {
+        private void selectSpecialTextAction(StyleClassedTextArea tarea) throws IOException, URISyntaxException {
 
-            int clickPos =  controller.mainTextArea.getCaretPosition();
-            StyleSpans<Collection<String>> styles = controller.mainTextArea.getStyleSpans(0, controller.mainTextArea.getLength());
+            int clickPos =  tarea.getCaretPosition();
+            StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
             int index = 0;
             int inote = 0;
             int ilink = 0;
@@ -1362,7 +1453,7 @@ public class MainController {
                             title = new Cutser().getEllenCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
                         else title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
                         title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
-                                controller.mainTextArea.getText(index, index+span.getLength()));
+                                tarea.getText(index, index+span.getLength()));
                         Note note = controller.getNotesForSelectedChapter().get(inote);
                         if (!note.isOpened()) {
                             new NoteWindow(title, note).stage().show();
@@ -1526,11 +1617,11 @@ public class MainController {
 
             defineDeltas(deltaX, deltaY);
 
-            controller.mainTextArea.selectionProperty().addListener((ov, i1, i2) -> {
+            controller.currentTArea.selectionProperty().addListener((ov, i1, i2) -> {
 
-                if (i1.getStart() != i1.getEnd() && !controller.mainTextArea.getSelectedText().isEmpty()) {
+                if (i1.getStart() != i1.getEnd() && !controller.currentTArea.getSelectedText().isEmpty()) {
                     hoverSelectionPanel.setVisible(true);
-                    Bounds bounds = controller.mainTextArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()).orElse(null);
+                    Bounds bounds = controller.currentTArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()).orElse(null);
 
                     if (bounds != null) {
                         hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
@@ -1543,7 +1634,29 @@ public class MainController {
 
                     }
                 }
-                if (controller.mainTextArea.getSelectedText().isEmpty()) {
+                if (controller.currentTArea.getSelectedText().isEmpty()) {
+                    hoverSelectionPanel.setVisible(false);
+                }
+            });
+
+            SplitReadComponent.getInstance(controller).tarea.selectionProperty().addListener((ov, i1, i2) -> {
+
+                if (i1.getStart() != i1.getEnd() && !controller.currentTArea.getSelectedText().isEmpty()) {
+                    hoverSelectionPanel.setVisible(true);
+                    Bounds bounds = controller.currentTArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()).orElse(null);
+
+                    if (bounds != null) {
+                        hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
+                        hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getHeight());
+
+                        if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getWidth()
+                                > currentWindowWidth.get() - 200) {
+                            hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getWidth());
+                        }
+
+                    }
+                }
+                if (controller.currentTArea.getSelectedText().isEmpty()) {
                     hoverSelectionPanel.setVisible(false);
                 }
             });
@@ -1551,7 +1664,12 @@ public class MainController {
 
         private void defineDeltas(AtomicReference<Double> deltaX, AtomicReference<Double> deltaY) {
 
-            controller.mainTextArea.setOnMousePressed(mouseEvent -> {
+            controller.currentTArea.setOnMousePressed(mouseEvent -> {
+                deltaX.set(getDeltaX(mouseEvent));
+                deltaY.set(getDeltaY(mouseEvent));
+            });
+
+            SplitReadComponent.getInstance(controller).tarea.setOnMousePressed(mouseEvent -> {
                 deltaX.set(getDeltaX(mouseEvent));
                 deltaY.set(getDeltaY(mouseEvent));
             });
@@ -1625,13 +1743,13 @@ public class MainController {
         private void defineCopyButtonBehavior(Button copyButton) {
 
             copyButton.onActionProperty().set(action -> {
-                if (!controller.mainTextArea.getSelectedText().isEmpty()) {
+                if (!controller.currentTArea.getSelectedText().isEmpty()) {
 
                     Clipboard clipboard = Clipboard.getSystemClipboard();
                     ClipboardContent content = new ClipboardContent();
-                    content.putString(controller.mainTextArea.getSelectedText());
+                    content.putString(controller.currentTArea.getSelectedText());
                     clipboard.setContent(content);
-                    controller.searchByTextField.setText(controller.mainTextArea.getSelectedText());
+                    controller.searchByTextField.setText(controller.currentTArea.getSelectedText());
 
                 }
             });
@@ -1693,9 +1811,9 @@ public class MainController {
             String text = "";
             for (String fragment : listView.getSelectionModel().getSelectedItem().getChapters().get(
                     controller.chapterListView.getSelectionModel().getSelectedIndex()+1).fragments) {
-                if (controller.mainTextArea.getSelection().getStart() >= index &&
-                        controller.mainTextArea.getSelection().getStart() <= index + fragment.length()) {
-                   pos = fragment.indexOf(controller.mainTextArea.getSelectedText());
+                if (controller.currentTArea.getSelection().getStart() >= index &&
+                        controller.currentTArea.getSelection().getStart() <= index + fragment.length()) {
+                   pos = fragment.indexOf(controller.currentTArea.getSelectedText());
                    endPos = pos;
                    if (pos > 0) {
                        while (pos-1 > 0 && Character.isLetterOrDigit(fragment.charAt(pos-1))) {
@@ -1725,7 +1843,7 @@ public class MainController {
                     fragmentId, pos,
                     wordKey,
                     null
-            )), listView.getItems(), mode, controller.mainTextArea.getSelectedText());
+            )), listView.getItems(), mode, controller.currentTArea.getSelectedText());
             return link;
         }
 
@@ -1940,6 +2058,7 @@ public class MainController {
             spane.getItems().add(gpane);
 
             tarea.setWrapText(true);
+            tarea.setEditable(false);
             tarea.setPadding(new Insets(0, 0, 0, 5));
 
             VirtualizedScrollPane scroll = new VirtualizedScrollPane(tarea);
@@ -1962,14 +2081,16 @@ public class MainController {
         private void display() {
 
             tarea.clear();
-            tarea.append(controller.mainTextArea.getText(), "");
+            tarea.append(controller.currentTArea.getText(), "");
             controller.mainSplitPane.getItems().add(spane);
+            controller.secondCD.copy(controller.mainCD);
 
         }
 
         private void hide() {
 
             controller.mainSplitPane.getItems().remove(spane);
+            controller.currentTArea = controller.mainTextArea;
 
         }
 
