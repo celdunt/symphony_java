@@ -72,6 +72,10 @@ public class MainController {
     public ToggleButton searchMode;
     public StackPane toggleContainer;
     public Label searchModeLabel;
+    public SplitPane midSplitPane;
+    public GridPane midGridPane;
+    public SplitPane mainSplitPane;
+    public ToggleButton splitReadButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -131,6 +135,7 @@ public class MainController {
         initSearchButton();
         initEraseLinkButtons();
         initArticleButtons();
+        initSplitReadButton();
         MainTextAreaComponent.getInstance(this).initMainTextArea();
         LeafButtonComponent.getInstance(this).initLeafButtons();
         HoverPanelComponent.getInstance(this).initHoverPanel();
@@ -993,6 +998,15 @@ public class MainController {
         });
     }
 
+    private void initSplitReadButton() {
+        splitReadButton.selectedProperty().addListener(action -> {
+            if (splitReadButton.isSelected()) {
+                SplitReadComponent.getInstance(this).display();
+            } else SplitReadComponent.getInstance(this).hide();
+        });
+    }
+
+
     /* * * Component description * * */
 
     static class LinkComponent {
@@ -1205,16 +1219,20 @@ public class MainController {
 
             controller.mainTextArea.setWrapText(true);
 
+            controller.mainTextArea.setPadding(new Insets(0, 0, 0, 5));
+
             VirtualizedScrollPane scroll = new VirtualizedScrollPane(controller.mainTextArea);
 
-            controller.mainGridPane.getChildren().add(scroll);
+            controller.midGridPane.getChildren().add(scroll);
+
+            /*controller.mainGridPane.getChildren().add(scroll);
             controller.mainTextArea.setPadding(new Insets(0, 0, 0, 5));
 
             GridPane.setColumnIndex(scroll, 1);
             GridPane.setRowIndex(scroll, 3);
             GridPane.setHgrow(scroll, Priority.ALWAYS);
             GridPane.setVgrow(scroll, Priority.ALWAYS);
-            GridPane.setMargin(scroll, new Insets(3, 0, 0, 0));
+            GridPane.setMargin(scroll, new Insets(3, 0, 0, 0));*/
 
         }
 
@@ -1406,9 +1424,7 @@ public class MainController {
 
             Button leafButton = getLeafButton(path);
 
-            controller.mainGridPane.getChildren().add(leafButton);
-            GridPane.setColumnIndex(leafButton, 1);
-            GridPane.setRowIndex(leafButton, 3);
+            controller.midGridPane.getChildren().add(leafButton);
             GridPane.setValignment(leafButton, VPos.BOTTOM);
             GridPane.setHalignment(leafButton, pos);
 
@@ -1905,6 +1921,57 @@ public class MainController {
 
         }
 
+
+    }
+
+    static class SplitReadComponent {
+        private static MainController controller;
+
+        private SplitPane spane = new SplitPane();
+        private GridPane gpane = new GridPane();
+
+        public StyleClassedTextArea tarea = new StyleClassedTextArea();
+
+        SplitReadComponent() {
+            SplitPane.setResizableWithParent(gpane, true);
+            gpane.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            gpane.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
+            spane.getItems().add(gpane);
+
+            tarea.setWrapText(true);
+            tarea.setPadding(new Insets(0, 0, 0, 5));
+
+            VirtualizedScrollPane scroll = new VirtualizedScrollPane(tarea);
+
+            GridPane.setHgrow(scroll, Priority.ALWAYS);
+            GridPane.setVgrow(scroll, Priority.ALWAYS);
+
+            gpane.getChildren().add(scroll);
+        }
+
+        private static class Holder {
+            private static final SplitReadComponent INSTANCE = new SplitReadComponent();
+        }
+
+        public static SplitReadComponent getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return SplitReadComponent.Holder.INSTANCE;
+        }
+
+        private void display() {
+
+            tarea.clear();
+            tarea.append(controller.mainTextArea.getText(), "");
+            controller.mainSplitPane.getItems().add(spane);
+
+        }
+
+        private void hide() {
+
+            controller.mainSplitPane.getItems().remove(spane);
+
+        }
 
     }
 

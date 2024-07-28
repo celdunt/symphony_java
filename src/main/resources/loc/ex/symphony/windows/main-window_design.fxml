@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
@@ -48,7 +49,7 @@
             </Button>
             <StackPane fx:id="toggleContainer" alignment="CENTER_LEFT" prefHeight="0.0" prefWidth="30.0" styleClass="stack-pane">
                <children>
-                  <ToggleButton fx:id="searchMode" mnemonicParsing="false" />
+                  <ToggleButton fx:id="searchMode" mnemonicParsing="false" styleClass="toggle-smode-button" />
                </children>
             </StackPane>
             <Label fx:id="searchModeLabel">
@@ -66,6 +67,14 @@
       </HBox>
       <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: white;" GridPane.columnIndex="1" GridPane.columnSpan="2">
          <children>
+            <ToggleButton fx:id="splitReadButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="split-read-button" text="ToggleButton">
+               <tooltip>
+                  <Tooltip text="Чтение в два окна" />
+               </tooltip>
+               <HBox.margin>
+                  <Insets right="30.0" />
+               </HBox.margin>
+            </ToggleButton>
             <Button fx:id="eraseCurLink" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="erase-cur-link-button">
                <tooltip>
                   <Tooltip text="Очистить выбранную вкладку" />
@@ -97,6 +106,84 @@
             <Insets right="5.0" top="2.0" />
          </padding>
       </HBox>
+      <SplitPane dividerPositions="0.5, 0.5" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="2" GridPane.rowSpan="2">
+         <items>
+            <SplitPane id="left" maxWidth="200.0" prefHeight="200.0" prefWidth="200.0" styleClass="split-pane-left">
+               <items>
+                  <TabPane fx:id="bookTabPane" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                      <Tab fx:id="bibleTab" onSelectionChanged="#selectTabBible__OnAction" text="Библия">
+                           <content>
+                              <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-listview" />
+                           </content>
+                        </Tab>
+                      <Tab fx:id="ellenTab" onSelectionChanged="#selectTabEllen__OnAction" text="Э. Уайт">
+                           <content>
+                              <ListView fx:id="ellenListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
+                           </content>
+                        </Tab>
+                        <Tab fx:id="booksTab" onSelectionChanged="#selectTabOther__OnAction" text="Книги">
+                           <content>
+                              <ListView fx:id="otherListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
+                           </content>
+                        </Tab>
+                    </tabs>
+                     <padding>
+                        <Insets right="3.0" />
+                     </padding>
+                  </TabPane>
+               </items>
+            </SplitPane>
+            <SplitPane fx:id="midSplitPane" dividerPositions="0.5" orientation="VERTICAL" prefHeight="0.0" prefWidth="0.0">
+               <items>
+                  <ListView fx:id="chapterListView" blendMode="SRC_ATOP" maxHeight="50.0" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" orientation="HORIZONTAL" prefHeight="50.0" styleClass="h-listview" />
+                  <SplitPane fx:id="mainSplitPane" prefHeight="200.0" prefWidth="200.0">
+                     <items>
+                        <SplitPane>
+                           <items>
+                              <GridPane fx:id="midGridPane">
+                                <columnConstraints>
+                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                              </GridPane>
+                           </items>
+                        </SplitPane>
+                     </items>
+                  </SplitPane>
+               </items>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+            </SplitPane>
+            <SplitPane id="right" maxWidth="200.0" prefHeight="200.0" prefWidth="200.0" styleClass="split-pane-right">
+               <items>
+                  <TabPane fx:id="linkTabPane" nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                      <Tab fx:id="bibleLinkTab" text="Библия">
+                          <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
+                      </Tab>
+                      <Tab fx:id="ellenLinkTab" text="Э. Уайт">
+                           <content>
+                              <ListView fx:id="ellenLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
+                           </content>
+                        </Tab>
+                        <Tab fx:id="booksLinkTab" text="Книги">
+                           <content>
+                              <ListView fx:id="otherLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
+                           </content>
+                        </Tab>
+                    </tabs>
+                     <padding>
+                        <Insets right="3.0" />
+                     </padding>
+                  </TabPane>
+               </items>
+            </SplitPane>
+         </items>
+      </SplitPane>
       <TextField fx:id="searchByTextField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Поиск по тексту" styleClass="round-text-field" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets left="-5.0" right="44.0" top="5.0" />
@@ -110,51 +197,6 @@
             <Insets left="15.0" />
          </padding>
       </TextField>
-      <ListView fx:id="chapterListView" blendMode="SRC_ATOP" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" nodeOrientation="LEFT_TO_RIGHT" orientation="HORIZONTAL" styleClass="h-listview" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
-         <GridPane.margin>
-            <Insets top="5.0" />
-         </GridPane.margin>
-      </ListView>
-      <TabPane fx:id="bookTabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.rowIndex="2" GridPane.rowSpan="2">
-        <tabs>
-          <Tab fx:id="bibleTab" onSelectionChanged="#selectTabBible__OnAction" text="Библия">
-               <content>
-                  <ListView fx:id="bibleListView" prefHeight="360.0" prefWidth="200.0" styleClass="v-listview" />
-               </content>
-            </Tab>
-          <Tab fx:id="ellenTab" onSelectionChanged="#selectTabEllen__OnAction" text="Э. Уайт">
-               <content>
-                  <ListView fx:id="ellenListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
-               </content></Tab>
-            <Tab fx:id="booksTab" onSelectionChanged="#selectTabOther__OnAction" text="Книги">
-               <content>
-                  <ListView fx:id="otherListView" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
-               </content>
-            </Tab>
-        </tabs>
-         <padding>
-            <Insets right="3.0" />
-         </padding>
-      </TabPane>
-      <TabPane fx:id="linkTabPane" nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.rowSpan="2">
-        <tabs>
-          <Tab fx:id="bibleLinkTab" text="Библия">
-              <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
-          </Tab>
-          <Tab fx:id="ellenLinkTab" text="Э. Уайт">
-               <content>
-                  <ListView fx:id="ellenLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
-               </content></Tab>
-            <Tab fx:id="booksLinkTab" text="Книги">
-               <content>
-                  <ListView fx:id="otherLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
-               </content>
-            </Tab>
-        </tabs>
-         <padding>
-            <Insets right="3.0" />
-         </padding>
-      </TabPane>
       <Button fx:id="eraseSearchByText" alignment="BOTTOM_LEFT" contentDisplay="TOP" graphicTextGap="0.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="29.0" prefWidth="16.0" styleClass="erase-button" GridPane.halignment="LEFT" GridPane.rowIndex="1">
          <font>
             <Font name="Ebrima" size="12.0" />
