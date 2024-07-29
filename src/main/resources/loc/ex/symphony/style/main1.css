@@ -39,7 +39,6 @@
 	-fx-text-fill: #000000; /* Цвет текста для выделенной ячейки с фокусом */
 }
 
-
 .scroll-pane {
 	-fx-background-color: white; /* Установите фон прокручиваемой области */
 }
@@ -164,6 +163,25 @@
 	-fx-background-color: #e3bbbb;
 }
 
+.split-read-container {
+	-fx-background-color: #ffe5e5;
+	-fx-background-radius: 5px;
+}
+
+.split-read-choose {
+	-fx-pref-width: 22px;
+	-fx-pref-height: 22px;
+	-fx-font-size: 12px;
+	-fx-padding: 0;
+	-fx-alignment: center; /* Выравнивание текста по центру */
+
+	-fx-background-color: transparent;
+}
+
+.split-read-choose:selected {
+	-fx-background-color: #e3bbbb;
+}
+
 .resave-article-button {
 	-fx-background-image: url('../main-window/resave-article.png');
 	-fx-background-size: 24px 24px;
@@ -174,7 +192,8 @@
 
 .index-button:hover, .article-button:hover, .bookmark-button:hover,
 .create-article-button:hover, .resave-article-button:hover,
-.erase-cur-link-button:hover, .erase-all-link-button:hover, .split-read-button:hover {
+.erase-cur-link-button:hover, .erase-all-link-button:hover,
+.split-read-button:hover, .split-read-choose:hover {
 	-fx-background-color: #ffdcdc;
 }
 

@@ -67,6 +67,40 @@
       </HBox>
       <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: white;" GridPane.columnIndex="1" GridPane.columnSpan="2">
          <children>
+            <HBox fx:id="splitReadContainer" alignment="CENTER_LEFT" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" styleClass="split-read-container" visible="false">
+               <children>
+                  <ToggleButton fx:id="splitReadMod2" mnemonicParsing="false" styleClass="split-read-choose" text="2">
+                     <tooltip>
+                        <Tooltip text="Чтение в два окна" />
+                     </tooltip>
+                  </ToggleButton>
+                  <ToggleButton fx:id="splitReadMod3" mnemonicParsing="false" styleClass="split-read-choose" text="3">
+                     <tooltip>
+                        <Tooltip text="Чтение в два окна" />
+                     </tooltip>
+                     <HBox.margin>
+                        <Insets left="1.0" />
+                     </HBox.margin>
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                  </ToggleButton>
+                  <ToggleButton fx:id="splitReadMod4" mnemonicParsing="false" styleClass="split-read-choose" text="4">
+                     <tooltip>
+                        <Tooltip text="Чтение в два окна" />
+                     </tooltip>
+                     <HBox.margin>
+                        <Insets left="1.0" />
+                     </HBox.margin>
+                     <font>
+                        <Font size="14.0" />
+                     </font>
+                  </ToggleButton>
+               </children>
+               <HBox.margin>
+                  <Insets right="2.0" />
+               </HBox.margin>
+            </HBox>
             <ToggleButton fx:id="splitReadButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="split-read-button" text="ToggleButton">
                <tooltip>
                   <Tooltip text="Чтение в два окна" />

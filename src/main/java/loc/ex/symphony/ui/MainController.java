@@ -3,7 +3,6 @@ package loc.ex.symphony.ui;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -27,7 +26,6 @@ import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
-import org.controlsfx.control.spreadsheet.Grid;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.model.StyleSpan;
@@ -45,7 +43,6 @@ import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class MainController {
 
@@ -77,6 +74,10 @@ public class MainController {
     public GridPane midGridPane;
     public SplitPane mainSplitPane;
     public ToggleButton splitReadButton;
+    public ToggleButton splitReadMod2;
+    public HBox splitReadContainer;
+    public ToggleButton splitReadMod3;
+    public ToggleButton splitReadMod4;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -92,7 +93,6 @@ public class MainController {
     public ListView<Link> ellenLinkView;
 
     private OpenChapterData mainCD = new OpenChapterData();
-    private OpenChapterData secondCD = new OpenChapterData();
 
     private StyleClassedTextArea currentTArea = new StyleClassedTextArea();
 
@@ -104,11 +104,11 @@ public class MainController {
     public ObservableList<Link> obsOtherLink = FXCollections.observableArrayList();
 
     public Tab bibleTab;
-    private Book selectedBook;
+    public Book selectedBook;
 
-    private HashMap<Integer, String> b_uniqueWord = new HashMap<>();
-    private HashMap<Integer, String> e_uniqueWord = new HashMap<>();
-    private HashMap<Integer, String> o_uniqueWord = new HashMap<>();
+    public HashMap<Integer, String> b_uniqueWord = new HashMap<>();
+    public HashMap<Integer, String> e_uniqueWord = new HashMap<>();
+    public HashMap<Integer, String> o_uniqueWord = new HashMap<>();
     private HashMap<String, Integer> b_uniqueWordH = new HashMap<>();
     private HashMap<String, Integer> e_uniqueWordH = new HashMap<>();
     private HashMap<String, Integer> o_uniqueWordH = new HashMap<>();
@@ -125,6 +125,8 @@ public class MainController {
 
     public static ObjectProperty<BookmarkStruct> openingBookmark = new SimpleObjectProperty<>();
     public static ObjectProperty<Article> openingArticle = new SimpleObjectProperty<>();
+
+    public int splitReadMode = 0;
 
     ChangeListener<Integer> selectedChapterListener = (_obs, _old, _new) -> {
         if (_new != null) {
@@ -146,10 +148,11 @@ public class MainController {
                 mainCD.setBook(bookID);
                 mainCD.setChapter(chapterListView.getSelectionModel().getSelectedIndex());
                 mainCD.setTab(tab);
-            } else if (currentTArea == SplitReadComponent.getInstance(this).tarea) {
-                secondCD.setBook(bookID);
-                secondCD.setChapter(chapterListView.getSelectionModel().getSelectedIndex());
-                secondCD.setTab(tab);
+            } else {
+                OpenChapterData cd = SplitReadComponent.getInstance(this).getChapterData(currentTArea);
+                cd.setBook(bookID);
+                cd.setChapter(chapterListView.getSelectionModel().getSelectedIndex());
+                cd.setTab(tab);
             }
 
             try {
@@ -192,13 +195,14 @@ public class MainController {
         initOpenArticleAction();
         initSearchByLink();
         initSearchByLinkCut();
+        initSplitReadModeButtons();
         Platform.runLater(this::initializeSceneHandler);
         bibleListView.setCellFactory(param -> new RichCell<>());
-        bibleLinkView.setCellFactory(param -> new RichCell<>());
+        bibleLinkView.setCellFactory(param -> new LinkCell<>((int) bibleLinkView.getWidth(), this));
         ellenListView.setCellFactory(param -> new RichCell<>());
-        ellenLinkView.setCellFactory(param -> new RichCell<>());
+        ellenLinkView.setCellFactory(param -> new LinkCell<>((int) ellenLinkView.getWidth(), this));
         otherListView.setCellFactory(param -> new RichCell<>());
-        otherLinkView.setCellFactory(param -> new RichCell<>());
+        otherLinkView.setCellFactory(param -> new LinkCell<>((int) otherLinkView.getWidth(), this));
         logger.info("resource is set");
         searchButton.setDisable(true);
         usabilityButtonListener.addListener(listener -> {
@@ -244,32 +248,35 @@ public class MainController {
             }
         });
 
-        SplitReadComponent.getInstance(this).tarea.focusedProperty().addListener(lis -> {
-            if (SplitReadComponent.getInstance(this).tarea.isFocused()) {
-                chapterListView.getSelectionModel().selectedItemProperty().removeListener(selectedChapterListener);
+        SplitReadComponent.getInstance(this).initFocused();
 
+    }
 
-                currentTArea = SplitReadComponent.getInstance(this).tarea;
-
-                ListView<Book> lb;
-
-                bookTabPane.getSelectionModel().select(secondCD.getTab());
-                if (secondCD.getTab() == 0)
-                    lb = bibleListView;
-                else if (secondCD.getTab() == 1)
-                    lb = ellenListView;
-                else lb = otherListView;
-
-                lb.getSelectionModel().select(secondCD.getBook());
-                lb.scrollTo(secondCD.getBook());
-
-                chapterListView.getSelectionModel().select(secondCD.getChapter());
-                chapterListView.scrollTo(secondCD.getChapter());
-
-                chapterListView.getSelectionModel().selectedItemProperty().addListener(selectedChapterListener);
+    public void initSplitReadModeButtons() {
+        splitReadMod2.selectedProperty().addListener(lis -> {
+            if (splitReadMod2.isSelected()) {
+                splitReadMod3.setSelected(false);
+                splitReadMod4.setSelected(false);
+                splitReadMode = 1;
+                SplitReadComponent.getInstance(this).display();
             }
         });
-
+        splitReadMod3.selectedProperty().addListener(lis -> {
+            if (splitReadMod3.isSelected()) {
+                splitReadMod2.setSelected(false);
+                splitReadMod4.setSelected(false);
+                splitReadMode = 2;
+                SplitReadComponent.getInstance(this).display();
+            }
+        });
+        splitReadMod4.selectedProperty().addListener(lis -> {
+            if (splitReadMod4.isSelected()) {
+                splitReadMod3.setSelected(false);
+                splitReadMod2.setSelected(false);
+                splitReadMode = 3;
+                SplitReadComponent.getInstance(this).display();
+            }
+        });
     }
 
     public void initSearchByTextEnterPressed() {
@@ -1084,8 +1091,15 @@ public class MainController {
     private void initSplitReadButton() {
         splitReadButton.selectedProperty().addListener(action -> {
             if (splitReadButton.isSelected()) {
-                SplitReadComponent.getInstance(this).display();
-            } else SplitReadComponent.getInstance(this).hide();
+                splitReadContainer.setVisible(true);
+                splitReadMod2.setSelected(true);
+            } else {
+                splitReadContainer.setVisible(false);
+                splitReadMod2.setSelected(false);
+                splitReadMod3.setSelected(false);
+                splitReadMod4.setSelected(false);
+                SplitReadComponent.getInstance(this).hide();
+            }
         });
     }
 
@@ -1345,6 +1359,13 @@ public class MainController {
 
             VirtualizedScrollPane scroll = new VirtualizedScrollPane(controller.mainTextArea);
 
+            controller.mainTextArea.setStyle("""
+                    -fx-font-size: 14px;
+                    """);
+            SplitReadComponent.getInstance(controller).tarea.setStyle("""
+                    -fx-font-size: 14px;
+                    """);
+
             controller.midGridPane.getChildren().add(scroll);
 
             /*controller.mainGridPane.getChildren().add(scroll);
@@ -1378,6 +1399,53 @@ public class MainController {
                 handle(mouse, SplitReadComponent.getInstance(controller).tarea);
             });
 
+            controller.mainTextArea.addEventFilter(ScrollEvent.SCROLL, event -> {
+                if (event.isControlDown()) {
+                    String currentStyle = controller.mainTextArea.getStyle();
+                    double currentFontSize = extractFontSize(currentStyle);
+                    double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
+                    if (newFontSize > 45) newFontSize = 45;
+                    if (newFontSize < 12) newFontSize = 12;
+                    String newStyle = updateFontSize(currentStyle, newFontSize);
+                    controller.mainTextArea.setStyle(newStyle);
+                    event.consume();
+                }
+            });
+            SplitReadComponent.getInstance(controller).tarea.addEventFilter(ScrollEvent.SCROLL, event -> {
+                if (event.isControlDown()) {
+                    String currentStyle = SplitReadComponent.getInstance(controller).tarea.getStyle();
+                    double currentFontSize = extractFontSize(currentStyle);
+                    double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
+                    String newStyle = updateFontSize(currentStyle, newFontSize);
+                    SplitReadComponent.getInstance(controller).tarea.setStyle(newStyle);
+                    event.consume();
+                }
+            });
+
+        }
+
+        private String updateFontSize(String style, double newSize) {
+            String[] styles = style.split(";");
+            StringBuilder newStyle = new StringBuilder();
+            for (String s : styles) {
+                if (s.trim().startsWith("-fx-font-size")) {
+                    newStyle.append("-fx-font-size: ").append(newSize).append("px;");
+                } else {
+                    newStyle.append(s).append(";");
+                }
+            }
+            return newStyle.toString();
+        }
+
+        private double extractFontSize(String style) {
+            String[] styles = style.split(";");
+            for (String s : styles) {
+                if (s.trim().startsWith("-fx-font-size")) {
+                    String size = s.split(":")[1].trim().replace("px", "");
+                    return Double.parseDouble(size);
+                }
+            }
+            return 14.0;
         }
 
         private void deleteSpecialTextAction(MouseEvent mouse, StyleClassedTextArea tarea) throws IOException {
@@ -1639,37 +1707,12 @@ public class MainController {
                 }
             });
 
-            SplitReadComponent.getInstance(controller).tarea.selectionProperty().addListener((ov, i1, i2) -> {
-
-                if (i1.getStart() != i1.getEnd() && !controller.currentTArea.getSelectedText().isEmpty()) {
-                    hoverSelectionPanel.setVisible(true);
-                    Bounds bounds = controller.currentTArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()).orElse(null);
-
-                    if (bounds != null) {
-                        hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
-                        hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getHeight());
-
-                        if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getWidth()
-                                > currentWindowWidth.get() - 200) {
-                            hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getWidth());
-                        }
-
-                    }
-                }
-                if (controller.currentTArea.getSelectedText().isEmpty()) {
-                    hoverSelectionPanel.setVisible(false);
-                }
-            });
+            SplitReadComponent.getInstance(controller).initSelection(hoverSelectionPanel, deltaX, deltaY);
         }
 
         private void defineDeltas(AtomicReference<Double> deltaX, AtomicReference<Double> deltaY) {
 
             controller.currentTArea.setOnMousePressed(mouseEvent -> {
-                deltaX.set(getDeltaX(mouseEvent));
-                deltaY.set(getDeltaY(mouseEvent));
-            });
-
-            SplitReadComponent.getInstance(controller).tarea.setOnMousePressed(mouseEvent -> {
                 deltaX.set(getDeltaX(mouseEvent));
                 deltaY.set(getDeltaY(mouseEvent));
             });
@@ -2045,28 +2088,46 @@ public class MainController {
     static class SplitReadComponent {
         private static MainController controller;
 
-        private SplitPane spane = new SplitPane();
+        private SplitPane spane2 = new SplitPane();
         private GridPane gpane = new GridPane();
+
+        private List<SplitPane> spanes = new ArrayList<>();
+        private List<GridPane> gpanes = new ArrayList<>();
+
+        private List<StyleClassedTextArea> tareas = new ArrayList<>();
+
+        private List<OpenChapterData> chapterData = new ArrayList<>();
 
         public StyleClassedTextArea tarea = new StyleClassedTextArea();
 
         SplitReadComponent() {
-            SplitPane.setResizableWithParent(gpane, true);
-            gpane.setPrefHeight(Region.USE_COMPUTED_SIZE);
-            gpane.setPrefWidth(Region.USE_COMPUTED_SIZE);
 
-            spane.getItems().add(gpane);
+            for (int i = 0; i < 3; i++) {
+                SplitPane s = new SplitPane();
+                GridPane g = new GridPane();
+                StyleClassedTextArea t = new StyleClassedTextArea();
+                OpenChapterData cd = new OpenChapterData();
+                SplitPane.setResizableWithParent(g, true);
 
-            tarea.setWrapText(true);
-            tarea.setEditable(false);
-            tarea.setPadding(new Insets(0, 0, 0, 5));
+                g.setPrefWidth(Region.USE_COMPUTED_SIZE);
+                g.setPrefHeight(Region.USE_COMPUTED_SIZE);
+                s.getItems().add(g);
+                t.setWrapText(true);
+                t.setEditable(false);
+                t.setPadding(new Insets(0, 0, 0, 5));
 
-            VirtualizedScrollPane scroll = new VirtualizedScrollPane(tarea);
+                VirtualizedScrollPane v = new VirtualizedScrollPane(t);
+                GridPane.setHgrow(v, Priority.ALWAYS);
+                GridPane.setVgrow(v, Priority.ALWAYS);
 
-            GridPane.setHgrow(scroll, Priority.ALWAYS);
-            GridPane.setVgrow(scroll, Priority.ALWAYS);
+                g.getChildren().add(v);
 
-            gpane.getChildren().add(scroll);
+                gpanes.add(g);
+                spanes.add(s);
+                tareas.add(t);
+                chapterData.add(cd);
+            }
+
         }
 
         private static class Holder {
@@ -2080,16 +2141,105 @@ public class MainController {
 
         private void display() {
 
-            tarea.clear();
-            tarea.append(controller.currentTArea.getText(), "");
-            controller.mainSplitPane.getItems().add(spane);
-            controller.secondCD.copy(controller.mainCD);
+            int k = controller.splitReadMode;
 
+            int s = controller.mainSplitPane.getItems().size()-1;
+
+            if (k < s) {
+                for (int i = s-1; i >= k; i--) {
+                    controller.mainSplitPane.getItems().remove(spanes.get(i));
+                }
+                controller.currentTArea = controller.mainTextArea;
+            } else {
+                for (int i = s; i < k; i++) {
+                    tareas.get(i).clear();
+                    tareas.get(i).append(controller.currentTArea.getText(), "");
+                    controller.mainSplitPane.getItems().add(spanes.get(i));
+                    chapterData.get(i).copy(controller.mainCD);
+                }
+            }
+
+        }
+
+        private void initFocused() {
+
+            for (int i = 0; i < 3; i++) {
+                int finalI = i;
+                tareas.get(i).focusedProperty().addListener(lis -> {
+                    controller.chapterListView.getSelectionModel().selectedItemProperty().removeListener(controller.selectedChapterListener);
+
+                    controller.currentTArea = tareas.get(finalI);
+
+                    ListView<Book> lb;
+
+                    controller.bookTabPane.getSelectionModel().select(chapterData.get(finalI).getTab());
+                    if (chapterData.get(finalI).getTab() == 0)
+                        lb = controller.bibleListView;
+                    else if (chapterData.get(finalI).getTab() == 1)
+                        lb = controller.ellenListView;
+                    else lb = controller.otherListView;
+
+                    lb.getSelectionModel().select(chapterData.get(finalI).getBook());
+                    lb.scrollTo(chapterData.get(finalI).getBook());
+
+                    controller.chapterListView.getSelectionModel().select(chapterData.get(finalI).getChapter());
+                    controller.chapterListView.scrollTo(chapterData.get(finalI).getChapter());
+
+                    controller.chapterListView.getSelectionModel().selectedItemProperty().addListener(controller.selectedChapterListener);
+                });
+
+            }
+
+        }
+
+        private void initSelection(HBox hoverSelectionPanel, AtomicReference<Double> deltaX, AtomicReference<Double> deltaY) {
+
+            for (int i = 0; i < 3; i++) {
+                tareas.get(i).setOnMousePressed(mouseEvent -> {
+                    deltaX.set(HoverPanelComponent.getInstance(controller).getDeltaX(mouseEvent));
+                    deltaY.set(HoverPanelComponent.getInstance(controller).getDeltaY(mouseEvent));
+                });
+
+                tareas.get(i).selectionProperty().addListener((ov, i1, i2) -> {
+
+                    if (i1.getStart() != i1.getEnd() && !controller.currentTArea.getSelectedText().isEmpty()) {
+                        hoverSelectionPanel.setVisible(true);
+                        Bounds bounds = controller.currentTArea.getCharacterBoundsOnScreen(i1.getStart(), i1.getStart()).orElse(null);
+
+                        if (bounds != null) {
+                            hoverSelectionPanel.translateXProperty().set(bounds.getMinX() - deltaX.get());
+                            hoverSelectionPanel.translateYProperty().set(bounds.getMinY() - deltaY.get() - hoverSelectionPanel.getHeight());
+
+                            if (hoverSelectionPanel.translateXProperty().get() + hoverSelectionPanel.getWidth()
+                                    > currentWindowWidth.get() - 200) {
+                                hoverSelectionPanel.translateXProperty().set(currentWindowWidth.get() - 200 - hoverSelectionPanel.getWidth());
+                            }
+
+                        }
+                    }
+                    if (controller.currentTArea.getSelectedText().isEmpty()) {
+                        hoverSelectionPanel.setVisible(false);
+                    }
+
+                });
+            }
+
+        }
+
+        private OpenChapterData getChapterData(StyleClassedTextArea tarea) {
+            for (int i = 0; i < 3; i++) {
+                if (tarea.equals(tareas.get(i))) {
+                    return chapterData.get(i);
+                }
+            }
+            return chapterData.get(0);
         }
 
         private void hide() {
 
-            controller.mainSplitPane.getItems().remove(spane);
+            for (int i = 2; i >= 0; i--) {
+                controller.mainSplitPane.getItems().remove(spanes.get(i));
+            }
             controller.currentTArea = controller.mainTextArea;
 
         }
