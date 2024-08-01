@@ -17,6 +17,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.file.ArticleSerializer;
 import loc.ex.symphony.file.BookSerializer;
@@ -253,28 +254,23 @@ public class MainController {
     }
 
     public void initSplitReadModeButtons() {
-        splitReadMod2.selectedProperty().addListener(lis -> {
-            if (splitReadMod2.isSelected()) {
-                splitReadMod3.setSelected(false);
-                splitReadMod4.setSelected(false);
-                splitReadMode = 1;
-                SplitReadComponent.getInstance(this).display();
-            }
-        });
-        splitReadMod3.selectedProperty().addListener(lis -> {
-            if (splitReadMod3.isSelected()) {
-                splitReadMod2.setSelected(false);
-                splitReadMod4.setSelected(false);
-                splitReadMode = 2;
-                SplitReadComponent.getInstance(this).display();
-            }
-        });
-        splitReadMod4.selectedProperty().addListener(lis -> {
-            if (splitReadMod4.isSelected()) {
-                splitReadMod3.setSelected(false);
-                splitReadMod2.setSelected(false);
-                splitReadMode = 3;
-                SplitReadComponent.getInstance(this).display();
+        ToggleGroup group = new ToggleGroup();
+        splitReadMod2.setToggleGroup(group);
+        splitReadMod3.setToggleGroup(group);
+        splitReadMod4.setToggleGroup(group);
+
+        group.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null) {
+                oldValue.setSelected(true);
+            } else {
+                if (newValue == splitReadMod2) {
+                    splitReadMode = 1;
+                } else if (newValue == splitReadMod3) {
+                    splitReadMode = 2;
+                } else if (newValue == splitReadMod4) {
+                    splitReadMode = 3;
+                }
+                SplitReadComponent.getInstance(this).display(splitReadMode);
             }
         });
     }
@@ -1095,9 +1091,6 @@ public class MainController {
                 splitReadMod2.setSelected(true);
             } else {
                 splitReadContainer.setVisible(false);
-                splitReadMod2.setSelected(false);
-                splitReadMod3.setSelected(false);
-                splitReadMod4.setSelected(false);
                 SplitReadComponent.getInstance(this).hide();
             }
         });
@@ -1291,6 +1284,8 @@ public class MainController {
         private ContextMenu noteContextMenu;
         private ContextMenu linkContextMenu;
 
+        private Tooltip tooltip = new Tooltip();
+
         private void handle(MouseEvent mouse, StyleClassedTextArea tarea) {
             if (mouse.getButton() == MouseButton.PRIMARY) {
                 noteContextMenu.hide();
@@ -1362,9 +1357,6 @@ public class MainController {
             controller.mainTextArea.setStyle("""
                     -fx-font-size: 14px;
                     """);
-            SplitReadComponent.getInstance(controller).tarea.setStyle("""
-                    -fx-font-size: 14px;
-                    """);
 
             controller.midGridPane.getChildren().add(scroll);
 
@@ -1395,9 +1387,25 @@ public class MainController {
             controller.mainTextArea.setOnMouseClicked(mouse -> {
                 handle(mouse, controller.mainTextArea);
             });
-            SplitReadComponent.getInstance(controller).tarea.setOnMouseClicked(mouse -> {
-                handle(mouse, SplitReadComponent.getInstance(controller).tarea);
-            });
+
+            for (int i = 0; i < 3; i++) {
+                int finalI = i;
+                SplitReadComponent.getInstance(controller).tareas.get(i).setOnMouseClicked(mouse -> {
+                    handle(mouse, SplitReadComponent.getInstance(controller).tareas.get(finalI));
+                });
+                SplitReadComponent.getInstance(controller).tareas.get(i).addEventFilter(ScrollEvent.SCROLL, event -> {
+                    if (event.isControlDown()) {
+                        String currentStyle = SplitReadComponent.getInstance(controller).tareas.get(finalI).getStyle();
+                        double currentFontSize = extractFontSize(currentStyle);
+                        double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
+                        if (newFontSize > 45) newFontSize = 45;
+                        if (newFontSize < 12) newFontSize = 12;
+                        String newStyle = updateFontSize(currentStyle, newFontSize);
+                        SplitReadComponent.getInstance(controller).tareas.get(finalI).setStyle(newStyle);
+                        event.consume();
+                    }
+                });
+            }
 
             controller.mainTextArea.addEventFilter(ScrollEvent.SCROLL, event -> {
                 if (event.isControlDown()) {
@@ -1411,17 +1419,29 @@ public class MainController {
                     event.consume();
                 }
             });
-            SplitReadComponent.getInstance(controller).tarea.addEventFilter(ScrollEvent.SCROLL, event -> {
-                if (event.isControlDown()) {
-                    String currentStyle = SplitReadComponent.getInstance(controller).tarea.getStyle();
-                    double currentFontSize = extractFontSize(currentStyle);
-                    double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
-                    String newStyle = updateFontSize(currentStyle, newFontSize);
-                    SplitReadComponent.getInstance(controller).tarea.setStyle(newStyle);
-                    event.consume();
+
+            controller.mainTextArea.setOnMouseMoved(mouse -> {
+                int index = controller.mainTextArea.hit(mouse.getX(), mouse.getY()).getInsertionIndex();
+                Collection<String> style = controller.mainTextArea.getStyleOfChar(index);
+                if (style != null && style.contains("note")) {
+                    try {
+                        showTooltip(controller.mainTextArea, mouse.getScreenX()+30, mouse.getScreenY(), controller.getNotesForSelectedChapter().getFromPos(index).text);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    Tooltip.uninstall(controller.mainTextArea, tooltip);
                 }
             });
 
+        }
+
+        private void showTooltip(StyleClassedTextArea textArea, double x, double y, String tooltipText) {
+            tooltip.setText(tooltipText);
+            tooltip.setShowDelay(Duration.ZERO);
+            tooltip.setHideDelay(Duration.ZERO);
+            Tooltip.install(textArea, tooltip);
+            tooltip.show(textArea, x, y);
         }
 
         private String updateFontSize(String style, double newSize) {
@@ -1464,7 +1484,8 @@ public class MainController {
                             Note note = null;
                             try {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
-                                tarea.setStyleClass(note.from, note.to, "");
+                                tarea.setStyleClass(note.from, note.to+1, "");
+                                tarea.deleteText(note.to, note.to+1);
                                 controller.getNotesForSelectedChapter().remove(finalInote);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
@@ -2088,9 +2109,6 @@ public class MainController {
     static class SplitReadComponent {
         private static MainController controller;
 
-        private SplitPane spane2 = new SplitPane();
-        private GridPane gpane = new GridPane();
-
         private List<SplitPane> spanes = new ArrayList<>();
         private List<GridPane> gpanes = new ArrayList<>();
 
@@ -2098,7 +2116,6 @@ public class MainController {
 
         private List<OpenChapterData> chapterData = new ArrayList<>();
 
-        public StyleClassedTextArea tarea = new StyleClassedTextArea();
 
         SplitReadComponent() {
 
@@ -2106,6 +2123,7 @@ public class MainController {
                 SplitPane s = new SplitPane();
                 GridPane g = new GridPane();
                 StyleClassedTextArea t = new StyleClassedTextArea();
+                t.setStyle("-fx-font-size: 14px");
                 OpenChapterData cd = new OpenChapterData();
                 SplitPane.setResizableWithParent(g, true);
 
@@ -2139,25 +2157,29 @@ public class MainController {
             return SplitReadComponent.Holder.INSTANCE;
         }
 
-        private void display() {
-
-            int k = controller.splitReadMode;
+        private void display(int mode) {
 
             int s = controller.mainSplitPane.getItems().size()-1;
 
-            if (k < s) {
-                for (int i = s-1; i >= k; i--) {
+            if (mode < s) {
+                for (int i = 2; i >= mode; i--) {
                     controller.mainSplitPane.getItems().remove(spanes.get(i));
                 }
                 controller.currentTArea = controller.mainTextArea;
             } else {
-                for (int i = s; i < k; i++) {
-                    tareas.get(i).clear();
-                    tareas.get(i).append(controller.currentTArea.getText(), "");
+                for (int i = s; i < mode; i++) {
+                    controller.currentTArea = tareas.get(i);
+                    controller.chapterListView.getSelectionModel().select(-1);
+                    controller.chapterListView.getSelectionModel().select(controller.mainCD.getChapter());
                     controller.mainSplitPane.getItems().add(spanes.get(i));
                     chapterData.get(i).copy(controller.mainCD);
                 }
             }
+
+            double dpos = 1d/controller.mainSplitPane.getItems().size();
+            double[] poses = new double[controller.mainSplitPane.getItems().size()];
+            for (int i = 0; i < poses.length; i++) poses[i] = dpos*(i+1);
+            controller.mainSplitPane.setDividerPositions(poses);
 
         }
 

@@ -30,13 +30,28 @@ public class NotesSubStorage {
         notes.add(note);
     }
 
+    public Note getFromPos(int pos) {
+        for (Note note : notes) {
+            if (note.getFrom() <= pos && note.getTo() >= pos) {
+                return note;
+            }
+        }
+        return new Note(0, 1, "error");
+    }
+
     public void remove(int index) {
+        for (int i = index; i < notes.size(); i++) {
+            notes.get(i).setFrom(notes.get(i).getFrom()-1);
+            notes.get(i).setTo(notes.get(i).getTo()-1);
+        }
         notes.remove(index);
     }
 
     public void display(StyleClassedTextArea textArea) {
         for (Note note : notes) {
-            textArea.setStyleClass(note.getFrom(), note.getTo(), "note");
+            if (!textArea.getText(note.getTo(), note.getTo()+1).equals("✒"))
+                textArea.insertText(note.getTo(), "✒");
+            textArea.setStyleClass(note.getFrom(), note.getTo()+1, "note");
         }
     }
 
