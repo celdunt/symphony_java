@@ -190,10 +190,27 @@
 	-fx-background-color: transparent;
 }
 
+.create-backup-button {
+	-fx-background-image: url('../main-window/create-backup.png');
+	-fx-background-size: 24px 24px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.load-backup-button {
+	-fx-background-image: url('../main-window/load-backup.png');
+	-fx-background-size: 24px 24px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
 .index-button:hover, .article-button:hover, .bookmark-button:hover,
 .create-article-button:hover, .resave-article-button:hover,
 .erase-cur-link-button:hover, .erase-all-link-button:hover,
-.split-read-button:hover, .split-read-choose:hover {
+.split-read-button:hover, .split-read-choose:hover,
+.create-backup-button:hover, .load-backup-button:hover {
 	-fx-background-color: #ffdcdc;
 }
 
@@ -359,10 +376,18 @@
 
 .note {
 	-fx-cursor: hand;
-	-fx-font-style: italic;
 }
 
 .note:hover {
+	-fx-underline: true;
+}
+
+.thelper {
+	-fx-cursor: hand;
+	-fx-font-style: italic;
+}
+
+.thelper:hover {
 	-fx-underline: true;
 }
 

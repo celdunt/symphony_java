@@ -3,9 +3,24 @@ package loc.ex.symphony.listview;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javafx.geometry.Insets;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import loc.ex.symphony.Symphony;
+import org.fxmisc.richtext.InlineCssTextArea;
 import org.fxmisc.richtext.StyleClassedTextArea;
+import org.fxmisc.richtext.TextExt;
+import org.fxmisc.richtext.model.SimpleEditableStyledDocument;
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyledDocument;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @JsonAutoDetect
@@ -48,12 +63,17 @@ public class NotesSubStorage {
     }
 
     public void display(StyleClassedTextArea textArea) {
+
+        double y = textArea.getEstimatedScrollY();
+
         for (Note note : notes) {
-            if (!textArea.getText(note.getTo(), note.getTo()+1).equals("✒"))
-                textArea.insertText(note.getTo(), "✒");
-            textArea.setStyleClass(note.getFrom(), note.getTo()+1, "note");
+            textArea.setStyleClass(note.getFrom(), note.getTo(), "note");
         }
+
+        if (y == 0d) textArea.moveTo(0);
+
     }
+
 
     public int size() {
         return notes.size();

@@ -5,8 +5,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import loc.ex.symphony.file.TranslateHelperSerializer;
 import loc.ex.symphony.listview.NotesStorage;
 import loc.ex.symphony.listview.ParallelsLinksStorage;
+import loc.ex.symphony.listview.TranslateHelperStorage;
 import loc.ex.symphony.ui.MainController;
 
 import java.io.IOException;
@@ -44,6 +46,7 @@ public class Symphony extends Application {
             try {
                 NotesStorage.update();
                 ParallelsLinksStorage.update();
+                TranslateHelperStorage.update();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

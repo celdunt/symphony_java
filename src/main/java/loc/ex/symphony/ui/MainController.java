@@ -12,6 +12,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.*;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.TextAreaSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
@@ -159,6 +160,7 @@ public class MainController {
             try {
                 getNotesForSelectedChapter().display(currentTArea);
                 getParallelLinkForSelectedChapter().display(currentTArea);
+                getTHelperForSelectedChapter().display(currentTArea);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -217,6 +219,9 @@ public class MainController {
         o_searcher.setResource(otherListView.getItems());
         mainTextArea.editableProperty().set(false);
         selectTabBible__OnAction();
+
+        Platform.runLater(() -> searchByTextField.requestFocus());
+
     }
 
     public void initFocusChange() {
@@ -434,6 +439,23 @@ public class MainController {
 
     }
 
+    private void doCreateTHelper() throws IOException, URISyntaxException {
+
+        if (!currentTArea.getSelectedText().isEmpty()) {
+            int start = currentTArea.getSelection().getStart();
+            int end = currentTArea.getSelection().getEnd();
+
+            TranslateHelper thelper = new TranslateHelper(start, end, "");
+
+            getTHelperForSelectedChapter().add(thelper);
+
+            getTHelperForSelectedChapter().display(currentTArea);
+
+            MainTextAreaComponent.getInstance(this).selectSpecialTextAction(currentTArea);
+        }
+
+    }
+
     private void doCreateParallelLink() throws IOException, URISyntaxException {
 
         if (!currentTArea.getSelectedText().isEmpty()){
@@ -463,6 +485,25 @@ public class MainController {
                     ).get(chapterListView.getSelectionModel().getSelectedIndex());
         } else {
             return NotesStorage.getOther(
+                    otherListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        }
+    }
+
+    private TranslateHelperSubStorage getTHelperForSelectedChapter() throws IOException {
+        if (bibleTab.isSelected()) {
+            return TranslateHelperStorage.getBible(
+                    bibleListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        } else if (ellenTab.isSelected()) {
+            return TranslateHelperStorage.getEllen(
+                    ellenListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
+        } else {
+            return TranslateHelperStorage.getOther(
                     otherListView.getSelectionModel().getSelectedIndex(),
                     chapterListView.getItems().size()
             ).get(chapterListView.getSelectionModel().getSelectedIndex());
@@ -1282,6 +1323,7 @@ public class MainController {
         private static MainController controller;
 
         private ContextMenu noteContextMenu;
+        private ContextMenu thelpContextMenu;
         private ContextMenu linkContextMenu;
 
         private Tooltip tooltip = new Tooltip();
@@ -1375,10 +1417,13 @@ public class MainController {
 
             noteContextMenu = new ContextMenu();
             linkContextMenu = new ContextMenu();
+            thelpContextMenu = new ContextMenu();
             MenuItem delete = new MenuItem("Удалить заметку");
             MenuItem delete1 = new MenuItem("Удалить параллельное место");
+            MenuItem delete2 = new MenuItem("Удалить варианты перевода");
             noteContextMenu.getItems().add(delete);
             linkContextMenu.getItems().add(delete1);
+            thelpContextMenu.getItems().add(delete2);
 
         }
 
@@ -1405,6 +1450,25 @@ public class MainController {
                         event.consume();
                     }
                 });
+                SplitReadComponent.getInstance(controller).tareas.get(i).setOnMouseMoved(mouse -> {
+                    int index = SplitReadComponent.getInstance(controller).tareas.get(finalI).hit(mouse.getX(), mouse.getY()).getInsertionIndex();
+                    Collection<String> style = SplitReadComponent.getInstance(controller).tareas.get(finalI).getStyleOfChar(index);
+                    if (style != null && style.contains("note")) {
+                        try {
+                            showTooltip(SplitReadComponent.getInstance(controller).tareas.get(finalI), mouse.getScreenX()+30, mouse.getScreenY(), controller.getNotesForSelectedChapter().getFromPos(index).text);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else if (style != null && style.contains("thelper")) {
+                        try {
+                            showTooltip(SplitReadComponent.getInstance(controller).tareas.get(finalI), mouse.getScreenX()+30, mouse.getScreenY(), controller.getTHelperForSelectedChapter().getFromPos(index).text);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        Tooltip.uninstall(SplitReadComponent.getInstance(controller).tareas.get(finalI), tooltip);
+                    }
+                });
             }
 
             controller.mainTextArea.addEventFilter(ScrollEvent.SCROLL, event -> {
@@ -1429,11 +1493,16 @@ public class MainController {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
+                } else if (style != null && style.contains("thelper")) {
+                    try {
+                        showTooltip(controller.mainTextArea, mouse.getScreenX()+30, mouse.getScreenY(), controller.getTHelperForSelectedChapter().getFromPos(index).text);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     Tooltip.uninstall(controller.mainTextArea, tooltip);
                 }
             });
-
         }
 
         private void showTooltip(StyleClassedTextArea textArea, double x, double y, String tooltipText) {
@@ -1474,6 +1543,7 @@ public class MainController {
             StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
             int index = 0;
             int inote = 0;
+            int ithelp = 0;
             int ilink = 0;
             for (StyleSpan<Collection<String>> span : styles) {
                 if (span.getStyle().contains("note")) {
@@ -1484,8 +1554,8 @@ public class MainController {
                             Note note = null;
                             try {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
-                                tarea.setStyleClass(note.from, note.to+1, "");
-                                tarea.deleteText(note.to, note.to+1);
+                                tarea.setStyleClass(note.from, note.to, "");
+                                tarea.deleteText(note.to, note.to);
                                 controller.getNotesForSelectedChapter().remove(finalInote);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
@@ -1496,6 +1566,25 @@ public class MainController {
                         break;
                     }
                     inote++;
+                } else if(span.getStyle().contains("thelper")) {
+                    if (clickPos >= index && clickPos <= index + span.getLength()) {
+
+                        int finalThelp = ithelp;
+                        thelpContextMenu.getItems().get(0).onActionProperty().set(actionEvent -> {
+                            TranslateHelper thelper = null;
+                            try {
+                                thelper = controller.getTHelperForSelectedChapter().get(finalThelp);
+                                tarea.setStyleClass(thelper.from, thelper.to, "");
+                                controller.getTHelperForSelectedChapter().remove(finalThelp);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                        thelpContextMenu.show(tarea,
+                                mouse.getScreenX(), mouse.getScreenY());
+                        break;
+                    }
+                    ithelp++;
                 } else if (span.getStyle().contains("parallel-link")) {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
 
@@ -1518,6 +1607,7 @@ public class MainController {
                 } else {
                     noteContextMenu.hide();
                     linkContextMenu.hide();
+                    thelpContextMenu.hide();
                 }
 
                 index += span.getLength();
@@ -1529,8 +1619,10 @@ public class MainController {
 
             int clickPos =  tarea.getCaretPosition();
             StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
+
             int index = 0;
             int inote = 0;
+            int ithelp= 0;
             int ilink = 0;
             for (StyleSpan<Collection<String>> span : styles) {
                 if (span.getStyle().contains("note")) {
@@ -1550,6 +1642,23 @@ public class MainController {
                         break;
                     }
                     inote++;
+                } else if (span.getStyle().contains("thelper")) {
+                    if (clickPos >= index && clickPos <= index + span.getLength()) {
+                        String title;
+                        if (controller.bibleTab.isSelected())
+                            title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
+                        else if (controller.ellenTab.isSelected())
+                            title = new Cutser().getEllenCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
+                        else title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
+                        title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
+                                tarea.getText(index, index+span.getLength()));
+                        TranslateHelper thelper = controller.getTHelperForSelectedChapter().get(ithelp);
+                        if (!thelper.isOpened()) {
+                            new THelperWindow(title, thelper).stage().show();
+                        }
+                        break;
+                    }
+                    ithelp++;
                 } else if (span.getStyle().contains("parallel-link")) {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
                         String oldPrompt = controller.searchByLinkField.getPromptText();
@@ -1680,7 +1789,7 @@ public class MainController {
             hoverSelectionPanel.setMaxHeight(40);
             hoverSelectionPanel.setPrefHeight(40);
             hoverSelectionPanel.setMinHeight(40);
-            hoverSelectionPanel.setMaxWidth(146);
+            hoverSelectionPanel.setMaxWidth(172);
             hoverSelectionPanel.getStyleClass().add("hover-selection-panel");
 
             controller.mainGridPane.getChildren().add(hoverSelectionPanel);
@@ -1697,6 +1806,7 @@ public class MainController {
             defineHoverPaneArticleButton(hoverSelectionPanel);
             defineHoverPaneNoteButton(hoverSelectionPanel);
             defineHoverPaneParallelLinkButton(hoverSelectionPanel);
+            defineHoverPaneTHelperButton(hoverSelectionPanel);
 
         }
 
@@ -1926,6 +2036,28 @@ public class MainController {
             createNoteButton.onActionProperty().set(actionEvent -> {
                 try {
                     controller.doCreateNote();
+                } catch (IOException | URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+        }
+
+        private void defineHoverPaneTHelperButton(HBox hoverPanel) throws URISyntaxException {
+
+            Button createTHelperButton = new Button();
+            createTHelperButton.setText("");
+            createTHelperButton.setPrefWidth(26);
+            createTHelperButton.setPrefHeight(26);
+            createTHelperButton.setTooltip(new Tooltip("Создать варианты перевода"));
+            HBox.setMargin(createTHelperButton, new Insets(0, 3, 1, 3));
+            createTHelperButton.getStyleClass().add("hover-panel-button");
+            createTHelperButton.setGraphic(defineGraphic("buttons/to-thelp.png"));
+            hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
+            hoverPanel.getChildren().add(createTHelperButton);
+            createTHelperButton.onActionProperty().set(actionEvent -> {
+                try {
+                    controller.doCreateTHelper();
                 } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }

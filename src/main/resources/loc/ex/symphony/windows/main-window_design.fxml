@@ -37,10 +37,26 @@
                   <Tooltip text="Индексировать" />
                </tooltip>
             </Button>
+            <Button fx:id="createBackupButton" ellipsisString="" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="create-backup-button">
+               <tooltip>
+                  <Tooltip text="Создать резервную копию данных" />
+               </tooltip>
+               <HBox.margin>
+                  <Insets left="20.0" />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="loadBackupButton" ellipsisString="" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="load-backup-button">
+               <tooltip>
+                  <Tooltip text="Загрузить резервную копию данных" />
+               </tooltip>
+            </Button>
             <Button fx:id="articleButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="article-button">
                <tooltip>
                   <Tooltip text="Открыть темы" />
                </tooltip>
+               <HBox.margin>
+                  <Insets left="20.0" />
+               </HBox.margin>
             </Button>
             <Button fx:id="bookmarkButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="bookmark-button">
                <tooltip>
@@ -51,6 +67,9 @@
                <children>
                   <ToggleButton fx:id="searchMode" mnemonicParsing="false" styleClass="toggle-smode-button" />
                </children>
+               <HBox.margin>
+                  <Insets left="20.0" />
+               </HBox.margin>
             </StackPane>
             <Label fx:id="searchModeLabel">
                <HBox.margin>
@@ -106,7 +125,7 @@
                   <Tooltip text="Чтение в два окна" />
                </tooltip>
                <HBox.margin>
-                  <Insets right="30.0" />
+                  <Insets right="20.0" />
                </HBox.margin>
             </ToggleButton>
             <Button fx:id="eraseCurLink" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="erase-cur-link-button">
@@ -119,7 +138,7 @@
                   <Tooltip text="Очистить все вкладки" />
                </tooltip>
                <HBox.margin>
-                  <Insets right="70.0" />
+                  <Insets right="20.0" />
                </HBox.margin>
             </Button>
             <Button fx:id="createArticleButton" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="create-article-button">
