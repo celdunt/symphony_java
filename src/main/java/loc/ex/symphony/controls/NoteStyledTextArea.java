@@ -6,6 +6,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.ScrollBar;
@@ -15,7 +16,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.listview.Note;
 import loc.ex.symphony.listview.NoteMark;
+import loc.ex.symphony.listview.ParallelLink;
+import loc.ex.symphony.listview.TranslateHelper;
 import loc.ex.symphony.ui.MainController;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -25,6 +29,7 @@ import org.fxmisc.richtext.model.StyleSpans;
 import org.reactfx.value.Val;
 import org.reactfx.value.Var;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,9 +42,11 @@ public class NoteStyledTextArea extends Region implements Virtualized {
     private StackPane pane = new StackPane();
     private GridPane container = new GridPane();
     InputStream urlStream = Symphony.class.getResourceAsStream("buttons/to-note.png");
-    private List<NoteMark> noteMarks = new ArrayList<>();
+    private List<Note> noteMarks = new ArrayList<>();
+    private MainController controller;
+    private static int delta = 0;
 
-    public NoteStyledTextArea() {
+    public NoteStyledTextArea(MainController controller) {
 
         pane.prefWidthProperty().bind(this.prefWidthProperty());
         pane.prefHeightProperty().bind(this.prefHeightProperty());
@@ -61,37 +68,119 @@ public class NoteStyledTextArea extends Region implements Virtualized {
         this.getChildren().add(container);
 
         textArea.setStyle("-fx-font-size: 14px");
+        textArea.setPadding(new Insets(0, 0, 0, 7));
 
         defineScrollBehavior();
+
+        this.controller = controller;
+
+    }
+
+    public static void setAdditionCondition() {
+        delta = 2;
+    }
+
+    public void addMark(Note note) throws IOException {
+
+        if (!noteMarks.contains(note)) {
+            noteMarks.add(note);
+            textArea.insertText(note.getTo(), "\uD83D\uDCDD");
+
+            for (Note t : noteMarks) {
+                if (t.from > note.getTo()) {
+                    t.setFrom(t.getFrom()+delta);
+                    t.setTo(t.getTo()+delta);
+                }
+            }
+
+            for (int i = 0; i < controller.getTHelperForSelectedChapter().size(); i++) {
+                TranslateHelper t = controller.getTHelperForSelectedChapter().thelpers.get(i);
+                if (t.from > note.getTo()) {
+                    t.setFrom(t.getFrom()+delta);
+                    t.setTo(t.getTo()+delta);
+                }
+            }
+
+            for (int i = 0; i < controller.getParallelLinkForSelectedChapter().size(); i++) {
+                ParallelLink t = controller.getParallelLinkForSelectedChapter().parallelsLinks.get(i);
+                if (t.from > note.getTo()) {
+                    t.setFrom(t.getFrom()+delta);
+                    t.setTo(t.getTo()+delta);
+                }
+            }
+
+            if (delta > 0) delta = 0;
+            //reboot();
+
+        }
+
+    }
+
+    public void clearMarks() {
+        noteMarks.clear();
+    }
+
+    public void removeMark(int index) throws IOException, InterruptedException {
+        textArea.deleteText(noteMarks.get(index).getTo(), noteMarks.get(index).getTo()+2);
+
+        for (int i = 0; i < controller.getTHelperForSelectedChapter().size(); i++) {
+            TranslateHelper t = controller.getTHelperForSelectedChapter().thelpers.get(i);
+            if (t.from > noteMarks.get(index).getTo()) {
+                t.setFrom(t.getFrom()-2);
+                t.setTo(t.getTo()-2);
+            }
+        }
+
+        for (int i = 0; i < controller.getParallelLinkForSelectedChapter().size(); i++) {
+            ParallelLink t = controller.getParallelLinkForSelectedChapter().parallelsLinks.get(i);
+            if (t.from > noteMarks.get(index).getTo()) {
+                t.setFrom(t.getFrom()-2);
+                t.setTo(t.getTo()-2);
+            }
+        }
+
+        for (int i = index; i < noteMarks.size(); i++) {
+            noteMarks.get(i).setFrom(noteMarks.get(i).getFrom()-2);
+            noteMarks.get(i).setTo(noteMarks.get(i).getTo()-2);
+        }
+
+        noteMarks.remove(index);
+
+        reboot();
+    }
+
+    private void reboot() {
+        Platform.runLater(() -> {
+            controller.currentTArea.clear();
+        });
+
+        Platform.runLater(() -> {
+            controller.currentTArea.setStyleClass(0, 0, "jtext");
+            controller.currentTArea.insertText(0, controller.selectedBook.getChapters().get(controller.chapterListView.getSelectionModel().getSelectedItem()).getEntireText());
+
+            controller.currentTArea.moveTo(0);
+            controller.currentTArea.requestFollowCaret();
+
+            try {
+                controller.getNotesForSelectedChapter().display(controller.currentTArea);
+                controller.getParallelLinkForSelectedChapter().display(controller.currentTArea);
+                controller.getTHelperForSelectedChapter().display(controller.currentTArea);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void defineScrollBehavior() {
-
-        textArea.estimatedScrollYProperty().addListener(lis -> {
-            for (NoteMark mark : noteMarks) {
-                Bounds b = getCharacterBoundsOnScreen(mark.pos(), mark.pos()).orElse(null);
-                if (b != null) {
-                    Bounds localBounds = textArea.screenToLocal(b);
-                    mark.imageView().setTranslateX(localBounds.getMinX());
-                    mark.imageView().setTranslateY(localBounds.getMinY());
-                }
-            }
-        });
 
         textArea.addEventFilter(ScrollEvent.SCROLL, event -> {
         if (event.isControlDown()) {
             String currentStyle = textArea.getStyle();
             double currentFontSize = extractFontSize(currentStyle);
             double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
-            if (newFontSize > 45) newFontSize = 45;
-            if (newFontSize < 12) newFontSize = 12;
+
             String newStyle = updateFontSize(currentStyle, newFontSize);
             textArea.setStyle(newStyle);
-
-            for (NoteMark mark : noteMarks) {
-                mark.imageView().setFitWidth(newFontSize);
-                mark.imageView().setFitHeight(newFontSize);
-            }
 
             event.consume();
         }
@@ -121,29 +210,6 @@ public class NoteStyledTextArea extends Region implements Virtualized {
             }
         }
         return 14.0;
-    }
-
-    public void addNoteMark(int pos) {
-        if (urlStream == null) {
-            throw new RuntimeException("Resource not found url");
-        }
-        Image image = new Image(urlStream);
-        ImageView imageView = new ImageView(image);
-        imageView.setFitHeight(14);
-        imageView.setFitWidth(14);
-
-        container.getChildren().add(imageView);
-
-        GridPane.setHalignment(imageView, HPos.LEFT);
-        GridPane.setValignment(imageView, VPos.TOP);
-
-        Bounds b = textArea.getCharacterBoundsOnScreen(pos, pos).orElse(null);
-        b = textArea.screenToLocal(b);
-        imageView.setTranslateX(b.getMinX());
-        imageView.setTranslateY(b.getMinY());
-
-        noteMarks.add(new NoteMark(pos, imageView));
-
     }
 
     @Override

@@ -20,9 +20,11 @@ import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyledDocument;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 @JsonAutoDetect
@@ -56,17 +58,22 @@ public class NotesSubStorage {
         return new Note(0, 1, "error");
     }
 
-    public void remove(int index) {
+    public void remove(NoteStyledTextArea textArea, int index) throws IOException, InterruptedException {
+        textArea.removeMark(index);
         notes.remove(index);
     }
 
-    public void display(NoteStyledTextArea textArea) {
+    public void display(NoteStyledTextArea textArea) throws IOException {
 
         double y = textArea.getEstimatedScrollY();
 
+        notes.sort(Comparator.comparing(a -> a.getFrom()));
+
+        if (!textArea.getText().contains("\uD83D\uDCDD"))
+            textArea.clearMarks();
 
         for (Note note : notes) {
-            Platform.runLater(() -> textArea.addNoteMark(note.to));
+            textArea.addMark(note);
             textArea.setStyleClass(note.getFrom(), note.getTo(), "note");
         }
 

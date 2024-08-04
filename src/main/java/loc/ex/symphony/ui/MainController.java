@@ -96,7 +96,7 @@ public class MainController {
 
     private OpenChapterData mainCD = new OpenChapterData();
 
-    private NoteStyledTextArea currentTArea = new NoteStyledTextArea();
+    public NoteStyledTextArea currentTArea = new NoteStyledTextArea(this);
 
     public FilteredList<Link> filteredBibleList;
     public FilteredList<Link> filteredEllenList;
@@ -472,7 +472,7 @@ public class MainController {
 
     }
 
-    private NotesSubStorage getNotesForSelectedChapter() throws IOException {
+    public NotesSubStorage getNotesForSelectedChapter() throws IOException {
         if (bibleTab.isSelected()) {
             return NotesStorage.getBible(
                             bibleListView.getSelectionModel().getSelectedIndex(),
@@ -491,7 +491,7 @@ public class MainController {
         }
     }
 
-    private TranslateHelperSubStorage getTHelperForSelectedChapter() throws IOException {
+    public TranslateHelperSubStorage getTHelperForSelectedChapter() throws IOException {
         if (bibleTab.isSelected()) {
             return TranslateHelperStorage.getBible(
                     bibleListView.getSelectionModel().getSelectedIndex(),
@@ -510,7 +510,7 @@ public class MainController {
         }
     }
 
-    private ParallelsLinksSubStorage getParallelLinkForSelectedChapter() throws IOException {
+    public ParallelsLinksSubStorage getParallelLinkForSelectedChapter() throws IOException {
         if (bibleTab.isSelected()) {
             return ParallelsLinksStorage.getBible(
                     bibleListView.getSelectionModel().getSelectedIndex(),
@@ -1388,7 +1388,7 @@ public class MainController {
         public void defineMainTextArea() {
 
 
-            controller.mainTextArea = new NoteStyledTextArea();
+            controller.mainTextArea = new NoteStyledTextArea(controller);
 
             controller.mainTextArea.setWrapText(true);
 
@@ -1402,10 +1402,6 @@ public class MainController {
 
             controller.mainTextArea.prefWidthProperty().bind(scroll.prefWidthProperty());
             controller.mainTextArea.prefHeightProperty().bind(scroll.prefHeightProperty());
-
-            controller.mainTextArea.setStyle("""
-                    -fx-font-size: 14px;
-                    """);
 
             controller.midGridPane.getChildren().add(scroll);
 
@@ -1563,8 +1559,10 @@ public class MainController {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
                                 tarea.setStyleClass(note.from, note.to, "");
                                 tarea.deleteText(note.to, note.to);
-                                controller.getNotesForSelectedChapter().remove(finalInote);
+                                controller.getNotesForSelectedChapter().remove(controller.currentTArea, finalInote);
                             } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
                         });
@@ -2042,6 +2040,7 @@ public class MainController {
             hoverPanel.getChildren().add(createNoteButton);
             createNoteButton.onActionProperty().set(actionEvent -> {
                 try {
+                    NoteStyledTextArea.setAdditionCondition();
                     controller.doCreateNote();
                 } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
@@ -2261,7 +2260,7 @@ public class MainController {
             for (int i = 0; i < 3; i++) {
                 SplitPane s = new SplitPane();
                 GridPane g = new GridPane();
-                NoteStyledTextArea t = new NoteStyledTextArea();
+                NoteStyledTextArea t = new NoteStyledTextArea(controller);
                 t.setStyle("-fx-font-size: 14px");
                 OpenChapterData cd = new OpenChapterData();
                 SplitPane.setResizableWithParent(g, true);
