@@ -20,6 +20,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.controls.NoteStyledTextArea;
 import loc.ex.symphony.file.ArticleSerializer;
 import loc.ex.symphony.file.BookSerializer;
 import loc.ex.symphony.file.FileAdapter;
@@ -29,7 +30,6 @@ import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
 import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ import java.util.logging.Logger;
 
 public class MainController {
 
-    public StyleClassedTextArea mainTextArea;
+    public NoteStyledTextArea mainTextArea;
     public GridPane mainGridPane;
     public Menu bookmarksMenu;
     public Tab ellenTab;
@@ -96,7 +96,7 @@ public class MainController {
 
     private OpenChapterData mainCD = new OpenChapterData();
 
-    private StyleClassedTextArea currentTArea = new StyleClassedTextArea();
+    private NoteStyledTextArea currentTArea = new NoteStyledTextArea();
 
     public FilteredList<Link> filteredBibleList;
     public FilteredList<Link> filteredEllenList;
@@ -556,7 +556,7 @@ public class MainController {
         Set<KeyCode> pressedKeys = new HashSet<>();
 
         Symphony.scene.setOnKeyPressed(e -> {
-            if (currentTArea.isFocused()) {
+            if (currentTArea.hasFocused()) {
                 if (e.getCode().getName().equals("Ctrl")) {
                     pressedKeys.add(e.getCode());
                 }
@@ -1328,7 +1328,7 @@ public class MainController {
 
         private Tooltip tooltip = new Tooltip();
 
-        private void handle(MouseEvent mouse, StyleClassedTextArea tarea) {
+        private void handle(MouseEvent mouse, NoteStyledTextArea tarea) {
             if (mouse.getButton() == MouseButton.PRIMARY) {
                 noteContextMenu.hide();
                 linkContextMenu.hide();
@@ -1388,13 +1388,20 @@ public class MainController {
         public void defineMainTextArea() {
 
 
-            controller.mainTextArea = new StyleClassedTextArea();
+            controller.mainTextArea = new NoteStyledTextArea();
 
             controller.mainTextArea.setWrapText(true);
 
             controller.mainTextArea.setPadding(new Insets(0, 0, 0, 5));
 
+
             VirtualizedScrollPane scroll = new VirtualizedScrollPane(controller.mainTextArea);
+
+            scroll.prefWidthProperty().bind(controller.midGridPane.prefWidthProperty());
+            scroll.prefHeightProperty().bind(controller.midGridPane.prefHeightProperty());
+
+            controller.mainTextArea.prefWidthProperty().bind(scroll.prefWidthProperty());
+            controller.mainTextArea.prefHeightProperty().bind(scroll.prefHeightProperty());
 
             controller.mainTextArea.setStyle("""
                     -fx-font-size: 14px;
@@ -1438,7 +1445,7 @@ public class MainController {
                 SplitReadComponent.getInstance(controller).tareas.get(i).setOnMouseClicked(mouse -> {
                     handle(mouse, SplitReadComponent.getInstance(controller).tareas.get(finalI));
                 });
-                SplitReadComponent.getInstance(controller).tareas.get(i).addEventFilter(ScrollEvent.SCROLL, event -> {
+                /*SplitReadComponent.getInstance(controller).tareas.get(i).addEventFilter(ScrollEvent.SCROLL, event -> {
                     if (event.isControlDown()) {
                         String currentStyle = SplitReadComponent.getInstance(controller).tareas.get(finalI).getStyle();
                         double currentFontSize = extractFontSize(currentStyle);
@@ -1449,7 +1456,7 @@ public class MainController {
                         SplitReadComponent.getInstance(controller).tareas.get(finalI).setStyle(newStyle);
                         event.consume();
                     }
-                });
+                });*/
                 SplitReadComponent.getInstance(controller).tareas.get(i).setOnMouseMoved(mouse -> {
                     int index = SplitReadComponent.getInstance(controller).tareas.get(finalI).hit(mouse.getX(), mouse.getY()).getInsertionIndex();
                     Collection<String> style = SplitReadComponent.getInstance(controller).tareas.get(finalI).getStyleOfChar(index);
@@ -1471,7 +1478,7 @@ public class MainController {
                 });
             }
 
-            controller.mainTextArea.addEventFilter(ScrollEvent.SCROLL, event -> {
+            /*controller.mainTextArea.addEventFilter(ScrollEvent.SCROLL, event -> {
                 if (event.isControlDown()) {
                     String currentStyle = controller.mainTextArea.getStyle();
                     double currentFontSize = extractFontSize(currentStyle);
@@ -1482,7 +1489,7 @@ public class MainController {
                     controller.mainTextArea.setStyle(newStyle);
                     event.consume();
                 }
-            });
+            });*/
 
             controller.mainTextArea.setOnMouseMoved(mouse -> {
                 int index = controller.mainTextArea.hit(mouse.getX(), mouse.getY()).getInsertionIndex();
@@ -1505,7 +1512,7 @@ public class MainController {
             });
         }
 
-        private void showTooltip(StyleClassedTextArea textArea, double x, double y, String tooltipText) {
+        private void showTooltip(NoteStyledTextArea textArea, double x, double y, String tooltipText) {
             tooltip.setText(tooltipText);
             tooltip.setShowDelay(Duration.ZERO);
             tooltip.setHideDelay(Duration.ZERO);
@@ -1537,7 +1544,7 @@ public class MainController {
             return 14.0;
         }
 
-        private void deleteSpecialTextAction(MouseEvent mouse, StyleClassedTextArea tarea) throws IOException {
+        private void deleteSpecialTextAction(MouseEvent mouse, NoteStyledTextArea tarea) throws IOException {
 
             int clickPos =  tarea.getCaretPosition();
             StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
@@ -1615,7 +1622,7 @@ public class MainController {
 
         }
 
-        private void selectSpecialTextAction(StyleClassedTextArea tarea) throws IOException, URISyntaxException {
+        private void selectSpecialTextAction(NoteStyledTextArea tarea) throws IOException, URISyntaxException {
 
             int clickPos =  tarea.getCaretPosition();
             StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
@@ -1843,7 +1850,7 @@ public class MainController {
 
         private void defineDeltas(AtomicReference<Double> deltaX, AtomicReference<Double> deltaY) {
 
-            controller.currentTArea.setOnMousePressed(mouseEvent -> {
+            controller.currentTArea.setOnMousePressedAction(mouseEvent -> {
                 deltaX.set(getDeltaX(mouseEvent));
                 deltaY.set(getDeltaY(mouseEvent));
             });
@@ -2244,7 +2251,7 @@ public class MainController {
         private List<SplitPane> spanes = new ArrayList<>();
         private List<GridPane> gpanes = new ArrayList<>();
 
-        private List<StyleClassedTextArea> tareas = new ArrayList<>();
+        private List<NoteStyledTextArea> tareas = new ArrayList<>();
 
         private List<OpenChapterData> chapterData = new ArrayList<>();
 
@@ -2254,7 +2261,7 @@ public class MainController {
             for (int i = 0; i < 3; i++) {
                 SplitPane s = new SplitPane();
                 GridPane g = new GridPane();
-                StyleClassedTextArea t = new StyleClassedTextArea();
+                NoteStyledTextArea t = new NoteStyledTextArea();
                 t.setStyle("-fx-font-size: 14px");
                 OpenChapterData cd = new OpenChapterData();
                 SplitPane.setResizableWithParent(g, true);
@@ -2380,7 +2387,7 @@ public class MainController {
 
         }
 
-        private OpenChapterData getChapterData(StyleClassedTextArea tarea) {
+        private OpenChapterData getChapterData(NoteStyledTextArea tarea) {
             for (int i = 0; i < 3; i++) {
                 if (tarea.equals(tareas.get(i))) {
                     return chapterData.get(i);

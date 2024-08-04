@@ -3,6 +3,7 @@ package loc.ex.symphony.listview;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -10,6 +11,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.controls.NoteStyledTextArea;
 import org.fxmisc.richtext.InlineCssTextArea;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.TextExt;
@@ -55,25 +57,22 @@ public class NotesSubStorage {
     }
 
     public void remove(int index) {
-        for (int i = index; i < notes.size(); i++) {
-            notes.get(i).setFrom(notes.get(i).getFrom()-1);
-            notes.get(i).setTo(notes.get(i).getTo()-1);
-        }
         notes.remove(index);
     }
 
-    public void display(StyleClassedTextArea textArea) {
+    public void display(NoteStyledTextArea textArea) {
 
         double y = textArea.getEstimatedScrollY();
 
+
         for (Note note : notes) {
+            Platform.runLater(() -> textArea.addNoteMark(note.to));
             textArea.setStyleClass(note.getFrom(), note.getTo(), "note");
         }
 
         if (y == 0d) textArea.moveTo(0);
 
     }
-
 
     public int size() {
         return notes.size();

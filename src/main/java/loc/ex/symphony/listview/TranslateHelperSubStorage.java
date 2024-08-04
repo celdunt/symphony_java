@@ -3,6 +3,7 @@ package loc.ex.symphony.listview;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import loc.ex.symphony.controls.NoteStyledTextArea;
 import org.fxmisc.richtext.InlineCssTextArea;
 import org.fxmisc.richtext.StyleClassedTextArea;
 
@@ -44,7 +45,7 @@ public class TranslateHelperSubStorage {
         thelpers.remove(index);
     }
 
-    public void display(StyleClassedTextArea textArea) {
+    public void display(NoteStyledTextArea textArea) {
         for (TranslateHelper thelper : thelpers) {
             textArea.setStyleClass(thelper.getFrom(), thelper.getTo(), "thelper");
         }

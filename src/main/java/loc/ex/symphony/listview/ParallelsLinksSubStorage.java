@@ -2,6 +2,7 @@ package loc.ex.symphony.listview;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import loc.ex.symphony.controls.NoteStyledTextArea;
 import org.fxmisc.richtext.InlineCssTextArea;
 import org.fxmisc.richtext.StyleClassedTextArea;
 
@@ -33,7 +34,7 @@ public class ParallelsLinksSubStorage {
         parallelsLinks.remove(index);
     }
 
-    public void display(StyleClassedTextArea textArea) {
+    public void display(NoteStyledTextArea textArea) {
         for (ParallelLink link : parallelsLinks) {
             textArea.setStyleClass(link.getFrom(), link.getTo(), "parallel-link");
         }
