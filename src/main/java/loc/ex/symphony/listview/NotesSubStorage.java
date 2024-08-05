@@ -67,7 +67,7 @@ public class NotesSubStorage {
 
         double y = textArea.getEstimatedScrollY();
 
-        notes.sort(Comparator.comparing(a -> a.getFrom()));
+        notes.sort(Comparator.comparing(Note::getFrom));
 
         if (!textArea.getText().contains("\uD83D\uDCDD"))
             textArea.clearMarks();

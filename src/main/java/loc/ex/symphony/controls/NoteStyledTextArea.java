@@ -1,5 +1,7 @@
 package loc.ex.symphony.controls;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ObservableValue;
@@ -15,6 +17,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.listview.Note;
 import loc.ex.symphony.listview.NoteMark;
@@ -44,6 +47,7 @@ public class NoteStyledTextArea extends Region implements Virtualized {
     InputStream urlStream = Symphony.class.getResourceAsStream("buttons/to-note.png");
     private List<Note> noteMarks = new ArrayList<>();
     private MainController controller;
+    private VirtualizedScrollPane spane;
     private static int delta = 0;
 
     public NoteStyledTextArea(MainController controller) {
@@ -74,6 +78,10 @@ public class NoteStyledTextArea extends Region implements Virtualized {
 
         this.controller = controller;
 
+    }
+
+    public void setSPane(VirtualizedScrollPane pane) {
+        spane = pane;
     }
 
     public static void setAdditionCondition() {
@@ -108,11 +116,10 @@ public class NoteStyledTextArea extends Region implements Virtualized {
                     t.setTo(t.getTo()+delta);
                 }
             }
-
-            if (delta > 0) delta = 0;
             //reboot();
-
         }
+
+        delta = 0;
 
     }
 
@@ -121,7 +128,6 @@ public class NoteStyledTextArea extends Region implements Virtualized {
     }
 
     public void removeMark(int index) throws IOException, InterruptedException {
-        textArea.deleteText(noteMarks.get(index).getTo(), noteMarks.get(index).getTo()+2);
 
         for (int i = 0; i < controller.getTHelperForSelectedChapter().size(); i++) {
             TranslateHelper t = controller.getTHelperForSelectedChapter().thelpers.get(i);
@@ -139,9 +145,11 @@ public class NoteStyledTextArea extends Region implements Virtualized {
             }
         }
 
-        for (int i = index; i < noteMarks.size(); i++) {
-            noteMarks.get(i).setFrom(noteMarks.get(i).getFrom()-2);
-            noteMarks.get(i).setTo(noteMarks.get(i).getTo()-2);
+        for (Note noteMark : noteMarks) {
+            if (noteMark.from > noteMarks.get(index).getTo()) {
+                noteMark.setFrom(noteMark.getFrom() - 2);
+                noteMark.setTo(noteMark.getTo() - 2);
+            }
         }
 
         noteMarks.remove(index);
@@ -150,16 +158,12 @@ public class NoteStyledTextArea extends Region implements Virtualized {
     }
 
     private void reboot() {
+        double y = (double) spane.estimatedScrollYProperty().getValue();
+
         Platform.runLater(() -> {
             controller.currentTArea.clear();
-        });
-
-        Platform.runLater(() -> {
             controller.currentTArea.setStyleClass(0, 0, "jtext");
             controller.currentTArea.insertText(0, controller.selectedBook.getChapters().get(controller.chapterListView.getSelectionModel().getSelectedItem()).getEntireText());
-
-            controller.currentTArea.moveTo(0);
-            controller.currentTArea.requestFollowCaret();
 
             try {
                 controller.getNotesForSelectedChapter().display(controller.currentTArea);
@@ -168,7 +172,27 @@ public class NoteStyledTextArea extends Region implements Virtualized {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+            Timeline tm = new Timeline(new KeyFrame(
+                    Duration.millis(100),
+                    ae -> {
+                        spane.scrollYToPixel(0d);
+                    }
+            ), new KeyFrame(
+                    Duration.millis(150),
+                    ae -> {
+                        spane.scrollYToPixel(y);
+                    }
+            ), new KeyFrame(
+                    Duration.millis(200),
+                    ae -> {
+                        spane.scrollYToPixel(y);
+                    }
+            ));
+            tm.play();
+
         });
+
     }
 
     private void defineScrollBehavior() {

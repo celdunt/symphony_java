@@ -1397,6 +1397,8 @@ public class MainController {
 
             VirtualizedScrollPane scroll = new VirtualizedScrollPane(controller.mainTextArea);
 
+            controller.mainTextArea.setSPane(scroll);
+
             scroll.prefWidthProperty().bind(controller.midGridPane.prefWidthProperty());
             scroll.prefHeightProperty().bind(controller.midGridPane.prefHeightProperty());
 
@@ -2275,6 +2277,7 @@ public class MainController {
                 VirtualizedScrollPane v = new VirtualizedScrollPane(t);
                 GridPane.setHgrow(v, Priority.ALWAYS);
                 GridPane.setVgrow(v, Priority.ALWAYS);
+                t.setSPane(v);
 
                 g.getChildren().add(v);
 
