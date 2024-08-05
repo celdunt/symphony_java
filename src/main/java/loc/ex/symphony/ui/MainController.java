@@ -1,6 +1,8 @@
 package loc.ex.symphony.ui;
 
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -17,14 +19,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import loc.ex.symphony.Symphony;
 import loc.ex.symphony.controls.NoteStyledTextArea;
-import loc.ex.symphony.file.ArticleSerializer;
-import loc.ex.symphony.file.BookSerializer;
-import loc.ex.symphony.file.FileAdapter;
-import loc.ex.symphony.file.FileResaver;
+import loc.ex.symphony.file.*;
 import loc.ex.symphony.indexdata.*;
 import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
@@ -80,6 +80,8 @@ public class MainController {
     public HBox splitReadContainer;
     public ToggleButton splitReadMod3;
     public ToggleButton splitReadMod4;
+    public Button createBackupButton;
+    public Button loadBackupButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -117,9 +119,6 @@ public class MainController {
 
     public static AtomicReference<Double> currentWindowWidth = new AtomicReference<>(0d);
     public static AtomicReference<Double> currentWindowHeight = new AtomicReference<>(0d);
-
-    public BookmarksWindow bookmarksWindow;
-    public ArticlesWindow articlesWindow;
 
     public static SimpleStringProperty listener = new SimpleStringProperty();
     public static SimpleStringProperty usabilityButtonListener = new SimpleStringProperty();
@@ -172,8 +171,6 @@ public class MainController {
 
     public void initialize() throws IOException, URISyntaxException {
 
-        initBookmarkWindow();
-        initArticlesWindow();
         initUniqueWordsFields();
         initSearchByTextEnterPressed();
         initBookLinkSelectionHandler();
@@ -198,6 +195,7 @@ public class MainController {
         initOpenArticleAction();
         initSearchByLink();
         initSearchByLinkCut();
+        initBackupButtons();
         initSplitReadModeButtons();
         Platform.runLater(this::initializeSceneHandler);
         bibleListView.setCellFactory(param -> new RichCell<>());
@@ -298,6 +296,47 @@ public class MainController {
 
     }
 
+    public void initBackupButtons() {
+
+        createBackupButton.setOnAction(lis -> {
+            BackupManager backupManager = new BackupManager();
+            DirectoryChooser dirChooser = new DirectoryChooser();
+            File dir = dirChooser.showDialog(Symphony.window);
+            if (dir != null) {
+                backupManager.zip(dir);
+            }
+        });
+        loadBackupButton.setOnAction(lis -> {
+            BackupManager backupManager = new BackupManager();
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("ZIP files (*.zip)", "*.zip"));
+            File file = fileChooser.showOpenDialog(Symphony.window);
+            if (file != null) {
+                NotesStorage.reset();
+                TranslateHelperStorage.reset();
+                ParallelsLinksStorage.reset();
+                backupManager.unzip(file);
+                Timeline tm = new Timeline(new KeyFrame(
+                        Duration.millis(100),
+                        ae -> {
+                            chapterListView.getSelectionModel().select(
+                                    chapterListView.getSelectionModel().getSelectedIndex()+1
+                            );
+                        }
+                ), new KeyFrame(
+                        Duration.millis(200),
+                        ae -> {
+                            chapterListView.getSelectionModel().select(
+                                    chapterListView.getSelectionModel().getSelectedIndex()-1
+                            );
+                        }
+                ));
+                tm.play();
+            }
+        });
+
+    }
+
     public void bookLinkSelectionHandler(ListView<Link> linkView) {
 
         linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -313,16 +352,6 @@ public class MainController {
             }
         });
 
-    }
-
-    public void initBookmarkWindow() throws IOException {
-
-        bookmarksWindow = new BookmarksWindow();
-
-    }
-
-    public void initArticlesWindow() throws IOException {
-        articlesWindow = new ArticlesWindow();
     }
 
     public void initUniqueWordsFields() throws IOException {
@@ -864,12 +893,11 @@ public class MainController {
     }
 
     public void openBookmarkWindowOnAction() throws IOException {
-        bookmarksWindow.stage().show();
+        new BookmarksWindow().stage().show();
     }
 
     public void openArticleWindowOnAction() throws IOException {
-        articlesWindow = new ArticlesWindow();
-        articlesWindow.stage().show();
+        new ArticlesWindow().stage().show();
     }
 
     public void selectTabBible__OnAction() {

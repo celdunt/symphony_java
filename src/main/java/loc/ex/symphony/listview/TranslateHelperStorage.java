@@ -66,6 +66,12 @@ public class TranslateHelperStorage {
         TranslateHelperSerializer.save(otherTHelperStorage, "other");
     }
 
+    public static void reset() {
+        bibleTHelperStorage = null;
+        ellenTHelperStorage = null;
+        otherTHelperStorage = null;
+    }
+
     @JsonCreator
     public TranslateHelperStorage(@JsonProperty("thelperSubStorage") TranslateHelperSubStorage[] thelperSubStorage) {
         this.thelperSubStorage = thelperSubStorage;

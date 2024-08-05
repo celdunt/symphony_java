@@ -65,6 +65,12 @@ public class NotesStorage {
         NotesSerializer.save(otherNoteStorage, "other");
     }
 
+    public static void reset() {
+        bibleNoteStorage = null;
+        ellenNoteStorage = null;
+        otherNoteStorage = null;
+    }
+
     @JsonCreator
     public NotesStorage(@JsonProperty("subNotesStorage") NotesSubStorage[] notesSubStorage) {
         this.notesSubStorage = notesSubStorage;

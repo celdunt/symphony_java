@@ -143,6 +143,7 @@ public class NoteStyledTextArea extends Region implements Virtualized {
                 t.setFrom(t.getFrom()-2);
                 t.setTo(t.getTo()-2);
             }
+
         }
 
         for (Note noteMark : noteMarks) {

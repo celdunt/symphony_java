@@ -67,6 +67,12 @@ public class ParallelsLinksStorage {
         } else return new ParallelsLinksStorage();
     }
 
+    public static void reset() {
+        bibleParallelsLinksStorage = null;
+        ellenParallelsLinksStorage = null;
+        otherParallelsLinksStorage = null;
+    }
+
     public ParallelsLinksSubStorage get(int index) {
         if (subStorage != null && index >= 0 && index < subStorage.length) {
             if (subStorage[index] == null)
