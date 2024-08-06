@@ -19,10 +19,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import loc.ex.symphony.Symphony;
-import loc.ex.symphony.listview.Note;
-import loc.ex.symphony.listview.NoteMark;
-import loc.ex.symphony.listview.ParallelLink;
-import loc.ex.symphony.listview.TranslateHelper;
+import loc.ex.symphony.listview.*;
 import loc.ex.symphony.ui.MainController;
 import org.fxmisc.flowless.Virtualized;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -34,10 +31,7 @@ import org.reactfx.value.Var;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class NoteStyledTextArea extends Region implements Virtualized {
 
@@ -45,10 +39,8 @@ public class NoteStyledTextArea extends Region implements Virtualized {
     private StackPane pane = new StackPane();
     private GridPane container = new GridPane();
     InputStream urlStream = Symphony.class.getResourceAsStream("buttons/to-note.png");
-    private List<Note> noteMarks = new ArrayList<>();
     private MainController controller;
     private VirtualizedScrollPane spane;
-    private static int delta = 0;
 
     public NoteStyledTextArea(MainController controller) {
 
@@ -84,96 +76,26 @@ public class NoteStyledTextArea extends Region implements Virtualized {
         spane = pane;
     }
 
-    public static void setAdditionCondition() {
-        delta = 2;
-    }
+    public void display(List<Note> notes) {
 
-    public void addMark(Note note) throws IOException {
-
-        if (!noteMarks.contains(note)) {
-            noteMarks.add(note);
-            textArea.insertText(note.getTo(), "\uD83D\uDCDD");
-
-            for (Note t : noteMarks) {
-                if (t.from > note.getTo()) {
-                    t.setFrom(t.getFrom()+delta);
-                    t.setTo(t.getTo()+delta);
-                }
-            }
-
-            for (int i = 0; i < controller.getTHelperForSelectedChapter().size(); i++) {
-                TranslateHelper t = controller.getTHelperForSelectedChapter().thelpers.get(i);
-                if (t.from > note.getTo()) {
-                    t.setFrom(t.getFrom()+delta);
-                    t.setTo(t.getTo()+delta);
-                }
-            }
-
-            for (int i = 0; i < controller.getParallelLinkForSelectedChapter().size(); i++) {
-                ParallelLink t = controller.getParallelLinkForSelectedChapter().parallelsLinks.get(i);
-                if (t.from > note.getTo()) {
-                    t.setFrom(t.getFrom()+delta);
-                    t.setTo(t.getTo()+delta);
-                }
-            }
-            //reboot();
-        }
-
-        delta = 0;
-
-    }
-
-    public void clearMarks() {
-        noteMarks.clear();
-    }
-
-    public void removeMark(int index) throws IOException, InterruptedException {
-
-        for (int i = 0; i < controller.getTHelperForSelectedChapter().size(); i++) {
-            TranslateHelper t = controller.getTHelperForSelectedChapter().thelpers.get(i);
-            if (t.from > noteMarks.get(index).getTo()) {
-                t.setFrom(t.getFrom()-2);
-                t.setTo(t.getTo()-2);
-            }
-        }
-
-        for (int i = 0; i < controller.getParallelLinkForSelectedChapter().size(); i++) {
-            ParallelLink t = controller.getParallelLinkForSelectedChapter().parallelsLinks.get(i);
-            if (t.from > noteMarks.get(index).getTo()) {
-                t.setFrom(t.getFrom()-2);
-                t.setTo(t.getTo()-2);
-            }
-
-        }
-
-        for (Note noteMark : noteMarks) {
-            if (noteMark.from > noteMarks.get(index).getTo()) {
-                noteMark.setFrom(noteMark.getFrom() - 2);
-                noteMark.setTo(noteMark.getTo() - 2);
-            }
-        }
-
-        noteMarks.remove(index);
-
-        reboot();
-    }
-
-    private void reboot() {
         double y = (double) spane.estimatedScrollYProperty().getValue();
 
+        notes.sort(Comparator.comparing(Note::getFrom));
+        reboot();
+
+        for (Note note : notes) {
+            textArea.insertText(note.getTo(), "\uD83D\uDCDD");
+            setStyleClass(note.getFrom(), note.getTo(), "note");
+        }
+
+        try {
+            controller.getParallelLinkForSelectedChapter().display(controller.currentTArea);
+            controller.getTHelperForSelectedChapter().display(controller.currentTArea);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         Platform.runLater(() -> {
-            controller.currentTArea.clear();
-            controller.currentTArea.setStyleClass(0, 0, "jtext");
-            controller.currentTArea.insertText(0, controller.selectedBook.getChapters().get(controller.chapterListView.getSelectionModel().getSelectedItem()).getEntireText());
-
-            try {
-                controller.getNotesForSelectedChapter().display(controller.currentTArea);
-                controller.getParallelLinkForSelectedChapter().display(controller.currentTArea);
-                controller.getTHelperForSelectedChapter().display(controller.currentTArea);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
             Timeline tm = new Timeline(new KeyFrame(
                     Duration.millis(100),
                     ae -> {
@@ -191,24 +113,31 @@ public class NoteStyledTextArea extends Region implements Virtualized {
                     }
             ));
             tm.play();
-
         });
+
+    }
+
+    private void reboot() {
+
+        controller.currentTArea.clear();
+        controller.currentTArea.setStyleClass(0, 0, "jtext");
+        controller.currentTArea.insertText(0, controller.selectedBook.getChapters().get(controller.chapterListView.getSelectionModel().getSelectedItem()).getEntireText());
 
     }
 
     private void defineScrollBehavior() {
 
         textArea.addEventFilter(ScrollEvent.SCROLL, event -> {
-        if (event.isControlDown()) {
-            String currentStyle = textArea.getStyle();
-            double currentFontSize = extractFontSize(currentStyle);
-            double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
+            if (event.isControlDown()) {
+                String currentStyle = textArea.getStyle();
+                double currentFontSize = extractFontSize(currentStyle);
+                double newFontSize = currentFontSize + (event.getDeltaY() > 0 ? 1 : -1);
 
-            String newStyle = updateFontSize(currentStyle, newFontSize);
-            textArea.setStyle(newStyle);
+                String newStyle = updateFontSize(currentStyle, newFontSize);
+                textArea.setStyle(newStyle);
 
-            event.consume();
-        }
+                event.consume();
+            }
         });
 
     }
@@ -243,7 +172,7 @@ public class NoteStyledTextArea extends Region implements Virtualized {
         container.resizeRelocate(0, 0, getWidth(), getHeight());
     }
 
-    public void setStyleClass(int from, int to,  String styleClass) {
+    public void setStyleClass(int from, int to, String styleClass) {
         this.textArea.setStyleClass(from, to, styleClass);
     }
 
@@ -353,7 +282,7 @@ public class NoteStyledTextArea extends Region implements Virtualized {
 
     @Override
     public void scrollYToPixel(double v) {
-    this.textArea.scrollYToPixel(v);
+        this.textArea.scrollYToPixel(v);
     }
 
     public int getCaretPosition() {

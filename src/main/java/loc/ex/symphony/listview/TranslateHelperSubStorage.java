@@ -29,6 +29,7 @@ public class TranslateHelperSubStorage {
     }
 
     public void add(TranslateHelper note) {
+        TextMarkObserver.subscribe(note, false);
         thelpers.add(note);
     }
 
@@ -41,7 +42,9 @@ public class TranslateHelperSubStorage {
         return new TranslateHelper(0, 1, "error");
     }
 
-    public void remove(int index) {
+    public void remove(int index, NoteStyledTextArea textArea) {
+        textArea.setStyleClass(thelpers.get(index).getFrom(), thelpers.get(index).getTo(), "");
+        TextMarkObserver.unsubscribe(thelpers.get(index), false);
         thelpers.remove(index);
     }
 

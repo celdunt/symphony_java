@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonAutoDetect
-public class TranslateHelper {
+public class TranslateHelper extends TextMarkObservable {
 
     @JsonCreator
     public TranslateHelper(
@@ -19,8 +19,6 @@ public class TranslateHelper {
         this.text = text;
     }
 
-    public int from;
-    public int to;
     public String text;
     @JsonIgnore
     boolean isOpen = false;
@@ -36,22 +34,6 @@ public class TranslateHelper {
 
     @JsonIgnore public boolean isOpened() {
         return isOpen;
-    }
-
-    public int getFrom() {
-        return from;
-    }
-
-    public void setFrom(int from) {
-        this.from = from;
-    }
-
-    public int getTo() {
-        return to;
-    }
-
-    public void setTo(int to) {
-        this.to = to;
     }
 
     public String getText() {

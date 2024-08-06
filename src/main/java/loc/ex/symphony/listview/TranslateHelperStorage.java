@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import loc.ex.symphony.file.TranslateHelperSerializer;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @JsonAutoDetect
 public class TranslateHelperStorage {

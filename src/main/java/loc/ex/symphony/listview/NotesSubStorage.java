@@ -46,6 +46,7 @@ public class NotesSubStorage {
     }
 
     public void add(Note note) {
+        TextMarkObserver.subscribe(note, true);
         notes.add(note);
     }
 
@@ -59,26 +60,13 @@ public class NotesSubStorage {
     }
 
     public void remove(NoteStyledTextArea textArea, int index) throws IOException, InterruptedException {
-        textArea.removeMark(index);
+        TextMarkObserver.unsubscribe(notes.get(index), true);
         notes.remove(index);
+        textArea.display(notes);
     }
 
     public void display(NoteStyledTextArea textArea) throws IOException {
-
-        double y = textArea.getEstimatedScrollY();
-
-        notes.sort(Comparator.comparing(Note::getFrom));
-
-        if (!textArea.getText().contains("\uD83D\uDCDD"))
-            textArea.clearMarks();
-
-        for (Note note : notes) {
-            textArea.addMark(note);
-            textArea.setStyleClass(note.getFrom(), note.getTo(), "note");
-        }
-
-        if (y == 0d) textArea.moveTo(0);
-
+        textArea.display(notes);
     }
 
     public int size() {

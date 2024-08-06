@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonAutoDetect
-public class Note {
+public class Note extends TextMarkObservable {
 
     @JsonCreator
     public Note(
@@ -19,8 +19,6 @@ public class Note {
         this.text = text;
     }
 
-    public int from;
-    public int to;
     public String text;
     @JsonIgnore boolean isOpen = false;
 
@@ -35,22 +33,6 @@ public class Note {
 
     @JsonIgnore public boolean isOpened() {
         return isOpen;
-    }
-
-    public int getFrom() {
-        return from;
-    }
-
-    public void setFrom(int from) {
-        this.from = from;
-    }
-
-    public int getTo() {
-        return to;
-    }
-
-    public void setTo(int to) {
-        this.to = to;
     }
 
     public String getText() {

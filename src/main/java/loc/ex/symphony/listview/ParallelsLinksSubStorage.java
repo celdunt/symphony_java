@@ -27,10 +27,13 @@ public class ParallelsLinksSubStorage {
     }
 
     public void add(ParallelLink link) {
+        TextMarkObserver.subscribe(link, false);
         parallelsLinks.add(link);
     }
 
-    public void remove(int index) {
+    public void remove(int index, NoteStyledTextArea textArea) {
+        textArea.setStyleClass(parallelsLinks.get(index).getFrom(), parallelsLinks.get(index).getTo(), "jtext");
+        TextMarkObserver.unsubscribe(parallelsLinks.get(index), false);
         parallelsLinks.remove(index);
     }
 

@@ -157,6 +157,10 @@ public class MainController {
             }
 
             try {
+                TextMarkObserver.clearAll();
+                TextMarkObserver.subscribeAll(getNotesForSelectedChapter().notes);
+                TextMarkObserver.subscribeAll(getParallelLinkForSelectedChapter().parallelsLinks);
+                TextMarkObserver.subscribeAll(getTHelperForSelectedChapter().thelpers);
                 getNotesForSelectedChapter().display(currentTArea);
                 getParallelLinkForSelectedChapter().display(currentTArea);
                 getTHelperForSelectedChapter().display(currentTArea);
@@ -1587,8 +1591,6 @@ public class MainController {
                             Note note = null;
                             try {
                                 note = controller.getNotesForSelectedChapter().get(finalInote);
-                                tarea.setStyleClass(note.from, note.to, "");
-                                tarea.deleteText(note.to, note.to);
                                 controller.getNotesForSelectedChapter().remove(controller.currentTArea, finalInote);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
@@ -1609,8 +1611,7 @@ public class MainController {
                             TranslateHelper thelper = null;
                             try {
                                 thelper = controller.getTHelperForSelectedChapter().get(finalThelp);
-                                tarea.setStyleClass(thelper.from, thelper.to, "");
-                                controller.getTHelperForSelectedChapter().remove(finalThelp);
+                                controller.getTHelperForSelectedChapter().remove(finalThelp, controller.currentTArea);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -1628,8 +1629,7 @@ public class MainController {
                             ParallelLink link = null;
                             try {
                                 link = controller.getParallelLinkForSelectedChapter().get(finalLink);
-                                tarea.setStyleClass(link.from, link.to, "");
-                                controller.getParallelLinkForSelectedChapter().remove(finalLink);
+                                controller.getParallelLinkForSelectedChapter().remove(finalLink, controller.currentTArea);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -2070,7 +2070,6 @@ public class MainController {
             hoverPanel.getChildren().add(createNoteButton);
             createNoteButton.onActionProperty().set(actionEvent -> {
                 try {
-                    NoteStyledTextArea.setAdditionCondition();
                     controller.doCreateNote();
                 } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);

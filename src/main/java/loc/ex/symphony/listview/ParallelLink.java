@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonAutoDetect
-public class ParallelLink {
+public class ParallelLink extends TextMarkObservable {
 
     public List<Link> getParallelLink() {
         return parallelLink;
@@ -22,25 +22,6 @@ public class ParallelLink {
     public void addLink(Link link) {
         this.parallelLink.add(link);
     }
-
-    public int getTo() {
-        return to;
-    }
-
-    public void setTo(int to) {
-        this.to = to;
-    }
-
-    public int getFrom() {
-        return from;
-    }
-
-    public void setFrom(int from) {
-        this.from = from;
-    }
-
-    public int from;
-    public int to;
 
     @JsonIgnore boolean isOpen = false;
 
