@@ -63,8 +63,6 @@ public class Searcher {
         List<List<IndexStruct>> fullWordsList = new ArrayList<>();
 
         for (String word : words) {
-            //indexData = IndexSaverSingleThreaded.load(word.toLowerCase().substring(0, 1), pathsEnum);
-
             if (indexData == null) continue;
 
             List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
@@ -73,15 +71,6 @@ public class Searcher {
             for (int synonymKey : primaryWords.get(0).getSynonymsKeys()) {
                 fullWords.addAll(indexData.get(uniqueWords.get(synonymKey)));
             }
-
-            /*for (String synonym : primaryWords.get(0).getSynonyms()) {
-                if (indexData.get(synonym) == null || indexData.get(synonym).isEmpty()) {
-                    *//*indexData.putAll(
-                            IndexSaverSingleThreaded.load(synonym.toLowerCase().substring(0, 1), pathsEnum)
-                    );*//*
-                }
-                fullWords.addAll(indexData.get(synonym));
-            }*/
 
             Collections.sort(primaryWords);
             Collections.sort(fullWords);
@@ -211,8 +200,6 @@ public class Searcher {
         List<Link> foundOccurrences = new ArrayList<>();
 
         String[] words = prompt.split("[\\s\\p{Punct}]+");
-
-        String[] fullWords = new String[words.length];
 
         int bookID = 0;
         int chapterID;

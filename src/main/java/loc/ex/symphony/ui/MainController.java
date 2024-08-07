@@ -38,6 +38,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -82,6 +84,7 @@ public class MainController {
     public ToggleButton splitReadMod4;
     public Button createBackupButton;
     public Button loadBackupButton;
+    public ToggleButton addSearchMode;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -173,7 +176,7 @@ public class MainController {
     public MainController() {
     }
 
-    public void initialize() throws IOException, URISyntaxException {
+    public void initialize() throws IOException, URISyntaxException, SQLException, ClassNotFoundException {
 
         initUniqueWordsFields();
         initSearchByTextEnterPressed();
@@ -209,6 +212,7 @@ public class MainController {
         otherListView.setCellFactory(param -> new RichCell<>());
         otherLinkView.setCellFactory(param -> new LinkCell<>((int) otherLinkView.getWidth(), this));
         logger.info("resource is set");
+        initCheckingIndexExisting();
         searchButton.setDisable(true);
         usabilityButtonListener.addListener(listener -> {
             searchButton.setDisable(false);
@@ -258,6 +262,25 @@ public class MainController {
 
         SplitReadComponent.getInstance(this).initFocused();
 
+    }
+
+    public void initCheckingIndexExisting() throws SQLException, IOException, ClassNotFoundException {
+       if (!Files.exists(Path.of("bible.json")) ||
+           !Files.exists(Path.of("ellen.json")) ||
+           !Files.exists(Path.of("other.json"))) {
+           Alert information = new Alert(Alert.AlertType.INFORMATION);
+           information.setTitle("Индексация");
+           information.setHeaderText(null);
+           information.setContentText("Будет произведена индексация для обеспечения возможности поиска.");
+           information.showAndWait();
+           doIndex__OnAction();
+           b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
+           b_searcher.setResource(bibleListView.getItems());
+           e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
+           e_searcher.setResource(ellenListView.getItems());
+           o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+           o_searcher.setResource(otherListView.getItems());
+       }
     }
 
     public void initSplitReadModeButtons() {
@@ -624,9 +647,13 @@ public class MainController {
             bibleListView.setItems(new FileAdapter().getBible());
             ellenListView.setItems(new FileAdapter().getEllen());
             otherListView.setItems(new FileAdapter().getOther());
-            BookSerializer.save(bibleListView.getItems());
-            BookSerializer.save(ellenListView.getItems());
-            BookSerializer.save(otherListView.getItems());
+            if (!bibleListView.getItems().isEmpty() &&
+                    !ellenListView.getItems().isEmpty() &&
+                    !otherListView.getItems().isEmpty()) {
+                BookSerializer.save(bibleListView.getItems());
+                BookSerializer.save(ellenListView.getItems());
+                BookSerializer.save(otherListView.getItems());
+            }
         }
 
     }
@@ -1060,59 +1087,23 @@ public class MainController {
     public void doSearch__OnAction() {
         String prompt = searchByTextField.getText();
         if (!prompt.isEmpty()) {
-            if (bibleTab.isSelected()) {
-                /* *********** ПРОПИСАТЬ ОПЦИИ ПОИСКА ************* */
-
+            if (!addSearchMode.isSelected()) {
+                bibleLinkView.setItems(filteredBibleList);
+                ellenLinkView.setItems(filteredEllenList);
+                otherLinkView.setItems(filteredOtherList);
                 obsBibleLink.clear();
-                if (!searchMode.isSelected())
-                    obsBibleLink.addAll(b_searcher.search(prompt, PathsEnum.Bible));
-                else obsBibleLink.addAll(b_searcher.search(prompt, PathsEnum.Bible, b_uniqueWordH));
-
-                sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
-
-                /*filteredBibleList = new FilteredList<>(b_searcher.search(prompt, PathsEnum.Bible), p -> true);
-                *//*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
-                    filteredBibleList.setPredicate(data -> {
-                        if (newValue == null || newValue.isEmpty()) {
-                            return true;
-                        }
-                        String[] findTexts = newValue.toLowerCase().split(" ");
-
-                        return checkContains(data.getLinkContent().toLowerCase(), findTexts);
-                    });
-                });*//*
-                bibleLinkView.setItems(filteredBibleList);*/
-            }
-            if (ellenTab.isSelected()) {
-
                 obsEllenLink.clear();
-                if (!searchMode.isSelected())
-                    obsEllenLink.addAll(e_searcher.search(prompt, PathsEnum.EllenWhite));
-                else obsEllenLink.addAll(e_searcher.search(prompt, PathsEnum.EllenWhite, e_uniqueWordH));
-
-                sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
-
-                /*filteredEllenList = new FilteredList<>(e_searcher.search(prompt, PathsEnum.EllenWhite), p -> true);
-                *//*searchByLinkField.textProperty().addListener((observable, oldValue, newValue) -> {
-                    filteredEllenList.setPredicate(data -> {
-                        if (newValue == null || newValue.isEmpty()) {
-                            return true;
-                        }
-                        String[] findTexts = newValue.toLowerCase().split(" ");
-
-                        return checkContains(data.getLinkContent().toLowerCase(), findTexts);
-                    });
-                });*//*
-                ellenLinkView.setItems(filteredEllenList);*/
-            }
-            if (booksTab.isSelected()) {
                 obsOtherLink.clear();
-                if (!searchMode.isSelected())
-                    obsOtherLink.addAll(o_searcher.search(prompt, PathsEnum.Other));
-                else obsOtherLink.addAll(o_searcher.search(prompt, PathsEnum.Other, o_uniqueWordH));
-                sortLinkView(otherListView.getSelectionModel().getSelectedIndex());
             }
-
+            if (!searchMode.isSelected()) {
+                obsEllenLink.addAll(0, e_searcher.search(prompt, PathsEnum.EllenWhite));
+                obsBibleLink.addAll(0, b_searcher.search(prompt, PathsEnum.Bible));
+                obsOtherLink.addAll(0, o_searcher.search(prompt, PathsEnum.Other));
+            } else {
+                obsBibleLink.addAll(0, b_searcher.search(prompt, PathsEnum.Bible, b_uniqueWordH));
+                obsEllenLink.addAll(0, e_searcher.search(prompt, PathsEnum.EllenWhite, e_uniqueWordH));
+                obsOtherLink.addAll(0, o_searcher.search(prompt, PathsEnum.Other, o_uniqueWordH));
+            }
         }
     }
 

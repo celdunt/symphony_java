@@ -6,7 +6,7 @@
 
     <groupId>loc.ex</groupId>
     <artifactId>symphony</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1</version>
     <name>symphony</name>
 
     <properties>
@@ -18,22 +18,22 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>20</version>
+            <version>22.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>20</version>
+            <version>22.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
-            <version>20</version>
+            <version>22.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-media</artifactId>
-            <version>20</version>
+            <version>22.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.controlsfx</groupId>

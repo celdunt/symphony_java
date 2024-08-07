@@ -128,6 +128,14 @@
                   <Insets right="20.0" />
                </HBox.margin>
             </ToggleButton>
+            <ToggleButton fx:id="addSearchMode" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="add-search-button" text="ToggleButton">
+               <tooltip>
+                  <Tooltip text="Добавлять к найденному" />
+               </tooltip>
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+            </ToggleButton>
             <Button fx:id="eraseCurLink" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="erase-cur-link-button">
                <tooltip>
                   <Tooltip text="Очистить выбранную вкладку" />
@@ -213,7 +221,7 @@
             </SplitPane>
             <SplitPane id="right" maxWidth="200.0" prefHeight="200.0" prefWidth="200.0" styleClass="split-pane-right">
                <items>
-                  <TabPane fx:id="linkTabPane" nodeOrientation="RIGHT_TO_LEFT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                  <TabPane fx:id="linkTabPane" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
                     <tabs>
                       <Tab fx:id="bibleLinkTab" text="Библия">
                           <ListView fx:id="bibleLinkView" nodeOrientation="LEFT_TO_RIGHT" prefHeight="200.0" prefWidth="200.0" styleClass="v-listview" />
