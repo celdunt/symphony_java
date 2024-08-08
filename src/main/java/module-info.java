@@ -24,5 +24,6 @@ module loc.ex.symphony {
     exports loc.ex.symphony.listview;
     exports loc.ex.symphony.indexdata;
     exports loc.ex.symphony.search;
+    exports loc.ex.symphony.file;
     opens loc.ex.symphony.ui to javafx.fxml;
 }

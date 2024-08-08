@@ -26,6 +26,7 @@ public class Book {
         this.name = new SimpleStringProperty(_name);
         this.root = root;
         this.chapters = chapters;
+        this._name = _name;
     }
 
     public Book(String name, PathsEnum root) {

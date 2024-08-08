@@ -163,6 +163,30 @@
 	-fx-background-color: #e3bbbb;
 }
 
+.bold-mode-button {
+	-fx-background-image: url('../main-window/to-bold.png');
+	-fx-background-size: 27px 27px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.bold-mode-button:selected {
+	-fx-background-color: #e3bbbb;
+}
+
+.edit-mode-button {
+	-fx-background-image: url('../main-window/to-edit.png');
+	-fx-background-size: 27px 27px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
+.edit-mode-button:selected {
+	-fx-background-color: #e3bbbb;
+}
+
 .add-search-button {
 	-fx-background-image: url('../main-window/add-search.png');
 	-fx-background-size: 27px 27px;
@@ -224,7 +248,8 @@
 .erase-cur-link-button:hover, .erase-all-link-button:hover,
 .split-read-button:hover, .split-read-choose:hover,
 .create-backup-button:hover, .load-backup-button:hover,
-.add-search-button:hover {
+.add-search-button:hover, .edit-mode-button:hover,
+.bold-mode-button:hover {
 	-fx-background-color: #ffdcdc;
 }
 

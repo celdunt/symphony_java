@@ -85,6 +85,8 @@ public class MainController {
     public Button createBackupButton;
     public Button loadBackupButton;
     public ToggleButton addSearchMode;
+    public ToggleButton editModeButton;
+    public ToggleButton boldModeButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -173,6 +175,16 @@ public class MainController {
         }
     };
 
+    ChangeListener<Boolean> editTextListener = (_obs, _old, _new) -> {
+        if (bibleTab.isSelected()) {
+            selectedBook.getChapters().get(chapterListView.getSelectionModel().getSelectedItem())
+                    .acceptBibleEdit(currentTArea.getText());
+        } else {
+            selectedBook.getChapters().get(chapterListView.getSelectionModel().getSelectedItem())
+                    .acceptOtherEdit(currentTArea.getText());
+        }
+    };
+
     public MainController() {
     }
 
@@ -187,6 +199,7 @@ public class MainController {
         initEraseLinkButtons();
         initArticleButtons();
         initSplitReadButton();
+        initEditModeButton();
         MainTextAreaComponent.getInstance(this).initMainTextArea();
         LeafButtonComponent.getInstance(this).initLeafButtons();
         HoverPanelComponent.getInstance(this).initHoverPanel();
@@ -226,7 +239,16 @@ public class MainController {
         mainTextArea.editableProperty().set(false);
         selectTabBible__OnAction();
 
-        Platform.runLater(() -> searchByTextField.requestFocus());
+        initBoldModeButton();
+
+        Platform.runLater(() -> {
+            searchByTextField.requestFocus();
+            try {
+                initStartupParameters();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
     }
 
@@ -262,6 +284,44 @@ public class MainController {
 
         SplitReadComponent.getInstance(this).initFocused();
 
+    }
+
+    public void initEditModeButton() {
+        editModeButton.selectedProperty().addListener(lis -> {
+            if (editModeButton.isSelected()) {
+                currentTArea.setEditable(true);
+                currentTArea.editableProperty().addListener(editTextListener);
+            } else {
+                currentTArea.setEditable(false);
+                currentTArea.editableProperty().removeListener(editTextListener);
+            }
+        });
+    }
+
+    public void initBoldModeButton() {
+        boldModeButton.selectedProperty().addListener(lis -> {
+
+            if (boldModeButton.isSelected()) {
+                mainSplitPane.setStyle(
+                        String.format("%s\n-fx-font-weight: bold;", mainSplitPane.getStyle())
+                );
+            } else {
+                mainSplitPane.setStyle(
+                        mainSplitPane.getStyle().replace("\n-fx-font-weight: bold;", ""));
+            }
+
+        });
+    }
+
+    public void initStartupParameters() throws IOException {
+        StartupParameters startupParameters = new StartupParameters().load();
+        bookTabPane.getSelectionModel().select(startupParameters.tabId);
+        ListView<Book> listView = bibleTab.isSelected()? bibleListView:
+                ellenTab.isSelected()? ellenListView: otherListView;
+        listView.getSelectionModel().select(startupParameters.bookId);
+        chapterListView.getSelectionModel().select(startupParameters.chapterId);
+        listView.scrollTo(listView.getSelectionModel().getSelectedIndex());
+        chapterListView.scrollTo(chapterListView.getSelectionModel().getSelectedIndex());
     }
 
     public void initCheckingIndexExisting() throws SQLException, IOException, ClassNotFoundException {
@@ -1152,6 +1212,7 @@ public class MainController {
         splitReadButton.selectedProperty().addListener(action -> {
             if (splitReadButton.isSelected()) {
                 splitReadContainer.setVisible(true);
+                splitReadMod2.setSelected(false);
                 splitReadMod2.setSelected(true);
             } else {
                 splitReadContainer.setVisible(false);

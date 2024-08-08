@@ -5,6 +5,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import loc.ex.symphony.file.BookSerializer;
+import loc.ex.symphony.file.StartupParameters;
 import loc.ex.symphony.file.TranslateHelperSerializer;
 import loc.ex.symphony.listview.NotesStorage;
 import loc.ex.symphony.listview.ParallelsLinksStorage;
@@ -47,6 +49,18 @@ public class Symphony extends Application {
                 NotesStorage.update();
                 ParallelsLinksStorage.update();
                 TranslateHelperStorage.update();
+                MainController controller = fxmlLoader.getController();
+                StartupParameters startupParameters = new StartupParameters(
+                        controller.bookTabPane.getSelectionModel().getSelectedIndex(),
+                        controller.bibleTab.isSelected()?controller.bibleListView.getSelectionModel().getSelectedIndex():
+                                controller.ellenTab.isSelected()? controller.ellenListView.getSelectionModel().getSelectedIndex():
+                                        controller.otherListView.getSelectionModel().getSelectedIndex(),
+                        controller.chapterListView.getSelectionModel().getSelectedIndex()
+                );
+                startupParameters.save();
+                BookSerializer.save(controller.bibleListView.getItems());
+                BookSerializer.save(controller.ellenListView.getItems());
+                BookSerializer.save(controller.otherListView.getItems());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

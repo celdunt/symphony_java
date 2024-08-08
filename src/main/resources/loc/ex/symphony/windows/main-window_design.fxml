@@ -128,6 +128,22 @@
                   <Insets right="20.0" />
                </HBox.margin>
             </ToggleButton>
+            <ToggleButton fx:id="editModeButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="edit-mode-button" text="ToggleButton">
+               <tooltip>
+                  <Tooltip text="Чтение в два окна" />
+               </tooltip>
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+            </ToggleButton>
+            <ToggleButton fx:id="boldModeButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="bold-mode-button" text="ToggleButton">
+               <tooltip>
+                  <Tooltip text="Чтение в два окна" />
+               </tooltip>
+               <HBox.margin>
+                  <Insets right="20.0" />
+               </HBox.margin>
+            </ToggleButton>
             <ToggleButton fx:id="addSearchMode" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="add-search-button" text="ToggleButton">
                <tooltip>
                   <Tooltip text="Добавлять к найденному" />
