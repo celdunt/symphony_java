@@ -41,6 +41,7 @@ public class NoteStyledTextArea extends Region implements Virtualized {
     InputStream urlStream = Symphony.class.getResourceAsStream("buttons/to-note.png");
     private MainController controller;
     private VirtualizedScrollPane spane;
+    private double rememberedScrollPosY;
 
     public NoteStyledTextArea(MainController controller) {
 
@@ -78,7 +79,7 @@ public class NoteStyledTextArea extends Region implements Virtualized {
 
     public void display(List<Note> notes) {
 
-        double y = (double) spane.estimatedScrollYProperty().getValue();
+        rememberedScrollPosY = (double) spane.estimatedScrollYProperty().getValue();
 
         notes.sort(Comparator.comparing(Note::getFrom));
         reboot();
@@ -95,6 +96,9 @@ public class NoteStyledTextArea extends Region implements Virtualized {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public void scrollToRecent() {
         Platform.runLater(() -> {
             Timeline tm = new Timeline(new KeyFrame(
                     Duration.millis(100),
@@ -104,17 +108,16 @@ public class NoteStyledTextArea extends Region implements Virtualized {
             ), new KeyFrame(
                     Duration.millis(150),
                     ae -> {
-                        spane.scrollYToPixel(y);
+                        spane.scrollYToPixel(rememberedScrollPosY);
                     }
             ), new KeyFrame(
                     Duration.millis(200),
                     ae -> {
-                        spane.scrollYToPixel(y);
+                        spane.scrollYToPixel(rememberedScrollPosY);
                     }
             ));
             tm.play();
         });
-
     }
 
     private void reboot() {

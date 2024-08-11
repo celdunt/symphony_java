@@ -172,6 +172,8 @@ public class MainController {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+            currentTArea.moveTo(0);
         }
     };
 
@@ -183,6 +185,50 @@ public class MainController {
             selectedBook.getChapters().get(chapterListView.getSelectionModel().getSelectedItem())
                     .acceptOtherEdit(currentTArea.getText());
         }
+    };
+
+    ChangeListener<Book> selectBibleWithoutSortingListener = (a, b, c) -> {
+        selectBibleListWithoutSorting();
+    };
+    ChangeListener<Book> selectBibleWithSortingListener = (a, b, c) -> {
+        selectBibleList();
+    };
+    ChangeListener<Book> selectEllenWithoutSortingListener = (a, b, c) -> {
+        selectEllenListWithoutSorting();
+    };
+    ChangeListener<Book> selectEllenWithSortingListener = (a, b, c) -> {
+        selectEllenList();
+    };
+    ChangeListener<Book> selectOtherWithoutSortingListener = (a, b, c) -> {
+        selectOtherListWithoutSorting();
+    };
+    ChangeListener<Book> selectOtherWithSortingListener = (a, b, c) -> {
+        selectOtherList();
+    };
+
+    ChangeListener<Boolean> selectTabBibleListener = (a, b, c) -> {
+        if (bibleListView.getSelectionModel().getSelectedItem() == null)
+            bibleListView.getSelectionModel().select(0);
+        else {
+            bibleListView.getSelectionModel().select(bibleListView.getSelectionModel().getSelectedIndex());
+        }
+        selectBibleList();
+    };
+    ChangeListener<Boolean> selectTabEllenListener = (a, b, c) -> {
+        if (ellenListView.getSelectionModel().getSelectedItem() == null)
+            ellenListView.getSelectionModel().select(0);
+        else {
+            ellenListView.getSelectionModel().select(ellenListView.getSelectionModel().getSelectedIndex());
+        }
+        selectEllenList();
+    };
+    ChangeListener<Boolean> selectTabOtherListener = (a, b, c) -> {
+        if (otherListView.getSelectionModel().getSelectedItem() == null)
+            otherListView.getSelectionModel().select(0);
+        else {
+            otherListView.getSelectionModel().select(otherListView.getSelectionModel().getSelectedIndex());
+        }
+        selectOtherList();
     };
 
     public MainController() {
@@ -217,6 +263,9 @@ public class MainController {
         initSearchByLinkCut();
         initBackupButtons();
         initSplitReadModeButtons();
+        selectTabBible__OnAction();
+        selectTabEllen__OnAction();
+        selectTabOther__OnAction();
         Platform.runLater(this::initializeSceneHandler);
         bibleListView.setCellFactory(param -> new RichCell<>());
         bibleLinkView.setCellFactory(param -> new LinkCell<>((int) bibleLinkView.getWidth(), this));
@@ -237,7 +286,6 @@ public class MainController {
         o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
         o_searcher.setResource(otherListView.getItems());
         mainTextArea.editableProperty().set(false);
-        selectTabBible__OnAction();
 
         initBoldModeButton();
 
@@ -551,6 +599,8 @@ public class MainController {
             getNotesForSelectedChapter().display(currentTArea);
 
             MainTextAreaComponent.getInstance(this).selectSpecialTextAction(currentTArea);
+
+            currentTArea.scrollToRecent();
         }
 
     }
@@ -761,9 +811,7 @@ public class MainController {
     }
 
     private void selectedBibleList__OnAction() {
-        bibleListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            selectBibleList();
-        });
+        bibleListView.getSelectionModel().selectedItemProperty().addListener(selectBibleWithSortingListener);
     }
 
     private void selectBibleList() {
@@ -772,11 +820,23 @@ public class MainController {
         if (_selectedBook != null) {
             selectedBook = _selectedBook;
             setChapterListView(_selectedBook);
-            bibleLinkView.getSelectionModel().select(-1);
+            bibleLinkView.getSelectionModel().clearSelection();
             if (bibleListView.getSelectionModel().getSelectedIndex() > -1 && !bibleLinkView.getItems().isEmpty())
                 sortLinkView(bibleListView.getSelectionModel().getSelectedIndex());
+
+            currentTArea.moveTo(0);
         }
 
+    }
+
+    private void selectBibleListWithoutSorting() {
+        Book _selectedBook = bibleListView.getSelectionModel().getSelectedItem();
+        if (_selectedBook != null) {
+            selectedBook = _selectedBook;
+            setChapterListView(_selectedBook);
+
+            currentTArea.moveTo(0);
+        }
     }
 
     private void sortLinkView(int id) {
@@ -804,15 +864,15 @@ public class MainController {
         String searchText = new Cutser().getCutByRoot(id, enu);
 
         sortedList.setComparator((item1, item2) -> {
-            boolean item1Contains = item1.getLinkContent().contains(searchText);
-            boolean item2Contains = item2.getLinkContent().contains(searchText);
+            boolean item1Contains = item1.getTitle().contains(searchText);
+            boolean item2Contains = item2.getTitle().contains(searchText);
 
             if (item1Contains && !item2Contains) {
                 return -1;
             } else if (!item1Contains && item2Contains) {
                 return 1;
             } else {
-                return item1.getLinkContent().compareTo(item2.getLinkContent());
+                return item1.getTitle().compareTo(item2.getTitle());
             }
         });
 
@@ -831,26 +891,35 @@ public class MainController {
     }
 
     private void selectedEllenList__OnAction() {
-        ellenListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            selectEllenList();
-        });
+        ellenListView.getSelectionModel().selectedItemProperty().addListener(selectEllenWithSortingListener);
     }
 
     private void selectedOtherList__OnAction() {
-        otherListView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
-            selectOtherList();
-        });
+        otherListView.getSelectionModel().selectedItemProperty().addListener(selectOtherWithSortingListener);
     }
 
     private void selectEllenList() {
 
         Book _selectedBook = ellenListView.getSelectionModel().getSelectedItem();
         if (_selectedBook != null) {
-            ellenLinkView.getSelectionModel().select(-1);
             selectedBook = _selectedBook;
             setChapterListView(_selectedBook);
+            ellenLinkView.getSelectionModel().clearSelection();
             if (ellenListView.getSelectionModel().getSelectedIndex() > -1 && !ellenLinkView.getItems().isEmpty())
                 sortLinkView(ellenListView.getSelectionModel().getSelectedIndex());
+            currentTArea.moveTo(0);
+        }
+
+    }
+
+    private void selectEllenListWithoutSorting() {
+
+        Book _selectedBook = ellenListView.getSelectionModel().getSelectedItem();
+        if (_selectedBook != null) {
+            selectedBook = _selectedBook;
+            setChapterListView(_selectedBook);
+
+            currentTArea.moveTo(0);
         }
 
     }
@@ -858,11 +927,22 @@ public class MainController {
     private void selectOtherList() {
         Book _selectedBook = otherListView.getSelectionModel().getSelectedItem();
         if (_selectedBook != null) {
-            otherLinkView.getSelectionModel().select(-1);
+            selectedBook = _selectedBook;
+            setChapterListView(_selectedBook);
+            otherLinkView.getSelectionModel().clearSelection();
+            if (otherListView.getSelectionModel().getSelectedIndex() > -1 && !otherListView.getItems().isEmpty())
+                sortLinkView(otherListView.getSelectionModel().getSelectedIndex());
+            currentTArea.moveTo(0);
+        }
+    }
+    private void selectOtherListWithoutSorting() {
+        Book _selectedBook = otherListView.getSelectionModel().getSelectedItem();
+        if (_selectedBook != null) {
             selectedBook = _selectedBook;
             setChapterListView(_selectedBook);
             if (otherListView.getSelectionModel().getSelectedIndex() > -1 && !otherListView.getItems().isEmpty())
                 sortLinkView(otherListView.getSelectionModel().getSelectedIndex());
+            currentTArea.moveTo(0);
         }
     }
 
@@ -992,18 +1072,15 @@ public class MainController {
     }
 
     public void selectTabBible__OnAction() {
-        bibleListView.getSelectionModel().select(0);
-        selectBibleList();
+        bibleTab.selectedProperty().addListener(selectTabBibleListener);
     }
 
     public void selectTabEllen__OnAction() {
-        ellenListView.getSelectionModel().select(0);
-        selectEllenList();
+        ellenTab.selectedProperty().addListener(selectTabEllenListener);
     }
 
     public void selectTabOther__OnAction() {
-        otherListView.getSelectionModel().select(0);
-        selectOtherList();
+        booksTab.selectedProperty().addListener(selectTabOtherListener);
     }
 
     public void initSearchByLink() {
@@ -1198,7 +1275,7 @@ public class MainController {
             else {
                 toggleContainer.getStyleClass().remove("stack-pane-selected");
                 toggleContainer.getStyleClass().add("stack-pane-unselected");
-                searchModeLabel.setText("Морфологический поиск");
+                searchModeLabel.setText("Расширенный поиск");
             }
         });
         searchMode.setSelected(!searchMode.isSelected());
@@ -1254,7 +1331,8 @@ public class MainController {
                 if (_new != null) {
                     List<IndexStruct> selectedReferences = _new.getReferences();
 
-                    //controller.bibleLinkView.scrollTo(controller.bibleLinkView.getSelectionModel().getSelectedIndex());
+                    controller.bibleListView.getSelectionModel().selectedItemProperty().removeListener(controller.selectBibleWithSortingListener);
+                    controller.bibleListView.getSelectionModel().selectedItemProperty().addListener(controller.selectBibleWithoutSortingListener);
 
                     if (_new.root == PathsEnum.Bible)
                         controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
@@ -1267,6 +1345,11 @@ public class MainController {
                     controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                     controller.highlightText(selectedReferences, _new.getWords());
+
+                    controller.bibleListView.getSelectionModel().selectedItemProperty()
+                            .addListener(controller.selectBibleWithSortingListener);
+                    controller.bibleListView.getSelectionModel().selectedItemProperty()
+                            .removeListener(controller.selectBibleWithoutSortingListener);
                 }
             });
 
@@ -1277,7 +1360,11 @@ public class MainController {
             controller.ellenLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
                 if (_new != null) {
                     List<IndexStruct> selectedReferences = _new.getReferences();
-                    controller.ellenLinkView.scrollTo(controller.ellenLinkView.getSelectionModel().getSelectedIndex());
+
+                    controller.ellenListView.getSelectionModel().selectedItemProperty()
+                            .removeListener(controller.selectEllenWithSortingListener);
+                    controller.ellenListView.getSelectionModel().selectedItemProperty()
+                            .addListener(controller.selectEllenWithoutSortingListener);
 
                     if (_new.root == PathsEnum.Bible)
                         controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
@@ -1290,6 +1377,11 @@ public class MainController {
                     controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                     controller.highlightText(selectedReferences, _new.getWords());
+
+                    controller.ellenListView.getSelectionModel().selectedItemProperty()
+                            .addListener(controller.selectEllenWithSortingListener);
+                    controller.ellenListView.getSelectionModel().selectedItemProperty()
+                            .removeListener(controller.selectEllenWithoutSortingListener);
                 }
             });
 
@@ -1300,7 +1392,11 @@ public class MainController {
             controller.otherLinkView.getSelectionModel().selectedItemProperty().addListener((_obs, _old, _new) -> {
                 if (_new != null) {
                     List<IndexStruct> selectedReferences = _new.getReferences();
-                    controller.otherLinkView.scrollTo(controller.otherLinkView.getSelectionModel().getSelectedIndex());
+
+                    controller.otherListView.getSelectionModel().selectedItemProperty()
+                            .removeListener(controller.selectOtherWithSortingListener);
+                    controller.otherListView.getSelectionModel().selectedItemProperty()
+                            .addListener(controller.selectOtherWithoutSortingListener);
 
                     controller.bookTabPane.getSelectionModel().select(controller.booksTab);
 
@@ -1311,6 +1407,11 @@ public class MainController {
                     controller.chapterListView.scrollTo(selectedReferences.get(0).getChapterID());
 
                     controller.highlightText(selectedReferences, _new.getWords());
+
+                    controller.otherListView.getSelectionModel().selectedItemProperty()
+                            .addListener(controller.selectOtherWithSortingListener);
+                    controller.otherListView.getSelectionModel().selectedItemProperty()
+                            .removeListener(controller.selectOtherWithoutSortingListener);
                 }
             });
 
@@ -1640,10 +1741,9 @@ public class MainController {
 
                         int finalInote = inote;
                         noteContextMenu.getItems().get(0).onActionProperty().set(actionEvent -> {
-                            Note note = null;
                             try {
-                                note = controller.getNotesForSelectedChapter().get(finalInote);
                                 controller.getNotesForSelectedChapter().remove(controller.currentTArea, finalInote);
+                                controller.currentTArea.scrollToRecent();
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             } catch (InterruptedException e) {

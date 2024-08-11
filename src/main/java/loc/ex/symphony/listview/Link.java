@@ -19,6 +19,8 @@ public class Link implements Serializable {
 
     public String linkContent;
 
+    public String title;
+
     public String[] words;
     public PathsEnum root;
 
@@ -40,6 +42,8 @@ public class Link implements Serializable {
 \{bookName} : \{chapterNumber}
 \{fragmentText}""";
 
+        title = String.format("%s %s", bookName, chapterNumber);
+
         this.words = words;
     }
 
@@ -47,17 +51,23 @@ public class Link implements Serializable {
     public Link(
         @JsonProperty("references") List<IndexStruct> references,
         @JsonProperty("linkContent") String linkContent,
+        @JsonProperty("title") String title,
         @JsonProperty("root") PathsEnum root,
         @JsonProperty("words") String[] words
     ) {
         this.references = references;
         this.linkContent = linkContent;
+        this.title = title;
         this.root = root;
         this.words = words;
     }
 
     public String getLinkContent() {
         return linkContent;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public String[] getWords() {
