@@ -42,7 +42,7 @@ public class Link implements Serializable {
 \{bookName} : \{chapterNumber}
 \{fragmentText}""";
 
-        title = String.format("%s %s", bookName, chapterNumber);
+        title = String.format("%s : %s\n", bookName, chapterNumber);
 
         this.words = words;
     }

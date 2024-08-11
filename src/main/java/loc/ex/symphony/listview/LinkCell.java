@@ -93,7 +93,7 @@ public class LinkCell<T> extends ListCell<T> {
 
         for (int i = 0; i < item.references.size(); i++) {
 
-            int start = item.references.get(i).position;
+            int start = item.references.get(i).position + item.getTitle().length();
             String word = uniqueWords.get(item.references.get(i).getWordKey()).toLowerCase();
             int end = start + word.length();
 

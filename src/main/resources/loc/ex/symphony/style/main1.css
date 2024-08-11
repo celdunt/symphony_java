@@ -111,6 +111,14 @@
 	-fx-background-color: transparent;
 }
 
+.info-button {
+	-fx-background-image: url('../main-window/info.png');
+	-fx-background-size: 24px 24px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
 .article-button {
 	-fx-background-image: url('../main-window/articles.png');
 	-fx-background-size: 20px 22px;
@@ -249,7 +257,7 @@
 .split-read-button:hover, .split-read-choose:hover,
 .create-backup-button:hover, .load-backup-button:hover,
 .add-search-button:hover, .edit-mode-button:hover,
-.bold-mode-button:hover {
+.bold-mode-button:hover, .info-button:hover {
 	-fx-background-color: #ffdcdc;
 }
 

@@ -87,6 +87,7 @@ public class MainController {
     public ToggleButton addSearchMode;
     public ToggleButton editModeButton;
     public ToggleButton boldModeButton;
+    public Button infoButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -262,6 +263,7 @@ public class MainController {
         initSearchByLink();
         initSearchByLinkCut();
         initBackupButtons();
+        initInfoButton();
         initSplitReadModeButtons();
         selectTabBible__OnAction();
         selectTabEllen__OnAction();
@@ -382,6 +384,7 @@ public class MainController {
            information.setContentText("Будет произведена индексация для обеспечения возможности поиска.");
            information.showAndWait();
            doIndex__OnAction();
+           initUniqueWordsFields();
            b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
            b_searcher.setResource(bibleListView.getItems());
            e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
@@ -814,6 +817,30 @@ public class MainController {
         bibleListView.getSelectionModel().selectedItemProperty().addListener(selectBibleWithSortingListener);
     }
 
+    public void initInfoButton() throws IOException {
+        Path path = Path.of("components/cut.txt");
+        String content;
+        if (Files.exists(path)) {
+            content  = Files.readString(path);
+        } else {
+            content = "Информация не прогружена. Произошла ошибка.";
+        }
+
+        infoButton.setOnAction(lis -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Информация");
+            alert.setHeaderText(null);
+
+            TextArea area = new TextArea(content);
+            area.setWrapText(true);
+            area.setEditable(false);
+
+            alert.getDialogPane().setContent(area);
+            alert.setResizable(true);
+            alert.showAndWait();
+        });
+    }
+
     private void selectBibleList() {
 
         Book _selectedBook = bibleListView.getSelectionModel().getSelectedItem();
@@ -1015,6 +1042,14 @@ public class MainController {
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Other);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Other);
 
+        initUniqueWordsFields();
+        b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
+        b_searcher.setResource(bibleListView.getItems());
+        e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
+        e_searcher.setResource(ellenListView.getItems());
+        o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+        o_searcher.setResource(otherListView.getItems());
+
     }
 
     public void initArticleButtons() {
@@ -1131,6 +1166,7 @@ public class MainController {
         searchByLinkField.onKeyPressedProperty().set(action -> {
             if (action.getCode() == KeyCode.ENTER && !searchByLinkField.getText().isEmpty()) {
                 searchByCut(searchByLinkField.getText());
+                searchByLinkField.clear();
             }
         });
 

@@ -37,6 +37,14 @@
                   <Tooltip text="Индексировать" />
                </tooltip>
             </Button>
+            <Button fx:id="infoButton" ellipsisString="" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="info-button">
+               <tooltip>
+                  <Tooltip text="Помощь" />
+               </tooltip>
+               <HBox.margin>
+                  <Insets left="20.0" />
+               </HBox.margin>
+            </Button>
             <Button fx:id="createBackupButton" ellipsisString="" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="create-backup-button">
                <tooltip>
                   <Tooltip text="Создать резервную копию данных" />
