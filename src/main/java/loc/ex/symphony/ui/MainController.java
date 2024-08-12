@@ -14,7 +14,6 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.*;
 import javafx.scene.control.*;
-import javafx.scene.control.skin.TextAreaSkin;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
@@ -65,7 +64,7 @@ public class MainController {
     public Button articleButton;
     public Button bookmarkButton;
     public Button createArticleButton;
-    public Button resaveArticleButton;
+    public Button addSelectionToArticleButton;
     public ListView<Book> otherListView;
     public ListView<Link> otherLinkView;
     public Tab booksTab;
@@ -133,6 +132,8 @@ public class MainController {
     public static ObjectProperty<BookmarkStruct> openingBookmark = new SimpleObjectProperty<>();
     public static ObjectProperty<Article> openingArticle = new SimpleObjectProperty<>();
 
+    public List<Link> linkClipboard = new ArrayList<>();
+
     public int splitReadMode = 0;
 
     ChangeListener<Integer> selectedChapterListener = (_obs, _old, _new) -> {
@@ -149,7 +150,7 @@ public class MainController {
                     ellenListView.getSelectionModel().getSelectedIndex()
             ), otherListView.getSelectionModel().getSelectedIndex());
 
-            int tab = bibleTab.isSelected()? 0: ellenTab.isSelected()? 1: 2;
+            int tab = bibleTab.isSelected() ? 0 : ellenTab.isSelected() ? 1 : 2;
 
             if (currentTArea == mainTextArea) {
                 mainCD.setBook(bookID);
@@ -289,6 +290,8 @@ public class MainController {
         o_searcher.setResource(otherListView.getItems());
         mainTextArea.editableProperty().set(false);
 
+        initFindOnPage();
+
         initBoldModeButton();
 
         Platform.runLater(() -> {
@@ -306,11 +309,9 @@ public class MainController {
 
         currentTArea = mainTextArea;
 
-
-        mainTextArea.focusedProperty().addListener(lis -> {
-            if (mainTextArea.isFocused()) {
+        mainTextArea.getTextArea().focusedProperty().addListener(lis -> {
+            if (mainTextArea.getTextArea().isFocused()) {
                 chapterListView.getSelectionModel().selectedItemProperty().removeListener(selectedChapterListener);
-
 
                 currentTArea = mainTextArea;
                 ListView<Book> lb;
@@ -326,7 +327,8 @@ public class MainController {
                 lb.scrollTo(mainCD.getBook());
 
                 chapterListView.getSelectionModel().select(mainCD.getChapter());
-                chapterListView.scrollTo(mainCD.getChapter());
+
+                scrollToItem(chapterListView, mainCD.getChapter());
 
                 chapterListView.getSelectionModel().selectedItemProperty().addListener(selectedChapterListener);
             }
@@ -334,6 +336,14 @@ public class MainController {
 
         SplitReadComponent.getInstance(this).initFocused();
 
+    }
+
+    public void scrollToItem(ListView<Integer> listView, int index) {
+        if (!listView.lookupAll(".list-cell").stream()
+                .map(node -> (ListCell<?>) node)
+                .anyMatch(cell -> cell.getItem() != null && cell.getItem().equals(listView.getItems().get(index)))) {
+            listView.scrollTo(index);
+        }
     }
 
     public void initEditModeButton() {
@@ -344,6 +354,14 @@ public class MainController {
             } else {
                 currentTArea.setEditable(false);
                 currentTArea.editableProperty().removeListener(editTextListener);
+            }
+        });
+    }
+
+    public void initFindOnPage() {
+        mainGridPane.setOnKeyPressed(key -> {
+            if (key.isControlDown() && key.getCode() == KeyCode.F) {
+                FindOnPageComponent.getInstance(this).display();
             }
         });
     }
@@ -366,8 +384,8 @@ public class MainController {
     public void initStartupParameters() throws IOException {
         StartupParameters startupParameters = new StartupParameters().load();
         bookTabPane.getSelectionModel().select(startupParameters.tabId);
-        ListView<Book> listView = bibleTab.isSelected()? bibleListView:
-                ellenTab.isSelected()? ellenListView: otherListView;
+        ListView<Book> listView = bibleTab.isSelected() ? bibleListView :
+                ellenTab.isSelected() ? ellenListView : otherListView;
         listView.getSelectionModel().select(startupParameters.bookId);
         chapterListView.getSelectionModel().select(startupParameters.chapterId);
         listView.scrollTo(listView.getSelectionModel().getSelectedIndex());
@@ -375,23 +393,23 @@ public class MainController {
     }
 
     public void initCheckingIndexExisting() throws SQLException, IOException, ClassNotFoundException {
-       if (!Files.exists(Path.of("bible.json")) ||
-           !Files.exists(Path.of("ellen.json")) ||
-           !Files.exists(Path.of("other.json"))) {
-           Alert information = new Alert(Alert.AlertType.INFORMATION);
-           information.setTitle("Индексация");
-           information.setHeaderText(null);
-           information.setContentText("Будет произведена индексация для обеспечения возможности поиска.");
-           information.showAndWait();
-           doIndex__OnAction();
-           initUniqueWordsFields();
-           b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
-           b_searcher.setResource(bibleListView.getItems());
-           e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
-           e_searcher.setResource(ellenListView.getItems());
-           o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
-           o_searcher.setResource(otherListView.getItems());
-       }
+        if (!Files.exists(Path.of("bible.json")) ||
+                !Files.exists(Path.of("ellen.json")) ||
+                !Files.exists(Path.of("other.json"))) {
+            Alert information = new Alert(Alert.AlertType.INFORMATION);
+            information.setTitle("Индексация");
+            information.setHeaderText(null);
+            information.setContentText("Будет произведена индексация для обеспечения возможности поиска.");
+            information.showAndWait();
+            doIndex__OnAction();
+            initUniqueWordsFields();
+            b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
+            b_searcher.setResource(bibleListView.getItems());
+            e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
+            e_searcher.setResource(ellenListView.getItems());
+            o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+            o_searcher.setResource(otherListView.getItems());
+        }
     }
 
     public void initSplitReadModeButtons() {
@@ -458,14 +476,14 @@ public class MainController {
                         Duration.millis(100),
                         ae -> {
                             chapterListView.getSelectionModel().select(
-                                    chapterListView.getSelectionModel().getSelectedIndex()+1
+                                    chapterListView.getSelectionModel().getSelectedIndex() + 1
                             );
                         }
                 ), new KeyFrame(
                         Duration.millis(200),
                         ae -> {
                             chapterListView.getSelectionModel().select(
-                                    chapterListView.getSelectionModel().getSelectedIndex()-1
+                                    chapterListView.getSelectionModel().getSelectedIndex() - 1
                             );
                         }
                 ));
@@ -479,7 +497,7 @@ public class MainController {
 
         linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         linkView.setOnKeyPressed(key -> {
-           if (key.getCode() == KeyCode.DELETE) {
+            if (key.getCode() == KeyCode.DELETE) {
                 if (linkView == bibleLinkView) {
                     obsBibleLink.removeAll(linkView.getSelectionModel().getSelectedItems());
                 } else if (linkView == ellenLinkView) {
@@ -487,6 +505,9 @@ public class MainController {
                 } else if (linkView == otherLinkView) {
                     obsOtherLink.removeAll(linkView.getSelectionModel().getSelectedItems());
                 }
+            }
+            if (key.isControlDown() && key.getCode() == KeyCode.C) {
+                linkClipboard = new ArrayList<>(linkView.getSelectionModel().getSelectedItems());
             }
         });
 
@@ -627,7 +648,7 @@ public class MainController {
 
     private void doCreateParallelLink() throws IOException, URISyntaxException {
 
-        if (!currentTArea.getSelectedText().isEmpty()){
+        if (!currentTArea.getSelectedText().isEmpty()) {
             int start = currentTArea.getSelection().getStart();
             int end = currentTArea.getSelection().getEnd();
 
@@ -644,14 +665,14 @@ public class MainController {
     public NotesSubStorage getNotesForSelectedChapter() throws IOException {
         if (bibleTab.isSelected()) {
             return NotesStorage.getBible(
-                            bibleListView.getSelectionModel().getSelectedIndex(),
-                            chapterListView.getItems().size()
-                    ).get(chapterListView.getSelectionModel().getSelectedIndex());
+                    bibleListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
         } else if (ellenTab.isSelected()) {
             return NotesStorage.getEllen(
-                            ellenListView.getSelectionModel().getSelectedIndex(),
-                            chapterListView.getItems().size()
-                    ).get(chapterListView.getSelectionModel().getSelectedIndex());
+                    ellenListView.getSelectionModel().getSelectedIndex(),
+                    chapterListView.getItems().size()
+            ).get(chapterListView.getSelectionModel().getSelectedIndex());
         } else {
             return NotesStorage.getOther(
                     otherListView.getSelectionModel().getSelectedIndex(),
@@ -685,7 +706,7 @@ public class MainController {
                     bibleListView.getSelectionModel().getSelectedIndex(),
                     chapterListView.getItems().size()
             ).get(chapterListView.getSelectionModel().getSelectedIndex());
-        } else if (ellenTab.isSelected()){
+        } else if (ellenTab.isSelected()) {
             return ParallelsLinksStorage.getEllen(
                     ellenListView.getSelectionModel().getSelectedIndex(),
                     chapterListView.getItems().size()
@@ -701,8 +722,8 @@ public class MainController {
     public BookmarkStruct createBookmark() {
 
         String selectedText = currentTArea.getSelectedText();
-        ListView<Book> selectedList = bibleTab.isSelected() ? bibleListView : ellenTab.isSelected()? ellenListView : otherListView;
-        PathsEnum root = bibleTab.isSelected() ? PathsEnum.Bible : ellenTab.isSelected()? PathsEnum.EllenWhite : PathsEnum.Other;
+        ListView<Book> selectedList = bibleTab.isSelected() ? bibleListView : ellenTab.isSelected() ? ellenListView : otherListView;
+        PathsEnum root = bibleTab.isSelected() ? PathsEnum.Bible : ellenTab.isSelected() ? PathsEnum.EllenWhite : PathsEnum.Other;
         String link = "";
         if (!selectedText.isEmpty()) {
             link += String.format("%s %d", new Cutser().getCutByRoot(selectedList.getSelectionModel().getSelectedIndex(), root), chapterListView.getSelectionModel().getSelectedItem());
@@ -755,8 +776,8 @@ public class MainController {
                 FXCollections.observableArrayList(BookSerializer.load(PathsEnum.Other)));
 
         if (bibleListView.getItems().isEmpty() &&
-        ellenListView.getItems().isEmpty() &&
-        otherListView.getItems().isEmpty()) {
+                ellenListView.getItems().isEmpty() &&
+                otherListView.getItems().isEmpty()) {
             bibleListView.setItems(new FileAdapter().getBible());
             ellenListView.setItems(new FileAdapter().getEllen());
             otherListView.setItems(new FileAdapter().getOther());
@@ -821,7 +842,7 @@ public class MainController {
         Path path = Path.of("components/cut.txt");
         String content;
         if (Files.exists(path)) {
-            content  = Files.readString(path);
+            content = Files.readString(path);
         } else {
             content = "Информация не прогружена. Произошла ошибка.";
         }
@@ -911,7 +932,7 @@ public class MainController {
     private void setChapterListView(Book _new) {
         ObservableList<Integer> chapterList = FXCollections.observableArrayList();
         chapterList.addAll(_new.getChapters().stream().map(x -> x.number.get()).toList());
-        chapterList.remove(chapterList.size()-1);
+        chapterList.remove(chapterList.size() - 1);
         chapterListView.setItems(chapterList);
 
         chapterListView.getSelectionModel().select(0);
@@ -962,6 +983,7 @@ public class MainController {
             currentTArea.moveTo(0);
         }
     }
+
     private void selectOtherListWithoutSorting() {
         Book _selectedBook = otherListView.getSelectionModel().getSelectedItem();
         if (_selectedBook != null) {
@@ -1067,22 +1089,29 @@ public class MainController {
                 throw new RuntimeException(e);
             }
         });
-        resaveArticleButton.onActionProperty().set(action -> {
-            if (openingArticle.get() != null) {
-                try {
-                    ObservableList<Article> obs = FXCollections.observableArrayList(ArticleSerializer.load());
-
-                    for (Article article : obs) {
-                        if (article.getName().equals(openingArticle.get().getName())) {
-                            article.oLinks = obsOtherLink;
-                            article.bLinks = obsBibleLink;
-                            article.eLinks = obsEllenLink;
-                        }
+        addSelectionToArticleButton.onActionProperty().set(action -> {
+            ListView<Link> openingListView = bibleLinkTab.isSelected()? bibleLinkView:
+                    ellenLinkTab.isSelected()? ellenLinkView: otherLinkView;
+            if (!openingListView.getSelectionModel().getSelectedItems().isEmpty()) {
+                PathsEnum mode = openingListView.getSelectionModel().getSelectedItems().get(0).root;
+                if (mode == PathsEnum.Bible) {
+                    try {
+                        new ArticlesWindow(new ArrayList<>(openingListView.getSelectionModel().getSelectedItems()), new ArrayList<>(), new ArrayList<>()).stage().show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-
-                    ArticleSerializer.save(obs);
-                } catch (IOException exception) {
-                    System.err.println(exception.getMessage());
+                } else if (mode == PathsEnum.EllenWhite) {
+                    try {
+                        new ArticlesWindow(new ArrayList<>(), new ArrayList<>(openingListView.getSelectionModel().getSelectedItems()), new ArrayList<>()).stage().show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else if (mode == PathsEnum.Other) {
+                    try {
+                        new ArticlesWindow(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(openingListView.getSelectionModel().getSelectedItems())).stage().show();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         });
@@ -1294,7 +1323,7 @@ public class MainController {
             obsBibleLink.clear();
             obsOtherLink.clear();
         });
-        eraseCurLink.setOnAction(action-> {
+        eraseCurLink.setOnAction(action -> {
             if (bibleLinkTab.isSelected()) obsBibleLink.clear();
             else if (ellenLinkTab.isSelected()) obsEllenLink.clear();
             else obsOtherLink.clear();
@@ -1307,8 +1336,7 @@ public class MainController {
                 toggleContainer.getStyleClass().remove("stack-pane-unselected");
                 toggleContainer.getStyleClass().add("stack-pane-selected");
                 searchModeLabel.setText("Поиск частей слов");
-            }
-            else {
+            } else {
                 toggleContainer.getStyleClass().remove("stack-pane-selected");
                 toggleContainer.getStyleClass().add("stack-pane-unselected");
                 searchModeLabel.setText("Расширенный поиск");
@@ -1681,13 +1709,13 @@ public class MainController {
                     Collection<String> style = SplitReadComponent.getInstance(controller).tareas.get(finalI).getStyleOfChar(index);
                     if (style != null && style.contains("note")) {
                         try {
-                            showTooltip(SplitReadComponent.getInstance(controller).tareas.get(finalI), mouse.getScreenX()+30, mouse.getScreenY(), controller.getNotesForSelectedChapter().getFromPos(index).text);
+                            showTooltip(SplitReadComponent.getInstance(controller).tareas.get(finalI), mouse.getScreenX() + 30, mouse.getScreenY(), controller.getNotesForSelectedChapter().getFromPos(index).text);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     } else if (style != null && style.contains("thelper")) {
                         try {
-                            showTooltip(SplitReadComponent.getInstance(controller).tareas.get(finalI), mouse.getScreenX()+30, mouse.getScreenY(), controller.getTHelperForSelectedChapter().getFromPos(index).text);
+                            showTooltip(SplitReadComponent.getInstance(controller).tareas.get(finalI), mouse.getScreenX() + 30, mouse.getScreenY(), controller.getTHelperForSelectedChapter().getFromPos(index).text);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -1715,13 +1743,13 @@ public class MainController {
                 Collection<String> style = controller.mainTextArea.getStyleOfChar(index);
                 if (style != null && style.contains("note")) {
                     try {
-                        showTooltip(controller.mainTextArea, mouse.getScreenX()+30, mouse.getScreenY(), controller.getNotesForSelectedChapter().getFromPos(index).text);
+                        showTooltip(controller.mainTextArea, mouse.getScreenX() + 30, mouse.getScreenY(), controller.getNotesForSelectedChapter().getFromPos(index).text);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 } else if (style != null && style.contains("thelper")) {
                     try {
-                        showTooltip(controller.mainTextArea, mouse.getScreenX()+30, mouse.getScreenY(), controller.getTHelperForSelectedChapter().getFromPos(index).text);
+                        showTooltip(controller.mainTextArea, mouse.getScreenX() + 30, mouse.getScreenY(), controller.getTHelperForSelectedChapter().getFromPos(index).text);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -1765,7 +1793,7 @@ public class MainController {
 
         private void deleteSpecialTextAction(MouseEvent mouse, NoteStyledTextArea tarea) throws IOException {
 
-            int clickPos =  tarea.getCaretPosition();
+            int clickPos = tarea.getCaretPosition();
             StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
             int index = 0;
             int inote = 0;
@@ -1791,7 +1819,7 @@ public class MainController {
                         break;
                     }
                     inote++;
-                } else if(span.getStyle().contains("thelper")) {
+                } else if (span.getStyle().contains("thelper")) {
                     if (clickPos >= index && clickPos <= index + span.getLength()) {
 
                         int finalThelp = ithelp;
@@ -1840,12 +1868,12 @@ public class MainController {
 
         private void selectSpecialTextAction(NoteStyledTextArea tarea) throws IOException, URISyntaxException {
 
-            int clickPos =  tarea.getCaretPosition();
+            int clickPos = tarea.getCaretPosition();
             StyleSpans<Collection<String>> styles = tarea.getStyleSpans(0, tarea.getLength());
 
             int index = 0;
             int inote = 0;
-            int ithelp= 0;
+            int ithelp = 0;
             int ilink = 0;
             for (StyleSpan<Collection<String>> span : styles) {
                 if (span.getStyle().contains("note")) {
@@ -1855,9 +1883,10 @@ public class MainController {
                             title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
                         else if (controller.ellenTab.isSelected())
                             title = new Cutser().getEllenCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
-                        else title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
+                        else
+                            title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
                         title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
-                                tarea.getText(index, index+span.getLength()));
+                                tarea.getText(index, index + span.getLength()));
                         Note note = controller.getNotesForSelectedChapter().get(inote);
                         if (!note.isOpened()) {
                             new NoteWindow(title, note).stage().show();
@@ -1872,9 +1901,10 @@ public class MainController {
                             title = new Cutser().getBibleCut(controller.bibleListView.getSelectionModel().getSelectedIndex());
                         else if (controller.ellenTab.isSelected())
                             title = new Cutser().getEllenCut(controller.ellenListView.getSelectionModel().getSelectedIndex());
-                        else title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
+                        else
+                            title = new Cutser().getOtherCut(controller.otherListView.getSelectionModel().getSelectedIndex());
                         title = String.format("%s %d :%s", title, controller.chapterListView.getSelectionModel().getSelectedItem(),
-                                tarea.getText(index, index+span.getLength()));
+                                tarea.getText(index, index + span.getLength()));
                         TranslateHelper thelper = controller.getTHelperForSelectedChapter().get(ithelp);
                         if (!thelper.isOpened()) {
                             new THelperWindow(title, thelper).stage().show();
@@ -2105,9 +2135,9 @@ public class MainController {
             }
 
             Image image = new Image(urlStream);
-            double k = image.getWidth()/ image.getHeight();
+            double k = image.getWidth() / image.getHeight();
             ImageView imageView = new ImageView(image);
-            imageView.setFitWidth(26*k);
+            imageView.setFitWidth(26 * k);
             imageView.setFitHeight(26);
 
             StackPane stackPane = new StackPane(imageView);
@@ -2166,12 +2196,12 @@ public class MainController {
             hoverPanel.alignmentProperty().set(Pos.CENTER_LEFT);
             hoverPanel.getChildren().add(createArticleButton);
             createArticleButton.onActionProperty().set(actionEvent -> {
-                PathsEnum mode = controller.bibleTab.isSelected()? PathsEnum.Bible:
-                        controller.ellenTab.isSelected()? PathsEnum.EllenWhite: PathsEnum.Other;
-                ListView<Book> listView = mode == PathsEnum.Bible? controller.bibleListView:
-                        mode == PathsEnum.EllenWhite? controller.ellenListView : controller.otherListView;
-                HashMap<String, Integer> whelp = mode == PathsEnum.Bible? controller.b_uniqueWordH:
-                        mode == PathsEnum.EllenWhite? controller.e_uniqueWordH : controller.o_uniqueWordH;
+                PathsEnum mode = controller.bibleTab.isSelected() ? PathsEnum.Bible :
+                        controller.ellenTab.isSelected() ? PathsEnum.EllenWhite : PathsEnum.Other;
+                ListView<Book> listView = mode == PathsEnum.Bible ? controller.bibleListView :
+                        mode == PathsEnum.EllenWhite ? controller.ellenListView : controller.otherListView;
+                HashMap<String, Integer> whelp = mode == PathsEnum.Bible ? controller.b_uniqueWordH :
+                        mode == PathsEnum.EllenWhite ? controller.e_uniqueWordH : controller.o_uniqueWordH;
 
                 Link link = getLink(listView, mode, whelp);
 
@@ -2181,7 +2211,7 @@ public class MainController {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                } else if (mode == PathsEnum.EllenWhite){
+                } else if (mode == PathsEnum.EllenWhite) {
                     try {
                         new ArticlesWindow(new ArrayList<>(), List.of(link), new ArrayList<>()).stage().show();
                     } catch (IOException e) {
@@ -2207,21 +2237,21 @@ public class MainController {
             int endPos = 0;
             String text = "";
             for (String fragment : listView.getSelectionModel().getSelectedItem().getChapters().get(
-                    controller.chapterListView.getSelectionModel().getSelectedIndex()+1).fragments) {
+                    controller.chapterListView.getSelectionModel().getSelectedIndex() + 1).fragments) {
                 if (controller.currentTArea.getSelection().getStart() >= index &&
                         controller.currentTArea.getSelection().getStart() <= index + fragment.length()) {
-                   pos = fragment.indexOf(controller.currentTArea.getSelectedText());
-                   endPos = pos;
-                   if (pos > 0) {
-                       while (pos-1 > 0 && Character.isLetterOrDigit(fragment.charAt(pos-1))) {
-                           pos--;
-                       }
-                   } else endPos = pos = 0;
-                   while (endPos < fragment.length() && Character.isLetterOrDigit(fragment.charAt(endPos))) {
+                    pos = fragment.indexOf(controller.currentTArea.getSelectedText());
+                    endPos = pos;
+                    if (pos > 0) {
+                        while (pos - 1 > 0 && Character.isLetterOrDigit(fragment.charAt(pos - 1))) {
+                            pos--;
+                        }
+                    } else endPos = pos = 0;
+                    while (endPos < fragment.length() && Character.isLetterOrDigit(fragment.charAt(endPos))) {
                         endPos++;
-                   }
-                   text = fragment.substring(pos, endPos);
-                   break;
+                    }
+                    text = fragment.substring(pos, endPos);
+                    break;
                 }
 
                 fragmentId++;
@@ -2236,7 +2266,7 @@ public class MainController {
 
             Link link = new Link(List.of(new IndexStruct(
                     listView.getSelectionModel().getSelectedIndex(),
-                    controller.chapterListView.getSelectionModel().getSelectedIndex()+1,
+                    controller.chapterListView.getSelectionModel().getSelectedIndex() + 1,
                     fragmentId, pos,
                     wordKey,
                     null
@@ -2332,18 +2362,18 @@ public class MainController {
 
         public void display(ParallelLink link) {
 
-             if (listView == null) {
-                 defineParallelLinkGraphic();
-             }
-             if (isOpened)
-                 hide();
+            if (listView == null) {
+                defineParallelLinkGraphic();
+            }
+            if (isOpened)
+                hide();
 
-             this.link = link;
-             isOpened = true;
-             controller.mainGridPane.getChildren().addAll(listView, close);
-             GridPane.setMargin(close, new Insets(8, 8, 0, 0));
-             obs.addAll(link.getParallelLink());
-             listView.setItems(obs);
+            this.link = link;
+            isOpened = true;
+            controller.mainGridPane.getChildren().addAll(listView, close);
+            GridPane.setMargin(close, new Insets(8, 8, 0, 0));
+            obs.addAll(link.getParallelLink());
+            listView.setItems(obs);
 
         }
 
@@ -2404,6 +2434,13 @@ public class MainController {
                         obs.removeAll(listView.getSelectionModel().getSelectedItems());
                     }
                 }
+                if (key.isControlDown() && key.getCode() == KeyCode.V) {
+                    obs.addAll(controller.linkClipboard);
+                    for (Link l : controller.linkClipboard) {
+                        link.addLink(l);
+                    }
+                }
+
             });
 
             listView.getSelectionModel().selectedItemProperty().addListener((obs, old, new_) -> {
@@ -2415,8 +2452,7 @@ public class MainController {
                         controller.bookTabPane.getSelectionModel().select(controller.bibleTab);
                         controller.linkTabPane.getSelectionModel().select(controller.bibleLinkTab);
                         bookView = controller.bibleListView;
-                    }
-                    else {
+                    } else {
                         bookView = controller.ellenListView;
                         controller.bookTabPane.getSelectionModel().select(controller.ellenTab);
                         controller.linkTabPane.getSelectionModel().select(controller.ellenLinkTab);
@@ -2464,12 +2500,12 @@ public class MainController {
     static class SplitReadComponent {
         private static MainController controller;
 
-        private List<SplitPane> spanes = new ArrayList<>();
-        private List<GridPane> gpanes = new ArrayList<>();
+        private final List<SplitPane> spanes = new ArrayList<>();
+        private final List<GridPane> gpanes = new ArrayList<>();
 
-        private List<NoteStyledTextArea> tareas = new ArrayList<>();
+        private final List<NoteStyledTextArea> tareas = new ArrayList<>();
 
-        private List<OpenChapterData> chapterData = new ArrayList<>();
+        private final List<OpenChapterData> chapterData = new ArrayList<>();
 
 
         SplitReadComponent() {
@@ -2488,6 +2524,7 @@ public class MainController {
                 t.setWrapText(true);
                 t.setEditable(false);
                 t.setPadding(new Insets(0, 0, 0, 5));
+
 
                 VirtualizedScrollPane v = new VirtualizedScrollPane(t);
                 GridPane.setHgrow(v, Priority.ALWAYS);
@@ -2515,7 +2552,7 @@ public class MainController {
 
         private void display(int mode) {
 
-            int s = controller.mainSplitPane.getItems().size()-1;
+            int s = controller.mainSplitPane.getItems().size() - 1;
 
             if (mode < s) {
                 for (int i = 2; i >= mode; i--) {
@@ -2532,9 +2569,9 @@ public class MainController {
                 }
             }
 
-            double dpos = 1d/controller.mainSplitPane.getItems().size();
+            double dpos = 1d / controller.mainSplitPane.getItems().size();
             double[] poses = new double[controller.mainSplitPane.getItems().size()];
-            for (int i = 0; i < poses.length; i++) poses[i] = dpos*(i+1);
+            for (int i = 0; i < poses.length; i++) poses[i] = dpos * (i + 1);
             controller.mainSplitPane.setDividerPositions(poses);
 
         }
@@ -2543,27 +2580,29 @@ public class MainController {
 
             for (int i = 0; i < 3; i++) {
                 int finalI = i;
-                tareas.get(i).focusedProperty().addListener(lis -> {
-                    controller.chapterListView.getSelectionModel().selectedItemProperty().removeListener(controller.selectedChapterListener);
+                tareas.get(i).getTextArea().focusedProperty().addListener(lis -> {
+                    if (tareas.get(finalI).getTextArea().isFocused()) {
+                        controller.chapterListView.getSelectionModel().selectedItemProperty().removeListener(controller.selectedChapterListener);
 
-                    controller.currentTArea = tareas.get(finalI);
+                        controller.currentTArea = tareas.get(finalI);
 
-                    ListView<Book> lb;
+                        ListView<Book> lb;
 
-                    controller.bookTabPane.getSelectionModel().select(chapterData.get(finalI).getTab());
-                    if (chapterData.get(finalI).getTab() == 0)
-                        lb = controller.bibleListView;
-                    else if (chapterData.get(finalI).getTab() == 1)
-                        lb = controller.ellenListView;
-                    else lb = controller.otherListView;
+                        controller.bookTabPane.getSelectionModel().select(chapterData.get(finalI).getTab());
+                        if (chapterData.get(finalI).getTab() == 0)
+                            lb = controller.bibleListView;
+                        else if (chapterData.get(finalI).getTab() == 1)
+                            lb = controller.ellenListView;
+                        else lb = controller.otherListView;
 
-                    lb.getSelectionModel().select(chapterData.get(finalI).getBook());
-                    lb.scrollTo(chapterData.get(finalI).getBook());
+                        lb.getSelectionModel().select(chapterData.get(finalI).getBook());
+                        lb.scrollTo(chapterData.get(finalI).getBook());
 
-                    controller.chapterListView.getSelectionModel().select(chapterData.get(finalI).getChapter());
-                    controller.chapterListView.scrollTo(chapterData.get(finalI).getChapter());
+                        controller.chapterListView.getSelectionModel().select(chapterData.get(finalI).getChapter());
+                        controller.scrollToItem(controller.chapterListView, chapterData.get(finalI).getChapter());
 
-                    controller.chapterListView.getSelectionModel().selectedItemProperty().addListener(controller.selectedChapterListener);
+                        controller.chapterListView.getSelectionModel().selectedItemProperty().addListener(controller.selectedChapterListener);
+                    }
                 });
 
             }
@@ -2620,6 +2659,71 @@ public class MainController {
             }
             controller.currentTArea = controller.mainTextArea;
 
+        }
+
+    }
+
+    static class FindOnPageComponent {
+
+        private TextField tfield = new TextField();
+
+        public FindOnPageComponent() {
+            defineTextField();
+        }
+
+        private static MainController controller;
+        private static class Holder {
+            private static final FindOnPageComponent INSTANCE = new FindOnPageComponent();
+        }
+
+        public static FindOnPageComponent getInstance(MainController _controller) {
+            if (controller == null) controller = _controller;
+            return FindOnPageComponent.Holder.INSTANCE;
+        }
+
+        private void defineTextField() {
+            tfield.getStyleClass().add("round-text-field");
+            tfield.setStyle("""
+                    -fx-border-width: 2px;
+                    -fx-border-color: #ffdcdc;
+                    """);
+            tfield.setPromptText("Поиск на странице");
+            tfield.setPrefWidth(300);
+            tfield.setPrefHeight(40);
+            tfield.setMaxWidth(300);
+            tfield.setMaxHeight(40);
+
+            tfield.setOnKeyPressed(key -> {
+                if (key.getCode() == KeyCode.ENTER) {
+                    String text = tfield.getText();
+                    if (!text.isEmpty()) {
+                        int selected = controller.chapterListView.getSelectionModel().getSelectedIndex();
+                        int index = 0;
+                        int from = 0;
+                        controller.chapterListView.getSelectionModel().select(null);
+                        controller.chapterListView.getSelectionModel().select(selected);
+                        while (index >= 0) {
+                            index = controller.currentTArea.getText().toLowerCase().indexOf(text.toLowerCase(), from);
+                            from = index + 1;
+                            if (from >= controller.currentTArea.getText().length()) break;
+                            if (index >= 0) {
+                                controller.currentTArea.setStyleClass(index, index + text.length(), "fill-text");
+                            }
+                        }
+                    }
+                    controller.mainGridPane.getChildren().remove(tfield);
+                }
+            });
+
+        }
+
+        public void display() {
+            controller.mainGridPane.getChildren().add(tfield);
+            GridPane.setRowIndex(tfield, 3);
+            GridPane.setColumnIndex(tfield, 1);
+            GridPane.setValignment(tfield, VPos.CENTER);
+            GridPane.setHalignment(tfield, HPos.CENTER);
+            tfield.requestFocus();
         }
 
     }

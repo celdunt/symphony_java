@@ -157,7 +157,7 @@
                   <Tooltip text="Добавлять к найденному" />
                </tooltip>
                <HBox.margin>
-                  <Insets right="10.0" />
+                  <Insets right="20.0" />
                </HBox.margin>
             </ToggleButton>
             <Button fx:id="eraseCurLink" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="erase-cur-link-button">
@@ -178,9 +178,9 @@
                   <Tooltip text="Создать тему" />
                </tooltip>
             </Button>
-            <Button fx:id="resaveArticleButton" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="resave-article-button">
+            <Button fx:id="addSelectionToArticleButton" alignment="CENTER_RIGHT" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="resave-article-button">
                <tooltip>
-                  <Tooltip text="Пересохранить тему" />
+                  <Tooltip text="Добавить выделенное в тему..." />
                </tooltip>
             </Button>
          </children>

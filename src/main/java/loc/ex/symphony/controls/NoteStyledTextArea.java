@@ -98,6 +98,10 @@ public class NoteStyledTextArea extends Region implements Virtualized {
 
     }
 
+    public StyleClassedTextArea getTextArea() {
+        return textArea;
+    }
+
     public void scrollToRecent() {
         Platform.runLater(() -> {
             Timeline tm = new Timeline(new KeyFrame(

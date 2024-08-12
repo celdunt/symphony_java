@@ -39,7 +39,7 @@ public class ConfirmNamingController {
 
         if (article != null && !nameField.getText().isEmpty()) {
             article.setName(nameField.getText()); //define name article
-            ArticlesController.additionArticle.set(article); //define and init addition article
+            ArticlesController.addArticle(article); //define and init addition article
             ((Stage) ((Node) source).getScene().getWindow()).close();//close window
         }
 

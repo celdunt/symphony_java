@@ -45,9 +45,19 @@ public class ArticlesController {
 
     }
 
+    public static void addArticle(Article article) {
+        try {
+            ObservableList<Article> articleObservableList = FXCollections.observableArrayList(ArticleSerializer.load());
+            articleObservableList.add(article);
+            ArticleSerializer.save(articleObservableList);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
     public void initAdditionArticle() {
 
-        additionArticle.addListener(change -> {
+       /* additionArticle.addListener(change -> {
             if (additionArticle.getValue() != null) {
                 articleObservableList.add(additionArticle.getValue());
                 try {
@@ -56,7 +66,7 @@ public class ArticlesController {
                     System.err.println(e.getMessage());
                 }
             }
-        });
+        });*/
 
     }
 

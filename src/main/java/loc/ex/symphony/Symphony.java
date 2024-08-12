@@ -66,7 +66,7 @@ public class Symphony extends Application {
             }
         });
 
-        window.setTitle("Симфония");
+        window.setTitle("Твоя Симфония");
         window.setScene(scene);
         window.show();
     }

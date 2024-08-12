@@ -170,13 +170,13 @@ public class Searcher {
 
             }
 
-            if (countOfValid == references.size()) {
+            if (countOfValid == references.size() && references.get(0).getBookID() >= 0) {
                 Link toAdd = new Link(references, resource, pathsEnum, words);
                 if (foundOccurrences.stream().noneMatch(x -> x.toString().equals(toAdd.toString())))
                     foundOccurrences.add(toAdd);
-                if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
-                else isContinue = false;
             }
+            if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
+            else isContinue = false;
 
         }
 
@@ -244,7 +244,7 @@ public class Searcher {
     private IndexStruct getIndexStruct(int b, int c, int f, String fr, String w, HashMap<String, Integer> u) {
         int p = fr.toLowerCase().indexOf(w.toLowerCase());
         int e = p;
-        while (p-1 > 0 && Character.isLetterOrDigit(fr.charAt(p-1))) {
+        while (p - 1 > 0 && Character.isLetterOrDigit(fr.charAt(p - 1))) {
             p--;
         }
         while (e < fr.length() && Character.isLetterOrDigit(fr.charAt(e))) {

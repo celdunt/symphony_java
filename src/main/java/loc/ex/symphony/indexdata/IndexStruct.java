@@ -40,7 +40,9 @@ public class IndexStruct implements Serializable, Comparable<IndexStruct> {
         }
     }
 
-    public IndexStruct() {}
+    public IndexStruct() {
+        bookId = -1;
+    }
 
     public List<Integer> getSynonymsKeys() {
         return synonymsKeys;

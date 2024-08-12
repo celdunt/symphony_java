@@ -76,6 +76,8 @@ public class IndexatorSingleThreaded {
 
         List<String[]> morphSynonymGroupsOfWords = getMorphSynonymGroupOfWords();
 
+        int morphSynKey = uniqueWords.size()+1;
+
         for (String[] morphSynonymGroupsOfWord : morphSynonymGroupsOfWords) {
             for (int fixedWord = 0; fixedWord < morphSynonymGroupsOfWord.length; fixedWord++)
                 for (int nextWord = fixedWord + 1; nextWord < morphSynonymGroupsOfWord.length; nextWord++) {
@@ -86,7 +88,22 @@ public class IndexatorSingleThreaded {
                     List<IndexStruct> fixed = indexData.get(morphSynonymGroupsOfWord[fixedWord]);
                     List<IndexStruct> next = indexData.get(morphSynonymGroupsOfWord[nextWord]);
 
-                    if (fixed == null || fixed.isEmpty() || next == null || next.isEmpty()) continue;
+                    if (fixed == null || fixed.isEmpty()) {
+                        System.err.println(morphSynonymGroupsOfWord[fixedWord].toLowerCase());
+                        indexData.computeIfAbsent(morphSynonymGroupsOfWord[fixedWord].toLowerCase(), k -> new ArrayList<>())
+                                .add(new IndexStruct());
+                        fixed = indexData.get(morphSynonymGroupsOfWord[fixedWord].toLowerCase());
+                        uniqueWords.put(morphSynKey, morphSynonymGroupsOfWord[fixedWord].toLowerCase());
+                        uniqueWordsHelp.put(morphSynonymGroupsOfWord[fixedWord].toLowerCase(), morphSynKey++);
+                    }
+                    if (next == null || next.isEmpty()) {
+                        System.err.println(morphSynonymGroupsOfWord[nextWord].toLowerCase());
+                        indexData.computeIfAbsent(morphSynonymGroupsOfWord[nextWord].toLowerCase(), k -> new ArrayList<>())
+                                .add(new IndexStruct());
+                        next = indexData.get(morphSynonymGroupsOfWord[nextWord].toLowerCase());
+                        uniqueWords.put(morphSynKey, morphSynonymGroupsOfWord[nextWord].toLowerCase());
+                        uniqueWordsHelp.put(morphSynonymGroupsOfWord[nextWord].toLowerCase(), morphSynKey++);
+                    }
 
                     fixed.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[nextWord]));
                     next.get(0).getSynonymsKeys().add(uniqueWordsHelp.get(morphSynonymGroupsOfWord[fixedWord]));
