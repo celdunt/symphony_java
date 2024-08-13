@@ -66,6 +66,7 @@ public class Searcher {
             if (indexData == null) continue;
 
             List<IndexStruct> primaryWords = indexData.get(word.toLowerCase());
+            if (primaryWords == null) continue;
             List<IndexStruct> fullWords = new ArrayList<>(primaryWords);
 
             for (int synonymKey : primaryWords.get(0).getSynonymsKeys()) {
@@ -174,9 +175,12 @@ public class Searcher {
                 Link toAdd = new Link(references, resource, pathsEnum, words);
                 if (foundOccurrences.stream().noneMatch(x -> x.toString().equals(toAdd.toString())))
                     foundOccurrences.add(toAdd);
+                if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
+                else isContinue = false;
+            } else if (countOfValid == references.size() && references.get(0).getBookID() < 0) {
+                if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
+                else isContinue = false;
             }
-            if (iterators.get(fixedID).hasNext()) references.set(fixedID, iterators.get(fixedID).next());
-            else isContinue = false;
 
         }
 

@@ -989,8 +989,6 @@ public class MainController {
         if (_selectedBook != null) {
             selectedBook = _selectedBook;
             setChapterListView(_selectedBook);
-            if (otherListView.getSelectionModel().getSelectedIndex() > -1 && !otherListView.getItems().isEmpty())
-                sortLinkView(otherListView.getSelectionModel().getSelectedIndex());
             currentTArea.moveTo(0);
         }
     }
@@ -1047,6 +1045,8 @@ public class MainController {
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Bible);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
+        b_searcher = new Searcher(PathsEnum.Bible, indexator.getUniqueWords());
+        b_searcher.setResource(bibleListView.getItems());
 
         indexator = new IndexatorSingleThreaded(ellenListView.getItems());
 
@@ -1056,6 +1056,9 @@ public class MainController {
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.EllenWhite);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
 
+        e_searcher = new Searcher(PathsEnum.EllenWhite, indexator.getUniqueWords());
+        e_searcher.setResource(ellenListView.getItems());
+
         indexator = new IndexatorSingleThreaded(otherListView.getItems());
 
         indexator.index();
@@ -1064,13 +1067,10 @@ public class MainController {
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Other);
         IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Other);
 
-        initUniqueWordsFields();
-        b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
-        b_searcher.setResource(bibleListView.getItems());
-        e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
-        e_searcher.setResource(ellenListView.getItems());
-        o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+        o_searcher = new Searcher(PathsEnum.Other, indexator.getUniqueWords());
         o_searcher.setResource(otherListView.getItems());
+
+        initUniqueWordsFields();
 
     }
 

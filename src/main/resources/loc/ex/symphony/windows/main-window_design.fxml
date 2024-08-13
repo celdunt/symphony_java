@@ -136,12 +136,12 @@
                   <Insets right="20.0" />
                </HBox.margin>
             </ToggleButton>
-            <ToggleButton fx:id="editModeButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="edit-mode-button" text="ToggleButton">
+            <ToggleButton fx:id="editModeButton" disable="true" maxHeight="0.0" maxWidth="0.0" minHeight="0.0" minWidth="0.0" mnemonicParsing="false" prefHeight="0.0" prefWidth="0.0" styleClass="edit-mode-button" text="ToggleButton" visible="false">
                <tooltip>
                   <Tooltip text="Редактирование текста" />
                </tooltip>
                <HBox.margin>
-                  <Insets right="20.0" />
+                  <Insets />
                </HBox.margin>
             </ToggleButton>
             <ToggleButton fx:id="boldModeButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="bold-mode-button" text="ToggleButton">

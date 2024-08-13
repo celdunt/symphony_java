@@ -89,7 +89,6 @@ public class IndexatorSingleThreaded {
                     List<IndexStruct> next = indexData.get(morphSynonymGroupsOfWord[nextWord]);
 
                     if (fixed == null || fixed.isEmpty()) {
-                        System.err.println(morphSynonymGroupsOfWord[fixedWord].toLowerCase());
                         indexData.computeIfAbsent(morphSynonymGroupsOfWord[fixedWord].toLowerCase(), k -> new ArrayList<>())
                                 .add(new IndexStruct());
                         fixed = indexData.get(morphSynonymGroupsOfWord[fixedWord].toLowerCase());
@@ -97,7 +96,6 @@ public class IndexatorSingleThreaded {
                         uniqueWordsHelp.put(morphSynonymGroupsOfWord[fixedWord].toLowerCase(), morphSynKey++);
                     }
                     if (next == null || next.isEmpty()) {
-                        System.err.println(morphSynonymGroupsOfWord[nextWord].toLowerCase());
                         indexData.computeIfAbsent(morphSynonymGroupsOfWord[nextWord].toLowerCase(), k -> new ArrayList<>())
                                 .add(new IndexStruct());
                         next = indexData.get(morphSynonymGroupsOfWord[nextWord].toLowerCase());
