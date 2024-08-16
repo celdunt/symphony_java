@@ -29,6 +29,7 @@ import loc.ex.symphony.listview.*;
 import loc.ex.symphony.search.*;
 
 import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +88,7 @@ public class MainController {
     public ToggleButton editModeButton;
     public ToggleButton boldModeButton;
     public Button infoButton;
+    public Button feedbackButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -145,12 +147,13 @@ public class MainController {
             currentTArea.moveTo(0);
             currentTArea.requestFollowCaret();
 
-            int bookID = Integer.max(Integer.max(
-                    bibleListView.getSelectionModel().getSelectedIndex(),
-                    ellenListView.getSelectionModel().getSelectedIndex()
-            ), otherListView.getSelectionModel().getSelectedIndex());
 
             int tab = bibleTab.isSelected() ? 0 : ellenTab.isSelected() ? 1 : 2;
+
+            int bookID = tab == 0? bibleListView.getSelectionModel().getSelectedIndex():
+                    tab == 1? ellenListView.getSelectionModel().getSelectedIndex():
+                    otherListView.getSelectionModel().getSelectedIndex();
+
 
             if (currentTArea == mainTextArea) {
                 mainCD.setBook(bookID);
@@ -265,6 +268,7 @@ public class MainController {
         initSearchByLinkCut();
         initBackupButtons();
         initInfoButton();
+        initFeedbackButton();
         initSplitReadModeButtons();
         selectTabBible__OnAction();
         selectTabEllen__OnAction();
@@ -278,15 +282,21 @@ public class MainController {
         otherLinkView.setCellFactory(param -> new LinkCell<>((int) otherLinkView.getWidth(), this));
         logger.info("resource is set");
         initCheckingIndexExisting();
-        searchButton.setDisable(true);
+        //searchButton.setDisable(true);
         usabilityButtonListener.addListener(listener -> {
             searchButton.setDisable(false);
         });
-        b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
+        /*b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
         b_searcher.setResource(bibleListView.getItems());
         e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
         e_searcher.setResource(ellenListView.getItems());
         o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+        o_searcher.setResource(otherListView.getItems());*/
+        b_searcher = new Searcher(b_uniqueWord);
+        b_searcher.setResource(bibleListView.getItems());
+        e_searcher = new Searcher(e_uniqueWord);
+        e_searcher.setResource(ellenListView.getItems());
+        o_searcher = new Searcher(o_uniqueWord);
         o_searcher.setResource(otherListView.getItems());
         mainTextArea.editableProperty().set(false);
 
@@ -393,9 +403,9 @@ public class MainController {
     }
 
     public void initCheckingIndexExisting() throws SQLException, IOException, ClassNotFoundException {
-        if (!Files.exists(Path.of("bible.json")) ||
-                !Files.exists(Path.of("ellen.json")) ||
-                !Files.exists(Path.of("other.json"))) {
+        if (!Files.exists(Path.of("b_uniqueWords.json")) ||
+                !Files.exists(Path.of("e_uniqueWords.json")) ||
+                !Files.exists(Path.of("o_uniqueWords.json"))) {
             Alert information = new Alert(Alert.AlertType.INFORMATION);
             information.setTitle("Индексация");
             information.setHeaderText(null);
@@ -403,11 +413,17 @@ public class MainController {
             information.showAndWait();
             doIndex__OnAction();
             initUniqueWordsFields();
-            b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
+            /*b_searcher = new Searcher(PathsEnum.Bible, b_uniqueWord);
             b_searcher.setResource(bibleListView.getItems());
             e_searcher = new Searcher(PathsEnum.EllenWhite, e_uniqueWord);
             e_searcher.setResource(ellenListView.getItems());
             o_searcher = new Searcher(PathsEnum.Other, o_uniqueWord);
+            o_searcher.setResource(otherListView.getItems());*/
+            b_searcher = new Searcher(b_uniqueWord);
+            b_searcher.setResource(bibleListView.getItems());
+            e_searcher = new Searcher(e_uniqueWord);
+            e_searcher.setResource(ellenListView.getItems());
+            o_searcher = new Searcher(o_uniqueWord);
             o_searcher.setResource(otherListView.getItems());
         }
     }
@@ -459,6 +475,13 @@ public class MainController {
             DirectoryChooser dirChooser = new DirectoryChooser();
             File dir = dirChooser.showDialog(Symphony.window);
             if (dir != null) {
+                try {
+                    NotesStorage.update();
+                    ParallelsLinksStorage.update();
+                    TranslateHelperStorage.update();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 backupManager.zip(dir);
             }
         });
@@ -594,7 +617,7 @@ public class MainController {
     }
 
     public void doCreateBookmark() {
-        BookmarksController.additionBookmark.set(createBookmark());
+        BookmarksController.addBookmark(createBookmark());
     }
 
     public void doCreateArticle() throws IOException {
@@ -862,6 +885,28 @@ public class MainController {
         });
     }
 
+    public void initFeedbackButton() {
+        feedbackButton.setOnAction(lis -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Обратная связь");
+            alert.setHeaderText(null);
+
+            StyleClassedTextArea area = new StyleClassedTextArea();
+            area.replaceText("""
+                        Почта: ule626@gmail.com
+                        Группа в ОК: ok.ru/group/54078939398251
+                    """);
+            area.setPrefWidth(300);
+            area.setStyle("-fx-background-color: transparent;");
+            area.setWrapText(true);
+            area.setEditable(false);
+
+            alert.getDialogPane().setContent(area);
+            alert.setResizable(true);
+            alert.showAndWait();
+        });
+    }
+
     private void selectBibleList() {
 
         Book _selectedBook = bibleListView.getSelectionModel().getSelectedItem();
@@ -1043,10 +1088,7 @@ public class MainController {
 
         IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.Bible);
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Bible);
-        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
-
-        b_searcher = new Searcher(PathsEnum.Bible, indexator.getUniqueWords());
-        b_searcher.setResource(bibleListView.getItems());
+        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Bible);
 
         indexator = new IndexatorSingleThreaded(ellenListView.getItems());
 
@@ -1054,10 +1096,8 @@ public class MainController {
 
         IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.EllenWhite);
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.EllenWhite);
-        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
+        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.EllenWhite);
 
-        e_searcher = new Searcher(PathsEnum.EllenWhite, indexator.getUniqueWords());
-        e_searcher.setResource(ellenListView.getItems());
 
         indexator = new IndexatorSingleThreaded(otherListView.getItems());
 
@@ -1065,12 +1105,16 @@ public class MainController {
 
         IndexSaverSingleThreaded.saveUniqueWords(indexator.getUniqueWords(), PathsEnum.Other);
         IndexSaverSingleThreaded.saveUniqueWordsHelp(indexator.getUniqueWordsHelp(), PathsEnum.Other);
-        IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Other);
-
-        o_searcher = new Searcher(PathsEnum.Other, indexator.getUniqueWords());
-        o_searcher.setResource(otherListView.getItems());
+        //IndexSaverSingleThreaded.save(indexator.getIndexData(), PathsEnum.Other);
 
         initUniqueWordsFields();
+
+        b_searcher = new Searcher(b_uniqueWord);
+        b_searcher.setResource(bibleListView.getItems());
+        e_searcher = new Searcher(e_uniqueWord);
+        e_searcher.setResource(ellenListView.getItems());
+        o_searcher = new Searcher(o_uniqueWord);
+        o_searcher.setResource(otherListView.getItems());
 
     }
 
@@ -1343,7 +1387,7 @@ public class MainController {
             }
         });
         searchMode.setSelected(!searchMode.isSelected());
-        searchMode.setSelected(!searchMode.isSelected());
+        //searchMode.setSelected(!searchMode.isSelected());
         toggleContainer.setOnMouseClicked(action -> {
             searchMode.setSelected(!searchMode.isSelected());
         });

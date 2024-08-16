@@ -87,6 +87,8 @@ public class LinkCell<T> extends ListCell<T> {
         HashMap<Integer, String> uniqueWords = item.root == PathsEnum.Bible ? controller.b_uniqueWord
                 : item.root == PathsEnum.EllenWhite ? controller.e_uniqueWord : controller.o_uniqueWord;
 
+
+
         String mainText = item.toString().toLowerCase();
 
         item.references.sort(Comparator.comparingInt(IndexStruct::getPosition));
@@ -94,6 +96,9 @@ public class LinkCell<T> extends ListCell<T> {
         for (int i = 0; i < item.references.size(); i++) {
 
             int start = item.references.get(i).position + item.getTitle().length();
+            if (uniqueWords.get(item.references.get(i).getWordKey()) == null) {
+                System.err.println(item.references.get(i).getWordKey());
+            }
             String word = uniqueWords.get(item.references.get(i).getWordKey()).toLowerCase();
             int end = start + word.length();
 

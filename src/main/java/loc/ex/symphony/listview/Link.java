@@ -39,10 +39,10 @@ public class Link implements Serializable {
         String fragmentText = book.get(references.get(0).getBookID()).getChapters().get(references.get(0).getChapterID())
                 .getFragments().get(references.get(0).getFragmentID());
         linkContent = STR."""
-\{bookName} : \{chapterNumber}
+\{bookName} \{chapterNumber}
 \{fragmentText}""";
 
-        title = String.format("%s : %s\n", bookName, chapterNumber);
+        title = String.format("%s %s\n", bookName, chapterNumber);
 
         this.words = words;
     }

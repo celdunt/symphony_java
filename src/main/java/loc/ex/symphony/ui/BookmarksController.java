@@ -8,7 +8,9 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
+import loc.ex.symphony.file.ArticleSerializer;
 import loc.ex.symphony.file.BookmarksSerializer;
+import loc.ex.symphony.listview.Article;
 import loc.ex.symphony.listview.BookmarkStruct;
 
 import java.io.IOException;
@@ -82,9 +84,20 @@ public class BookmarksController {
 
     }
 
+    public static void addBookmark(BookmarkStruct bookmark) {
+        try {
+            ObservableList<BookmarkStruct> bookmarkStructObservableList =
+                    FXCollections.observableArrayList(BookmarksSerializer.load());
+            bookmarkStructObservableList.add(bookmark);
+            BookmarksSerializer.save(bookmarkStructObservableList);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
     public void initAdditionBookmark() {
 
-        additionBookmark.addListener(change -> {
+        /*additionBookmark.addListener(change -> {
             if (additionBookmark.getValue() != null) {
                 observableBookmarksList.add(additionBookmark.getValue());
                 try {
@@ -93,7 +106,7 @@ public class BookmarksController {
                     System.err.println(e.getMessage());
                 }
             }
-        });
+        });*/
 
     }
 

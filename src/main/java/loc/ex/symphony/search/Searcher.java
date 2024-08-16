@@ -46,6 +46,10 @@ public class Searcher {
         this.uniqueWords = uniqueWords;
     }
 
+    public Searcher(HashMap<Integer, String> uniqueWords) throws IOException {
+        this.uniqueWords = uniqueWords;
+    }
+
     public void setResource(ObservableList<Book> resource) {
         this.resource = resource;
     }
@@ -222,14 +226,16 @@ public class Searcher {
                             isFound = false;
                             break;
                         } else {
-                            indexStructs.add(getIndexStruct(
+                            IndexStruct is = getIndexStruct(
                                     bookID, chapterID, fragmentID,
                                     fragment, word, uniqueWordH
-                            ));
+                            );
+                            if (is == null) continue;
+                            indexStructs.add(is);
                         }
                     }
 
-                    if (isFound) {
+                    if (isFound && !indexStructs.isEmpty()) {
                         foundOccurrences.add(new Link(indexStructs, resource, pathsEnum,
                                 Arrays.toString(indexStructs.stream().map(f -> uniqueWords.get(f.getWordKey())).toArray())));
                     }
@@ -255,7 +261,8 @@ public class Searcher {
             e++;
         }
         w = fr.substring(p, e).toLowerCase();
-        return new IndexStruct(b, c, f, p, u.getOrDefault(w, 0), null);
+        if (u.get(w) == null) return null;
+        return new IndexStruct(b, c, f, p, u.get(w), null);
     }
 
 }
