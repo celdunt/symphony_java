@@ -1260,6 +1260,8 @@ public class MainController {
 
     public void searchByCutEllenPart(EllenCutprompt cutprompt) {
 
+        if (!addSearchMode.isSelected()) obsEllenLink.clear();
+
         int page = cutprompt.getPage();
         int chapterId = 0;
         int fragmentId = 0;
@@ -1302,6 +1304,8 @@ public class MainController {
     }
 
     public void searchByCutBiblePart(BibleCutprompt cutprompt) {
+
+        if (!addSearchMode.isSelected()) obsBibleLink.clear();
 
         int chapterId = cutprompt.getChapter();
         int fragmentId = cutprompt.getFragment();
