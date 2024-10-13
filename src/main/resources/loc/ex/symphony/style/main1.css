@@ -119,12 +119,12 @@
 	-fx-background-color: transparent;
 }
 
-.feedback-button {
-	-fx-background-image: url('../main-window/feedback.png');
-	-fx-background-size: 24px 24px;
-	-fx-background-repeat: no-repeat;
-	-fx-background-position: center;
-	-fx-background-color: transparent;
+.fun-button {
+    -fx-background-image: url('../main-window/fun.png');
+    -fx-background-size: 24px 24px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-color: transparent;
 }
 
 .article-button {
@@ -178,7 +178,6 @@
 .split-read-button:selected {
 	-fx-background-color: #e3bbbb;
 }
-
 
 .bold-mode-button {
 	-fx-background-image: url('../main-window/to-bold.png');
@@ -266,7 +265,7 @@
 .split-read-button:hover, .split-read-choose:hover,
 .create-backup-button:hover, .load-backup-button:hover,
 .add-search-button:hover, .edit-mode-button:hover,
-.bold-mode-button:hover, .info-button:hover, .feedback-button:hover {
+.bold-mode-button:hover, .info-button:hover, .fun-button:hover {
 	-fx-background-color: #ffdcdc;
 }
 
