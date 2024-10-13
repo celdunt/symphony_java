@@ -87,6 +87,7 @@ public class MainController {
     public ToggleButton editModeButton;
     public ToggleButton boldModeButton;
     public Button infoButton;
+    public Button funButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -265,6 +266,7 @@ public class MainController {
         initSearchByLinkCut();
         initBackupButtons();
         initInfoButton();
+        initFunButton();
         initSplitReadModeButtons();
         selectTabBible__OnAction();
         selectTabEllen__OnAction();
@@ -508,6 +510,14 @@ public class MainController {
             }
             if (key.isControlDown() && key.getCode() == KeyCode.C) {
                 linkClipboard = new ArrayList<>(linkView.getSelectionModel().getSelectedItems());
+                String toClipboard = "";
+                for (Link l : linkView.getSelectionModel().getSelectedItems()) {
+                    toClipboard += String.format("%s\n", l.getLinkContent());
+                }
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(toClipboard);
+                clipboard.setContent(content);
             }
         });
 
@@ -849,8 +859,36 @@ public class MainController {
 
         infoButton.setOnAction(lis -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Информация");
+            alert.setTitle("Сокращения");
             alert.setHeaderText(null);
+            alert.setWidth(600d);
+            alert.setHeight(800d);
+
+            TextArea area = new TextArea(content);
+            area.setWrapText(true);
+            area.setEditable(false);
+
+            alert.getDialogPane().setContent(area);
+            alert.setResizable(true);
+            alert.showAndWait();
+        });
+    }
+
+    public void initFunButton() throws IOException {
+        Path path = Path.of("components/fun.txt");
+        String content;
+        if (Files.exists(path)) {
+            content = Files.readString(path);
+        } else {
+            content = "Информация не прогружена. Произошла ошибка.";
+        }
+
+        funButton.setOnAction(lis -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Функции");
+            alert.setHeaderText(null);
+            alert.setWidth(600d);
+            alert.setHeight(800d);
 
             TextArea area = new TextArea(content);
             area.setWrapText(true);
