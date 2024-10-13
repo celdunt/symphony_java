@@ -829,13 +829,14 @@ public class MainController {
             Chapter chapter = selectedBook.getChapters().get(selectedReferences.get(i).getChapterID());
 
             int start = 0;
-            String word = uniqueWords.get(selectedReferences.get(i).getWordKey());
+            String word = uniqueWords.get((Integer)selectedReferences.get(i).getWordKey());
+
 
             for (int j = 0; j < selectedReferences.get(i).getFragmentID(); j++)
                 start += chapter.getFragments().get(j).length();
 
             start += selectedReferences.get(i).getPosition();
-            int end = start + uniqueWords.get(selectedReferences.get(i).getWordKey()).length();
+            int end = start + uniqueWords.get((Integer)selectedReferences.get(i).getWordKey()).length();
 
 
             //[SOLVED?] Проблема: иногда(может даже часто) не может найти в тексте искомое слово, из-за чего упирается в конец строки и выдаёт исключение
