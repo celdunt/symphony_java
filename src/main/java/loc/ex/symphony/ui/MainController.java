@@ -146,10 +146,9 @@ public class MainController {
             currentTArea.moveTo(0);
             currentTArea.requestFollowCaret();
 
-            int bookID = Integer.max(Integer.max(
-                    bibleListView.getSelectionModel().getSelectedIndex(),
-                    ellenListView.getSelectionModel().getSelectedIndex()
-            ), otherListView.getSelectionModel().getSelectedIndex());
+            int bookID = bibleTab.isSelected()? bibleListView.getSelectionModel().getSelectedIndex():
+                    ellenTab.isSelected()? ellenListView.getSelectionModel().getSelectedIndex():
+                            otherListView.getSelectionModel().getSelectedIndex();
 
             int tab = bibleTab.isSelected() ? 0 : ellenTab.isSelected() ? 1 : 2;
 
@@ -385,6 +384,7 @@ public class MainController {
 
     public void initStartupParameters() throws IOException {
         StartupParameters startupParameters = new StartupParameters().load();
+        System.out.printf("Открыто на книге %d, главе %d", startupParameters.getBookId(), startupParameters.getChapterId());
         bookTabPane.getSelectionModel().select(startupParameters.tabId);
         ListView<Book> listView = bibleTab.isSelected() ? bibleListView :
                 ellenTab.isSelected() ? ellenListView : otherListView;
