@@ -500,13 +500,7 @@ public class MainController {
         linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         linkView.setOnKeyPressed(key -> {
             if (key.getCode() == KeyCode.DELETE) {
-                if (linkView == bibleLinkView) {
-                    obsBibleLink.removeAll(linkView.getSelectionModel().getSelectedItems());
-                } else if (linkView == ellenLinkView) {
-                    obsEllenLink.removeAll(linkView.getSelectionModel().getSelectedItems());
-                } else if (linkView == otherLinkView) {
-                    obsOtherLink.removeAll(linkView.getSelectionModel().getSelectedItems());
-                }
+                linkViewDeleteAction(linkView);
             }
             if (key.isControlDown() && key.getCode() == KeyCode.C) {
                 linkViewCopyAction(linkView);
@@ -515,10 +509,24 @@ public class MainController {
 
         ContextMenu menu = new ContextMenu();
         MenuItem item = new MenuItem("Копировать");
+        MenuItem delete = new MenuItem("Удалить");
         item.setOnAction(action -> linkViewCopyAction(linkView));
+        delete.setOnAction(action -> linkViewDeleteAction(linkView));
 
-        menu.getItems().add(item);
+        menu.getItems().addAll(item, delete);
         linkView.setContextMenu(menu);
+
+    }
+
+    public void linkViewDeleteAction(ListView<Link> linkView) {
+
+        if (linkView == bibleLinkView) {
+            obsBibleLink.removeAll(linkView.getSelectionModel().getSelectedItems());
+        } else if (linkView == ellenLinkView) {
+            obsEllenLink.removeAll(linkView.getSelectionModel().getSelectedItems());
+        } else if (linkView == otherLinkView) {
+            obsOtherLink.removeAll(linkView.getSelectionModel().getSelectedItems());
+        }
 
     }
 
@@ -2482,16 +2490,10 @@ public class MainController {
 
             listView.setOnKeyPressed(key -> {
                 if (key.getCode() == KeyCode.DELETE) {
-                    if (link != null) {
-                        link.parallelLink.removeAll(listView.getSelectionModel().getSelectedItems());
-                        obs.removeAll(listView.getSelectionModel().getSelectedItems());
-                    }
+                    deleteAction();
                 }
                 if (key.isControlDown() && key.getCode() == KeyCode.V) {
-                    obs.addAll(controller.linkClipboard);
-                    for (Link l : controller.linkClipboard) {
-                        link.addLink(l);
-                    }
+                    pasteAction();
                 }
 
             });
@@ -2521,6 +2523,31 @@ public class MainController {
                 }
             });
 
+            ContextMenu menu = new ContextMenu();
+            MenuItem paste = new MenuItem("Вставить");
+            MenuItem delete = new MenuItem("Удалить");
+
+            paste.setOnAction(action -> pasteAction());
+            delete.setOnAction(action -> deleteAction());
+
+            menu.getItems().addAll(paste, delete);
+
+            listView.setContextMenu(menu);
+
+        }
+
+        private void pasteAction() {
+            obs.addAll(controller.linkClipboard);
+            for (Link l : controller.linkClipboard) {
+                link.addLink(l);
+            }
+        }
+
+        private void deleteAction() {
+            if (link != null) {
+                link.parallelLink.removeAll(listView.getSelectionModel().getSelectedItems());
+                obs.removeAll(listView.getSelectionModel().getSelectedItems());
+            }
         }
 
         private void defineCloseButtonGraphic() {
