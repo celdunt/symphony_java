@@ -509,18 +509,29 @@ public class MainController {
                 }
             }
             if (key.isControlDown() && key.getCode() == KeyCode.C) {
-                linkClipboard = new ArrayList<>(linkView.getSelectionModel().getSelectedItems());
-                String toClipboard = "";
-                for (Link l : linkView.getSelectionModel().getSelectedItems()) {
-                    toClipboard += String.format("%s\n", l.getLinkContent());
-                }
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent content = new ClipboardContent();
-                content.putString(toClipboard);
-                clipboard.setContent(content);
+                linkViewCopyAction(linkView);
             }
         });
 
+        ContextMenu menu = new ContextMenu();
+        MenuItem item = new MenuItem("Копировать");
+        item.setOnAction(action -> linkViewCopyAction(linkView));
+
+        menu.getItems().add(item);
+        linkView.setContextMenu(menu);
+
+    }
+
+    public void linkViewCopyAction(ListView<Link> linkView) {
+        linkClipboard = new ArrayList<>(linkView.getSelectionModel().getSelectedItems());
+        String toClipboard = "";
+        for (Link l : linkView.getSelectionModel().getSelectedItems()) {
+            toClipboard += String.format("%s\n", l.getLinkContent());
+        }
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        content.putString(toClipboard);
+        clipboard.setContent(content);
     }
 
     public void initUniqueWordsFields() throws IOException {

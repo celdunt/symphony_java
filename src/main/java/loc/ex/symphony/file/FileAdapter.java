@@ -76,7 +76,7 @@ public class FileAdapter {
                 StringBuilder buffer = new StringBuilder();
 
                 for (String part : rawFragments) {
-                    part = part.trim(); // Убираем пробелы по краям
+                    part = part.trim();
 
                     if (buffer.isEmpty()) {
                         buffer.append(part);
@@ -84,14 +84,14 @@ public class FileAdapter {
                         if (buffer.length() + part.length() + 1 < minLength) {
                             buffer.append(".").append(part);
                         } else {
-                            splitedFragmets.add(buffer.append(".").toString());
+                            splitedFragmets.add(buffer.append(". ").toString());
                             buffer.setLength(0);
                             buffer.append(part);
                         }
                     }
                 }
                 if (!buffer.isEmpty())
-                    splitedFragmets.add(buffer.append(".").toString());
+                    splitedFragmets.add(buffer.append(". ").toString());
 
                 List<String> fragments = new ArrayList<>(splitedFragmets)
                         .stream().map(fr -> fr.replaceAll("^\\s*\\n+", ""))
@@ -130,14 +130,14 @@ public class FileAdapter {
                         if (buffer.length() + part.length() + 1 < minLength) {
                             buffer.append(".").append(part);
                         } else {
-                            splitedFragmets.add(buffer.append(".").toString());
+                            splitedFragmets.add(buffer.append(". ").toString());
                             buffer.setLength(0);
                             buffer.append(part);
                         }
                     }
                 }
                 if (!buffer.isEmpty())
-                    splitedFragmets.add(buffer.append(".").toString());
+                    splitedFragmets.add(buffer.append(". ").toString());
 
                 List<String> fragments = new ArrayList<>(splitedFragmets)
                         .stream().map(fr -> fr.replaceAll("^\\s*\\n+", ""))
