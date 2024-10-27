@@ -63,8 +63,6 @@ public class Chapter {
         StringBuilder buffer = new StringBuilder();
 
         for (String part : rawFragments) {
-            part = part.trim();
-
             if (buffer.isEmpty()) {
                 buffer.append(part);
             } else {

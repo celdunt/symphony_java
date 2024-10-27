@@ -58,6 +58,7 @@ public class Symphony extends Application {
                         controller.chapterListView.getSelectionModel().getSelectedIndex()
                 );
                 startupParameters.save();
+                System.out.printf("Закрыто на книге %d, главе %d", startupParameters.getBookId(), startupParameters.getChapterId());
                 BookSerializer.save(controller.bibleListView.getItems());
                 BookSerializer.save(controller.ellenListView.getItems());
                 BookSerializer.save(controller.otherListView.getItems());

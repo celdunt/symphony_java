@@ -125,6 +125,7 @@ public class ArticlesController {
                         ((Stage) ((Node) articlesTableView).getScene().getWindow()).close();
                     } else {
                         MainController.openingArticle.set(row.getItem());
+                        ((Stage) ((Node) articlesTableView).getScene().getWindow()).close();
                     }
 
                 } else if (!row.isEmpty() && mouse.getButton() == MouseButton.SECONDARY

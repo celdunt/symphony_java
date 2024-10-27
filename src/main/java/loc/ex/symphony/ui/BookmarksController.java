@@ -6,8 +6,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
+import javafx.stage.Stage;
 import loc.ex.symphony.file.BookmarksSerializer;
 import loc.ex.symphony.listview.BookmarkStruct;
 
@@ -71,6 +73,7 @@ public class BookmarksController {
                 if (!row.isEmpty() && mouse.getButton() == MouseButton.PRIMARY
                         && mouse.getClickCount() == 2 && bookmarksTableView.getSelectionModel().getSelectedItem() != null) {
                     MainController.openingBookmark.set(row.getItem());
+                    ((Stage) ((Node) bookmarksTableView).getScene().getWindow()).close();
                 } else if (!row.isEmpty() && mouse.getButton() == MouseButton.SECONDARY
                         && bookmarksTableView.getSelectionModel().getSelectedItem() != null) {
                     menu.show(bookmarksTableView, mouse.getScreenX(), mouse.getScreenY());
