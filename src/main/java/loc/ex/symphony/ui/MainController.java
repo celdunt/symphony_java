@@ -88,6 +88,7 @@ public class MainController {
     public ToggleButton boldModeButton;
     public Button infoButton;
     public Button funButton;
+    public Button resaveArticleButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -132,6 +133,7 @@ public class MainController {
 
     public static ObjectProperty<BookmarkStruct> openingBookmark = new SimpleObjectProperty<>();
     public static ObjectProperty<Article> openingArticle = new SimpleObjectProperty<>();
+    public static ObjectProperty<ObservableList<Article>> currentArticleList = new SimpleObjectProperty<>();
 
     public List<Link> linkClipboard = new ArrayList<>();
 
@@ -270,6 +272,8 @@ public class MainController {
         selectTabBible__OnAction();
         selectTabEllen__OnAction();
         selectTabOther__OnAction();
+        initResaveArticleButton();
+
         Platform.runLater(this::initializeSceneHandler);
         bibleListView.setCellFactory(param -> new RichCell<>());
         bibleLinkView.setCellFactory(param -> new LinkCell<>((int) bibleLinkView.getWidth(), this));
@@ -384,7 +388,6 @@ public class MainController {
 
     public void initStartupParameters() throws IOException {
         StartupParameters startupParameters = new StartupParameters().load();
-        System.out.printf("Открыто на книге %d, главе %d", startupParameters.getBookId(), startupParameters.getChapterId());
         bookTabPane.getSelectionModel().select(startupParameters.tabId);
         ListView<Book> listView = bibleTab.isSelected() ? bibleListView :
                 ellenTab.isSelected() ? ellenListView : otherListView;
@@ -586,17 +589,40 @@ public class MainController {
 
     }
 
+    public void initResaveArticleButton() {
+
+        resaveArticleButton.setDisable(true);
+
+        resaveArticleButton.setOnAction(action -> {
+
+            openingArticle.get().bLinks = bibleLinkView.getItems();
+            openingArticle.get().eLinks = ellenLinkView.getItems();
+            openingArticle.get().oLinks = otherLinkView.getItems();
+            try {
+                if (currentArticleList.get() != null)
+                    ArticleSerializer.save(currentArticleList.get());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+
+    }
+
     public void initOpenArticleAction() {
 
         openingArticle.addListener(change -> {
 
             if (openingArticle.get() != null) {
+                resaveArticleButton.setDisable(false);
                 obsBibleLink.clear();
                 obsEllenLink.clear();
                 obsOtherLink.clear();
                 obsBibleLink.addAll(openingArticle.get().getbLinks());
                 obsEllenLink.addAll(openingArticle.get().geteLinks());
                 obsOtherLink.addAll(openingArticle.get().getoLinks());
+            } else {
+                resaveArticleButton.setDisable(true);
             }
 
         });

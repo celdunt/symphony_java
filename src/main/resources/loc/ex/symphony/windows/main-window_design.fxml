@@ -176,6 +176,11 @@
                   <Tooltip text="Добавить выделенное в тему..." />
                </tooltip>
             </Button>
+            <Button fx:id="resaveArticleButton" alignment="CENTER_RIGHT" layoutX="480.0" layoutY="16.0" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="resave-article-button-true">
+               <tooltip>
+                  <Tooltip text="Сохранить изменения в теме" />
+               </tooltip>
+            </Button>
          </children>
          <GridPane.margin>
             <Insets left="300.0" />

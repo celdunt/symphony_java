@@ -124,7 +124,9 @@ public class ArticlesController {
                         }
                         ((Stage) ((Node) articlesTableView).getScene().getWindow()).close();
                     } else {
-                        MainController.openingArticle.set(row.getItem());
+
+                        MainController.openingArticle.set(articleObservableList.get(row.getIndex()));
+                        MainController.currentArticleList.set(articleObservableList);
                         ((Stage) ((Node) articlesTableView).getScene().getWindow()).close();
                     }
 

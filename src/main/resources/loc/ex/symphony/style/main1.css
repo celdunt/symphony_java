@@ -243,6 +243,14 @@
 	-fx-background-color: transparent;
 }
 
+.resave-article-button-true {
+	-fx-background-image: url('../main-window/resave-article-true.png');
+	-fx-background-size: 24px 24px;
+	-fx-background-repeat: no-repeat;
+	-fx-background-position: center;
+	-fx-background-color: transparent;
+}
+
 .create-backup-button {
 	-fx-background-image: url('../main-window/create-backup.png');
 	-fx-background-size: 24px 24px;
@@ -260,7 +268,7 @@
 }
 
 .index-button:hover, .article-button:hover, .bookmark-button:hover,
-.create-article-button:hover, .resave-article-button:hover,
+.create-article-button:hover, .resave-article-button:hover, .resave-article-button-true:hover,
 .erase-cur-link-button:hover, .erase-all-link-button:hover,
 .split-read-button:hover, .split-read-choose:hover,
 .create-backup-button:hover, .load-backup-button:hover,
