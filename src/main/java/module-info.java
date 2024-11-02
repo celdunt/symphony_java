@@ -16,6 +16,7 @@ module loc.ex.symphony {
     requires java.sql;
     requires org.fxmisc.flowless;
     requires reactfx;
+    requires org.json;
 
 
     opens loc.ex.symphony to javafx.fxml;

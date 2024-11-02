@@ -25,6 +25,11 @@
                   <Tooltip text="Индексировать" />
                </tooltip>
             </Button>
+            <Button fx:id="updateButton" ellipsisString="" layoutX="15.0" layoutY="16.0" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="update-button">
+               <tooltip>
+                  <Tooltip text="Обновить программу" />
+               </tooltip>
+            </Button>
             <Button fx:id="infoButton" ellipsisString="" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="info-button">
                <HBox.margin>
                   <Insets left="20.0" />

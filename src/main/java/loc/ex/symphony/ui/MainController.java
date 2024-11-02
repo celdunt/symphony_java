@@ -22,6 +22,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import loc.ex.symphony.Symphony;
+import loc.ex.symphony.Updater;
 import loc.ex.symphony.controls.NoteStyledTextArea;
 import loc.ex.symphony.file.*;
 import loc.ex.symphony.indexdata.*;
@@ -89,6 +90,7 @@ public class MainController {
     public Button infoButton;
     public Button funButton;
     public Button resaveArticleButton;
+    public Button updateButton;
     private Searcher b_searcher;
     private Searcher e_searcher;
     private Searcher o_searcher;
@@ -273,6 +275,7 @@ public class MainController {
         selectTabEllen__OnAction();
         selectTabOther__OnAction();
         initResaveArticleButton();
+        initUpdateButton();
 
         Platform.runLater(this::initializeSceneHandler);
         bibleListView.setCellFactory(param -> new RichCell<>());
@@ -307,6 +310,8 @@ public class MainController {
                 throw new RuntimeException(e);
             }
         });
+
+        checkUpdates();
 
     }
 
@@ -395,6 +400,29 @@ public class MainController {
         chapterListView.getSelectionModel().select(startupParameters.chapterId);
         listView.scrollTo(listView.getSelectionModel().getSelectedIndex());
         chapterListView.scrollTo(chapterListView.getSelectionModel().getSelectedIndex());
+    }
+
+    public void initUpdateButton() {
+
+        updateButton.setOnAction(action -> {
+            try {
+                Updater.updateApp();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+    }
+
+    public void checkUpdates() throws IOException {
+
+        if (Updater.thereNewUpdates()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Обновления");
+            alert.setContentText("Доступна новая версия программы.\nДля обновления нажмите на соответствующую кнопку.");
+            alert.show();
+        }
+
     }
 
     public void initCheckingIndexExisting() throws SQLException, IOException, ClassNotFoundException {
