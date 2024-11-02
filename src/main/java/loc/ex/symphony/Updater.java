@@ -52,9 +52,16 @@ public class Updater {
         }
     }
 
+    private static void updateCurrentVersionInfo() throws IOException {
+
+        Files.write(Path.of("cur-v.txt"), CURRENT_VERSION.getBytes());
+
+    }
+
     public static void updateApp() throws IOException {
         URL url = new URL(String.format("https://github.com/celdunt/symphony_java/releases/download/%s/latest.exe", CURRENT_VERSION));
         download(url.toString(), "latest.exe");
+        updateCurrentVersionInfo();
         createUpdateScript();
         Runtime.getRuntime().exec("cmd /c start " + UPDATE_SCRIPT);
         System.exit(0);
