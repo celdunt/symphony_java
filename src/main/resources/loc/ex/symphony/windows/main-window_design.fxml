@@ -101,7 +101,7 @@
                   </ToggleButton>
                   <ToggleButton fx:id="splitReadMod3" mnemonicParsing="false" styleClass="split-read-choose" text="3">
                      <tooltip>
-                        <Tooltip text="Чтение в два окна" />
+                        <Tooltip text="Чтение в три окна" />
                      </tooltip>
                      <HBox.margin>
                         <Insets left="1.0" />
@@ -112,7 +112,7 @@
                   </ToggleButton>
                   <ToggleButton fx:id="splitReadMod4" mnemonicParsing="false" styleClass="split-read-choose" text="4">
                      <tooltip>
-                        <Tooltip text="Чтение в два окна" />
+                        <Tooltip text="Чтение в четыре окна" />
                      </tooltip>
                      <HBox.margin>
                         <Insets left="1.0" />
@@ -128,7 +128,7 @@
             </HBox>
             <ToggleButton fx:id="splitReadButton" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" styleClass="split-read-button" text="ToggleButton">
                <tooltip>
-                  <Tooltip text="Чтение в два окна" />
+                  <Tooltip text="Чтение в несколько окон" />
                </tooltip>
                <HBox.margin>
                   <Insets right="20.0" />

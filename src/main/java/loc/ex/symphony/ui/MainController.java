@@ -479,9 +479,9 @@ public class MainController {
 
     public void initBookLinkSelectionHandler() {
 
-        bookLinkSelectionHandler(bibleLinkView);
-        bookLinkSelectionHandler(ellenLinkView);
-        bookLinkSelectionHandler(otherLinkView);
+        bookLinkSelectionHandler(bibleLinkView, obsBibleLink);
+        bookLinkSelectionHandler(ellenLinkView, obsEllenLink);
+        bookLinkSelectionHandler(otherLinkView, obsOtherLink);
 
     }
 
@@ -526,7 +526,7 @@ public class MainController {
 
     }
 
-    public void bookLinkSelectionHandler(ListView<Link> linkView) {
+    public void bookLinkSelectionHandler(ListView<Link> linkView, ObservableList<Link> obs) {
 
         linkView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         linkView.setOnKeyPressed(key -> {
@@ -536,16 +536,29 @@ public class MainController {
             if (key.isControlDown() && key.getCode() == KeyCode.C) {
                 linkViewCopyAction(linkView);
             }
+            if (key.isControlDown() && key.getCode() == KeyCode.V) {
+                linkViewPasteAction(obs);
+            }
         });
 
         ContextMenu menu = new ContextMenu();
         MenuItem item = new MenuItem("Копировать");
         MenuItem delete = new MenuItem("Удалить");
+        MenuItem paste = new MenuItem("Вставить");
         item.setOnAction(action -> linkViewCopyAction(linkView));
         delete.setOnAction(action -> linkViewDeleteAction(linkView));
+        paste.setOnAction(action -> linkViewPasteAction(obs));
 
-        menu.getItems().addAll(item, delete);
+        menu.getItems().addAll(item, delete, paste);
         linkView.setContextMenu(menu);
+
+    }
+
+    public void linkViewPasteAction(ObservableList<Link> obs) {
+
+        if (!linkClipboard.isEmpty()) {
+            obs.addAll(linkClipboard);
+        }
 
     }
 
@@ -2577,16 +2590,40 @@ public class MainController {
                 }
             });
 
+            listView.setOnKeyPressed(key -> {
+                if (key.getCode() == KeyCode.DELETE) {
+                    deleteAction();
+                }
+                if (key.isControlDown() && key.getCode() == KeyCode.C) {
+                    copyAction();
+                }
+                if (key.isControlDown() && key.getCode() == KeyCode.V) {
+                    pasteAction();
+                }
+            });
+
             ContextMenu menu = new ContextMenu();
             MenuItem paste = new MenuItem("Вставить");
             MenuItem delete = new MenuItem("Удалить");
+            MenuItem copy = new MenuItem("Копировать");
 
             paste.setOnAction(action -> pasteAction());
             delete.setOnAction(action -> deleteAction());
+            copy.setOnAction(action -> copyAction());
 
-            menu.getItems().addAll(paste, delete);
+            menu.getItems().addAll(copy, paste, delete);
 
             listView.setContextMenu(menu);
+
+        }
+
+        private void copyAction() {
+
+            if (!listView.getSelectionModel().getSelectedItems().isEmpty()) {
+                controller.linkClipboard = new ArrayList<>(listView.getSelectionModel().getSelectedItems());
+            }
+
+            System.err.println(controller.linkClipboard.size());
 
         }
 
