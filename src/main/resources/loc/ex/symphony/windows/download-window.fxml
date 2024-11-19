@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefHeight="120.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="loc.ex.symphony.ui.UpdaterWindow">
+   <children>
+      <Label alignment="CENTER" text="Идёт загрузка обновления..." />
+      <ProgressBar fx:id="downloadProgressBar" prefWidth="300.0" progress="0.0">
+         <VBox.margin>
+            <Insets top="5.0" />
+         </VBox.margin>
+      </ProgressBar>
+      <TextField fx:id="downloadSpeedLabel" style="-fx-background-color: transparent;" text="Скорость загрузки:">
+         <VBox.margin>
+            <Insets top="5.0" />
+         </VBox.margin>
+      </TextField>
+   </children>
+   <padding>
+      <Insets bottom="15.0" left="10.0" right="10.0" top="15.0" />
+   </padding>
+</VBox>

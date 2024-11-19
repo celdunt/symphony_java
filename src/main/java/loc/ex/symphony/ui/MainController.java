@@ -12,6 +12,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.concurrent.Task;
 import javafx.geometry.*;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -406,7 +407,24 @@ public class MainController {
 
         updateButton.setOnAction(action -> {
             try {
-                Updater.updateApp();
+                UpdaterUI up = new UpdaterUI();
+                up.show();
+                Task<Void> downloadTask = new Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        Updater.updateApp(up.getController());
+                        return null;
+                    }
+                };
+                downloadTask.setOnSucceeded(e -> {
+                    try {
+                        Updater.endPartUpdation();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
+                new Thread(downloadTask).start();
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

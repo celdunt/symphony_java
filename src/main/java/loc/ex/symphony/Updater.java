@@ -1,5 +1,6 @@
 package loc.ex.symphony;
 
+import loc.ex.symphony.ui.UpdaterWindow;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -41,14 +42,39 @@ public class Updater {
 
     }
 
-    private static void download(String fileURL, String savePath) throws IOException {
-        try (InputStream in = new BufferedInputStream(new URL(fileURL).openStream());
+    private static void download(String fileURL, String savePath, UpdaterWindow window) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(fileURL).openConnection();
+
+        int fileSize = connection.getContentLength();
+
+        System.err.println(fileSize + "  ЕБАТЬ");
+
+        try (InputStream in = new BufferedInputStream(connection.getInputStream());
              FileOutputStream fileOutputStream = new FileOutputStream(savePath)) {
             byte[] dataBuffer = new byte[1024];
             int bytesRead;
+
+            long totalBytesRead = 0;
+            long startTime = System.currentTimeMillis();
+            long lastUpdateTime = System.currentTimeMillis();
+
             while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+                double progress = (double) totalBytesRead / fileSize;
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                double downloadSpeed = totalBytesRead / (elapsedTime / 1000d) / (1024 * 1024);
+
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastUpdateTime >= 1000) { // 1000 мс = 1 секунда
+                    window.updateProgress(progress, downloadSpeed);
+                    lastUpdateTime = currentTime; // Обновляем время последнего обновления
+                }
             }
+        } catch (IOException exception) {
+            System.err.println("Какая-то Оёшибка");
+        } finally {
+            connection.disconnect();
         }
     }
 
@@ -58,9 +84,12 @@ public class Updater {
 
     }
 
-    public static void updateApp() throws IOException {
+    public static void updateApp(UpdaterWindow window) throws IOException {
         URL url = new URL(String.format("https://github.com/celdunt/symphony_java/releases/download/%s/latest.exe", CURRENT_VERSION));
-        download(url.toString(), "latest.exe");
+        download(url.toString(), "latest.exe", window);
+    }
+
+    public static void endPartUpdation() throws IOException {
         updateCurrentVersionInfo();
         createUpdateScript();
         Runtime.getRuntime().exec("cmd /c start " + UPDATE_SCRIPT);
